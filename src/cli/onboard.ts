@@ -1,4 +1,4 @@
-import inquirer from 'inquirer';
+﻿import inquirer from 'inquirer';
 import chalk from 'chalk';
 import ora from 'ora';
 import boxen from 'boxen';
@@ -794,7 +794,7 @@ export class HyperClawWizard {
 
     await this.config.save({
       ...current,
-      version: '4.0.0',
+      version: '4.0.1',
       workspaceName: data.workspaceName,
       provider: data.providerConfig,
       providers: data.providers || (data.providerConfig ? [data.providerConfig] : []),
@@ -903,7 +903,7 @@ export class HyperClawWizard {
     ].join('\n');
 
     console.log('\n' + boxen(
-      chalk.hex('#06b6d4')('🎉 HyperClaw v4.0.0 ready!\n\n') + lines,
+      chalk.hex('#06b6d4')('🎉 HyperClaw v4.0.1 ready!\n\n') + lines,
       { padding: 1, borderStyle: 'round', borderColor: 'cyan', margin: 1, backgroundColor: '#0a0a0a' }
     ));
   }

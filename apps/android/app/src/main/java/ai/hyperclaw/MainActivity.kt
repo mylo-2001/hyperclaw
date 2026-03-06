@@ -1,4 +1,4 @@
-package ai.hyperclaw
+﻿package ai.hyperclaw
 
 import android.Manifest
 import android.content.Context
@@ -458,7 +458,7 @@ fun HyperClawApp() {
                         Text("🦅", fontSize = 20.sp)
                         Column {
                             Text("HyperClaw", fontWeight = FontWeight.Bold, color = CyanColor, fontSize = 16.sp)
-                            Text("v4.0.0", fontSize = 11.sp, color = Color.Gray)
+                            Text("v4.0.1", fontSize = 11.sp, color = Color.Gray)
                         }
                     }
                 },

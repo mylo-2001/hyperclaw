@@ -1,4 +1,4 @@
-# default.nix — Legacy Nix package (no flake)
+﻿# default.nix — Legacy Nix package (no flake)
 # For flakes: nix build .#  or  nix develop
 { pkgs ? import <nixpkgs> {} }:
 let
@@ -6,7 +6,7 @@ let
 in
   pkgs.buildNpmPackage {
     pname = "hyperclaw";
-    version = "4.0.0";
+    version = "4.0.1";
     src = ./.;
     npmDepsHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     nodejs = nodejs;

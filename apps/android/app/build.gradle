@@ -1,4 +1,4 @@
-plugins {
+﻿plugins {
     id 'com.android.application'
     id 'kotlin-android'
 }
@@ -12,7 +12,7 @@ android {
         minSdk 26
         targetSdk 35
         versionCode 40000
-        versionName "4.0.0"
+        versionName "4.0.1"
     }
 
     buildFeatures {

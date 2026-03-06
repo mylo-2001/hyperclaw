@@ -1,4 +1,4 @@
-<p align="center">
+﻿<p align="center">
   <img src="assets/icon.png" width="120" alt="HyperClaw">
   <br>
   <h1 align="center">🦅 HyperClaw — Personal AI Assistant</h1>
@@ -6,7 +6,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/build-passing-brightgreen?style=flat-square" alt="build">
-  <img src="https://img.shields.io/badge/release-v4.0.0-blue?style=flat-square" alt="release">
+  <img src="https://img.shields.io/badge/release-v4.0.1-blue?style=flat-square" alt="release">
   <img src="https://img.shields.io/badge/node-%E2%89%A522-green?style=flat-square" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-gray?style=flat-square" alt="license">
   <img src="https://img.shields.io/badge/typescript-5.4-3178c6?style=flat-square&logo=typescript&logoColor=white" alt="typescript">

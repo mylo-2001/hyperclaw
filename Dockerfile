@@ -1,4 +1,4 @@
-# ─── HyperClaw Gateway — Docker Image ────────────────────────────────────────
+﻿# ─── HyperClaw Gateway — Docker Image ────────────────────────────────────────
 # Build:   docker build -t hyperclaw .
 # Run:     docker run -p 18789:18789 -v ~/.hyperclaw:/root/.hyperclaw hyperclaw
 
@@ -17,7 +17,7 @@ FROM node:22-alpine AS runtime
 
 LABEL org.opencontainers.image.title="HyperClaw"
 LABEL org.opencontainers.image.description="⚡ AI Gateway Platform — The Lobster Evolution"
-LABEL org.opencontainers.image.version="4.0.0"
+LABEL org.opencontainers.image.version="4.0.1"
 LABEL org.opencontainers.image.licenses="MIT"
 
 # Create non-root user

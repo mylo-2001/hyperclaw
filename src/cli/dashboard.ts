@@ -1,4 +1,4 @@
-import chalk from 'chalk';
+﻿import chalk from 'chalk';
 import readline from 'readline';
 import { GatewayManager } from './gateway';
 import { ConfigManager } from './config';
@@ -41,7 +41,7 @@ export class Dashboard {
     };
 
     console.log(c(`╔${line}╗`));
-    console.log(c(`║`) + chalk.bold.hex('#06b6d4')(`${'🦅 HYPERCLAW v4.0.0 — GATEWAY DASHBOARD'.padStart(45).padEnd(w)}`) + c(`║`));
+    console.log(c(`║`) + chalk.bold.hex('#06b6d4')(`${'🦅 HYPERCLAW v4.0.1 — GATEWAY DASHBOARD'.padStart(45).padEnd(w)}`) + c(`║`));
     console.log(c(`╠${line}╣`));
     console.log(row(`${statusDot} Gateway  ${statusText}   ${chalk.gray('│')}  ws://localhost:${port}   ${chalk.gray('│')}  Agent: ${c(agent)}`));
     console.log(row(`${c('◆')} Model     ${chalk.gray(model.slice(0, 30))}   ${chalk.gray('│')}  User: ${c(user)}`));

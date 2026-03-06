@@ -1,4 +1,4 @@
-{
+﻿{
   description = "HyperClaw — AI Gateway Platform";
 
   inputs = {
@@ -43,7 +43,7 @@
         # To get npmDepsHash: run ./scripts/nix-update-hash.sh or: nix build .# 2>&1 and copy the "got:" hash
         packages.default = pkgs.buildNpmPackage {
           pname = "hyperclaw";
-          version = "4.0.0";
+          version = "4.0.1";
           src = ./.;
           npmDepsHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
           nodejs = nodejs;
