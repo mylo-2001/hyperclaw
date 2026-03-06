@@ -30,7 +30,7 @@ export interface Provider {
 export const PROVIDERS: Provider[] = [
   {
     id: 'anthropic',
-    displayName: '🎭 Anthropic',
+    displayName: '🎭 Anthropic (API Key)',
     authType: 'api_key',
     authLabel: 'Anthropic API Key',
     authHint: 'console.anthropic.com → API Keys',
@@ -38,6 +38,52 @@ export const PROVIDERS: Provider[] = [
       { id: 'claude-opus-4-5', name: 'Claude Opus 4.5', contextK: 200, reasoning: true, flagship: true },
       { id: 'claude-sonnet-4-5', name: 'Claude Sonnet 4.5', contextK: 200, reasoning: true },
       { id: 'claude-haiku-4-5', name: 'Claude Haiku 4.5', contextK: 200, fast: true },
+    ]
+  },
+  {
+    id: 'anthropic-oauth',
+    displayName: '🎭 Anthropic (OAuth — Claude Code/Max)',
+    authType: 'oauth',
+    authLabel: 'Claude OAuth credentials',
+    authHint: 'Reuses ~/.claude/.credentials.json (Claude Code CLI) or macOS Keychain "Claude Code-credentials"',
+    models: [
+      { id: 'claude-opus-4-5', name: 'Claude Opus 4.5', contextK: 200, reasoning: true, flagship: true },
+      { id: 'claude-sonnet-4-5', name: 'Claude Sonnet 4.5', contextK: 200, reasoning: true },
+    ]
+  },
+  {
+    id: 'anthropic-setup-token',
+    displayName: '🎭 Anthropic (setup-token)',
+    authType: 'api_key',
+    authLabel: 'Anthropic setup-token',
+    authHint: 'Run `claude setup-token` on any machine → paste the token here',
+    models: [
+      { id: 'claude-opus-4-5', name: 'Claude Opus 4.5', contextK: 200, reasoning: true, flagship: true },
+      { id: 'claude-sonnet-4-5', name: 'Claude Sonnet 4.5', contextK: 200, reasoning: true },
+    ]
+  },
+  {
+    id: 'vercel-ai',
+    displayName: '▲ Vercel AI Gateway',
+    authType: 'api_key',
+    authLabel: 'Vercel AI Gateway API Key',
+    authHint: 'vercel.com/docs/ai — multi-model proxy (AI_GATEWAY_API_KEY)',
+    baseUrl: 'https://ai-gateway.vercel.sh/v1',
+    models: [
+      { id: 'openai/gpt-4o', name: 'GPT-4o (via Vercel)', contextK: 128, flagship: true },
+      { id: 'anthropic/claude-sonnet-4-5', name: 'Claude Sonnet (via Vercel)', contextK: 200 },
+      { id: 'google/gemini-2.0-flash', name: 'Gemini 2.0 Flash (via Vercel)', contextK: 1000, fast: true },
+    ]
+  },
+  {
+    id: 'opencode-zen',
+    displayName: '🧘 OpenCode Zen (multi-model proxy)',
+    authType: 'api_key',
+    authLabel: 'OpenCode Zen API Key',
+    authHint: 'opencode.ai/auth — OPENCODE_API_KEY',
+    baseUrl: 'https://api.opencode.ai/v1',
+    models: [
+      { id: 'auto', name: 'Auto (best available)', contextK: 200, flagship: true },
     ]
   },
   {

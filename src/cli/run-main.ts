@@ -72,8 +72,61 @@ program.command('onboard')
   .description('Full onboarding wizard — preferred setup path')
   .option('--install-daemon', 'Auto-install system daemon (starts on boot, grants full PC access)')
   .option('--quick', 'Use QuickStart mode (skip advanced options)')
+  .option('--reset', 'Reset config before running wizard (sends to trash, not deleted)')
+  .option('--reset-scope <scope>', 'What to reset: config | config+creds | full', 'config')
+  .option('--non-interactive', 'Run in non-interactive mode (use flags for all options)')
+  .option('--json', 'Output result as JSON (use with --non-interactive)')
+  .option('--anthropic-api-key <key>', 'Anthropic API key (non-interactive)')
+  .option('--openai-api-key <key>', 'OpenAI API key (non-interactive)')
+  .option('--gateway-port <port>', 'Gateway port (non-interactive)', '18789')
+  .option('--gateway-bind <bind>', 'Gateway bind: loopback | all (non-interactive)', 'loopback')
+  .option('--daemon-runtime <runtime>', 'Daemon runtime: node | bun (non-interactive)', 'node')
+  .option('--skip-skills', 'Skip skills setup (non-interactive)')
+  .option('--skip-search', 'Skip web search setup (non-interactive)')
   .action(async (opts) => {
     await (new Banner()).showNeonBanner(false);
+
+    // ── --reset / --reset-scope ────────────────────────────────────────────
+    if (opts.reset) {
+      const fs = require('fs-extra');
+      const path = require('path');
+      const os = require('os');
+      const hcDir = path.join(os.homedir(), '.hyperclaw');
+      const scope: string = opts.resetScope ?? 'config';
+      const filesToRemove: string[] = [path.join(hcDir, 'hyperclaw.json')];
+      if (scope === 'config+creds' || scope === 'full') {
+        filesToRemove.push(path.join(hcDir, 'credentials'));
+        filesToRemove.push(path.join(hcDir, 'sessions'));
+      }
+      if (scope === 'full') {
+        filesToRemove.push(path.join(hcDir, 'workspace'));
+      }
+      const chalk = require('chalk');
+      console.log(chalk.yellow(`\n  ⚠  Reset scope: ${chalk.bold(scope)}\n`));
+      console.log(chalk.gray('  Files to remove:'));
+      filesToRemove.forEach(f => console.log(chalk.gray(`    • ${f}`)));
+      const inquirer = require('inquirer');
+      const { confirmReset } = await inquirer.prompt([{
+        type: 'confirm', name: 'confirmReset',
+        message: 'Confirm reset? (files will be moved to trash/backup, not permanently deleted)',
+        default: false
+      }]);
+      if (confirmReset) {
+        const backupDir = path.join(hcDir, `backup-${Date.now()}`);
+        await fs.ensureDir(backupDir);
+        for (const f of filesToRemove) {
+          if (await fs.pathExists(f)) {
+            const dest = path.join(backupDir, path.basename(f));
+            await fs.move(f, dest);
+            console.log(chalk.gray(`  ✓ Moved ${path.basename(f)} → backup/`));
+          }
+        }
+        console.log(chalk.green('\n  ✔  Reset complete. Starting fresh...\n'));
+      } else {
+        console.log(chalk.gray('\n  Reset cancelled.\n'));
+        process.exit(0);
+      }
+    }
 
     if (opts.installDaemon) {
       // Show explicit full-access warning before proceeding
@@ -100,6 +153,15 @@ program.command('onboard')
       ...opts,
       wizard: true,
       installDaemon: opts.installDaemon ?? false,
+      nonInteractive: opts.nonInteractive ?? false,
+      jsonOutput: opts.json ?? false,
+      skipSkills: opts.skipSkills ?? false,
+      skipSearch: opts.skipSearch ?? false,
+      daemonRuntime: opts.daemonRuntime ?? 'node',
+      gatewayPort: opts.gatewayPort ? parseInt(opts.gatewayPort) : undefined,
+      gatewayBind: opts.gatewayBind ?? 'loopback',
+      anthropicApiKey: opts.anthropicApiKey,
+      openaiApiKey: opts.openaiApiKey,
     });
     process.exit(0);
   });

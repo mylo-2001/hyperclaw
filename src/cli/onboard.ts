@@ -26,6 +26,15 @@ interface WizardOptions {
   daemon?: boolean;
   startNow?: boolean;
   installDaemon?: boolean;
+  nonInteractive?: boolean;
+  jsonOutput?: boolean;
+  skipSkills?: boolean;
+  skipSearch?: boolean;
+  daemonRuntime?: 'node' | 'bun';
+  gatewayPort?: number;
+  gatewayBind?: 'loopback' | 'all';
+  anthropicApiKey?: string;
+  openaiApiKey?: string;
 }
 
 export class HyperClawWizard {
@@ -34,6 +43,56 @@ export class HyperClawWizard {
   private gateway = new GatewayManager();
 
   async run(options: WizardOptions): Promise<void> {
+    // ── Existing config detection ─────────────────────────────────────────────
+    const existingCfg = await this.config.load();
+    const hasExistingConfig = !!(existingCfg && (existingCfg.provider || existingCfg.providers?.length));
+    if (hasExistingConfig && !options.nonInteractive) {
+      const { getConfigPath } = await import('../infra/paths');
+      console.log(chalk.yellow(`\n  ⚡ Existing config detected: ${chalk.bold(getConfigPath())}\n`));
+      const { configAction } = await inquirer.prompt([{
+        type: 'list',
+        name: 'configAction',
+        message: 'What would you like to do?',
+        choices: [
+          { name: `${chalk.green('★')} Keep & modify    ${chalk.gray('(keep existing config, change specific settings)')}`, value: 'modify' },
+          { name: `  Keep & continue  ${chalk.gray('(re-run wizard, keep all current values as defaults)')}`, value: 'keep' },
+          { name: `${chalk.red('✖')} Reset             ${chalk.gray('(back up config and start fresh)')}`, value: 'reset' },
+        ]
+      }]);
+      if (configAction === 'reset') {
+        const { resetScope } = await inquirer.prompt([{
+          type: 'list',
+          name: 'resetScope',
+          message: 'Reset scope:',
+          choices: [
+            { name: 'Config only', value: 'config' },
+            { name: 'Config + credentials + sessions', value: 'config+creds' },
+            { name: 'Full reset (config + credentials + workspace)', value: 'full' },
+          ]
+        }]);
+        const fs = await import('fs-extra');
+        const path = await import('path');
+        const os = await import('os');
+        const hcDir = path.join(os.homedir(), '.hyperclaw');
+        const backupDir = path.join(hcDir, `backup-${Date.now()}`);
+        await fs.ensureDir(backupDir);
+        const toRemove = [path.join(hcDir, 'hyperclaw.json')];
+        if (resetScope !== 'config') {
+          toRemove.push(path.join(hcDir, 'credentials'), path.join(hcDir, 'sessions'));
+        }
+        if (resetScope === 'full') toRemove.push(path.join(hcDir, 'workspace'));
+        for (const f of toRemove) {
+          if (await fs.pathExists(f)) {
+            await fs.move(f, path.join(backupDir, path.basename(f)));
+          }
+        }
+        console.log(chalk.green(`\n  ✔  Config backed up to ${backupDir}\n  Starting fresh...\n`));
+      } else if (configAction === 'modify') {
+        // Partial reconfigure — just run the wizard with existing values as defaults
+        console.log(chalk.gray('\n  Continuing with existing config as defaults...\n'));
+      }
+    }
+
     const proceed = await showSecurityDisclaimer();
     if (!proceed) return;
 
@@ -112,6 +171,7 @@ export class HyperClawWizard {
     const { hooks, heartbeat: heartbeatEnabled } = await this.configureSkillsAndHooks();
 
     this.stepHeader(7, STEPS, 'Extras');
+    const webSearch = await this.configureWebSearch(options.skipSearch);
     const memoryIntegration = await this.configureMemoryIntegration();
     const serviceApiKeys = await this.configureServiceApiKeys();
     const hyperclawbotConfig = await this.configureHyperClawBot(gatewayConfig);
@@ -136,7 +196,7 @@ export class HyperClawWizard {
 
     await this.saveAll({
       workspaceName, providerConfig, providers: allProviders, channelConfigs,
-      gatewayConfig, identity, hooks, heartbeatEnabled,
+      gatewayConfig, identity, hooks, heartbeatEnabled, webSearch,
       memoryIntegration, serviceApiKeys, hyperclawbotConfig, talkModeConfig,
       pcAccess, updateChannel, groupSandbox, rateLimit
     }, options);
@@ -185,18 +245,33 @@ export class HyperClawWizard {
 
     this.stepHeader(7, STEPS, 'Services & Daemon');
     let installDaemon = options.installDaemon ?? false;
+    let daemonRuntime: 'node' | 'bun' = options.daemonRuntime ?? 'node';
     if (!installDaemon) {
       console.log(chalk.gray('  The daemon runs the gateway as a background service that starts on boot.\n'));
-      const ans = await inquirer.prompt([{
-        type: 'confirm', name: 'installDaemon',
-        message: 'Install as system daemon (auto-start on boot)?', default: false
-      }]);
+      const ans = await inquirer.prompt([
+        {
+          type: 'confirm', name: 'installDaemon',
+          message: 'Install as system daemon (auto-start on boot)?', default: false
+        },
+        {
+          type: 'list', name: 'daemonRuntime',
+          message: 'Daemon runtime:',
+          default: 'node',
+          choices: [
+            { name: `Node.js  ${chalk.green('(recommended)')} — required for WhatsApp/Telegram`, value: 'node' },
+            { name: `Bun      ${chalk.gray('(faster startup, experimental)')}`, value: 'bun' },
+          ],
+          when: (answers: any) => answers.installDaemon
+        }
+      ]);
       installDaemon = ans.installDaemon;
+      if (ans.daemonRuntime) daemonRuntime = ans.daemonRuntime;
     } else {
-      console.log(chalk.green('  ✔ Daemon will be installed automatically (--install-daemon)\n'));
+      console.log(chalk.green(`  ✔ Daemon will be installed (runtime: ${daemonRuntime})\n`));
     }
 
     this.stepHeader(8, STEPS, 'Extras');
+    const webSearch = await this.configureWebSearch(options.skipSearch);
     const memoryIntegration = await this.configureMemoryIntegration();
     const serviceApiKeys = await this.configureServiceApiKeys();
     const hyperclawbotConfig = await this.configureHyperClawBot(gatewayConfig);
@@ -235,7 +310,7 @@ export class HyperClawWizard {
     await this.saveAll({
       workspaceName, providerConfig, providers: allProviders, channelConfigs,
       gatewayConfig: gatewayConfig ? { ...gatewayConfig, hooks: hooks.length > 0 } : null,
-      identity, hooks, heartbeatEnabled, installDaemon, hatchMode,
+      identity, hooks, heartbeatEnabled, installDaemon, daemonRuntime, hatchMode, webSearch,
       memoryIntegration, serviceApiKeys, hyperclawbotConfig, talkModeConfig,
       pcAccess, updateChannel, groupSandbox, rateLimit
     }, options);
@@ -276,7 +351,31 @@ export class HyperClawWizard {
       let baseUrl: string | undefined;
       let modelId = '';
 
-      if (provider.authType === 'api_key') {
+      if (pid === 'anthropic-oauth') {
+        // Try to auto-detect existing Claude credentials
+        const fs = await import('fs-extra');
+        const path = await import('path');
+        const os = await import('os');
+        const credPath = path.join(os.homedir(), '.claude', '.credentials.json');
+        const credExists = await fs.pathExists(credPath);
+        if (credExists) {
+          console.log(chalk.green(`  ✔ Found Claude credentials: ${credPath}`));
+          console.log(chalk.gray('    HyperClaw will reuse these credentials automatically.\n'));
+          apiKey = '__claude_oauth__'; // sentinel — gateway reads from .claude/.credentials.json
+        } else {
+          console.log(chalk.yellow(`  ⚠  ~/.claude/.credentials.json not found.\n`));
+          console.log(chalk.gray('  Run `claude` CLI on this machine first to authenticate,\n  or paste a setup-token (use "Anthropic setup-token" provider instead).\n'));
+          apiKey = '__claude_oauth__';
+        }
+      } else if (pid === 'anthropic-setup-token') {
+        console.log(chalk.gray('  Run `claude setup-token` on any machine → paste the token below.\n'));
+        const r = await inquirer.prompt([{
+          type: 'password', name: 'apiKey',
+          message: '  Setup token (sk-ant-setup-...):', mask: '●',
+          validate: (v: string) => v.trim().length > 10 || 'Required'
+        }]);
+        apiKey = r.apiKey.trim();
+      } else if (provider.authType === 'api_key') {
         if (pid === 'custom') {
           const r = await inquirer.prompt([
             { type: 'input', name: 'baseUrl', message: '  Base URL:', validate: (v: string) => v.trim().length > 5 || 'Required' },
@@ -594,6 +693,45 @@ export class HyperClawWizard {
     }
 
     return channelConfigs;
+  }
+
+  private async configureWebSearch(skip = false): Promise<{ provider: string; apiKey: string } | null> {
+    if (skip) return null;
+    const { wantSearch } = await inquirer.prompt([{
+      type: 'confirm', name: 'wantSearch',
+      message: 'Configure a web search provider for the agent?',
+      default: false
+    }]);
+    if (!wantSearch) return null;
+
+    const SEARCH_PROVIDERS = [
+      { id: 'tavily',     name: 'Tavily',       hint: 'app.tavily.com — best for agents',         prefix: 'tvly-' },
+      { id: 'perplexity', name: 'Perplexity',   hint: 'perplexity.ai/settings/api',               prefix: 'pplx-' },
+      { id: 'brave',      name: 'Brave Search', hint: 'api.search.brave.com',                     prefix: 'BSA' },
+      { id: 'gemini',     name: 'Gemini',        hint: 'aistudio.google.com/app/apikey',           prefix: 'AIza' },
+      { id: 'grok',       name: 'Grok/xAI',     hint: 'console.x.ai — same key as xAI provider', prefix: 'xai-' },
+      { id: 'kimi',       name: 'Kimi (Moonshot)', hint: 'platform.moonshot.cn/user-center/api-keys', prefix: 'sk-' },
+    ];
+
+    const { searchProvider } = await inquirer.prompt([{
+      type: 'list', name: 'searchProvider',
+      message: 'Select web search provider:',
+      choices: SEARCH_PROVIDERS.map(p => ({
+        name: `${p.name.padEnd(14)} ${chalk.gray(p.hint)}`,
+        value: p.id
+      }))
+    }]);
+
+    const chosen = SEARCH_PROVIDERS.find(p => p.id === searchProvider)!;
+    const { searchKey } = await inquirer.prompt([{
+      type: 'password', name: 'searchKey',
+      message: `${chosen.name} API key (starts with ${chalk.gray(chosen.prefix)}):`,
+      mask: '●',
+      validate: (v: string) => v.trim().length > 4 || 'Required'
+    }]);
+
+    console.log(chalk.green(`  ✔  Web search: ${chosen.name}`));
+    return { provider: searchProvider, apiKey: searchKey.trim() };
   }
 
   private async configureServiceApiKeys(): Promise<Record<string, string>> {
@@ -1552,6 +1690,7 @@ export class HyperClawWizard {
       },
       updateChannel: data.updateChannel || 'stable',
       groupSandbox: data.groupSandbox,
+      ...(data.webSearch ? { webSearch: data.webSearch } : {}),
       ...(data.rateLimit ? { rateLimit: data.rateLimit } : {}),
       hatchMode: data.hatchMode || 'tui',
       installedAt: new Date().toISOString()
@@ -1574,9 +1713,10 @@ export class HyperClawWizard {
     await this.testConnections(data.channelConfigs || {});
 
     if (data.installDaemon || options.daemon || options.installDaemon) {
-      const s = ora('🩸 Installing system daemon...').start();
+      const runtime = options.daemonRuntime ?? data.daemonRuntime ?? 'node';
+      const s = ora(`🩸 Installing system daemon (runtime: ${runtime})...`).start();
       await this.daemon.install();
-      s.succeed(chalk.red('🩸 System daemon installed (starts on boot)'));
+      s.succeed(chalk.red(`🩸 System daemon installed (runtime: ${runtime}, starts on boot)`));
     }
 
     if (data.gatewayConfig?.tailscaleExposure && data.gatewayConfig.tailscaleExposure !== 'off') {
@@ -1589,12 +1729,50 @@ export class HyperClawWizard {
       s.succeed(`Gateway running at ws://localhost:${data.gatewayConfig.port}`);
     }
 
-    // Auto-run doctor to surface any misconfigs right after setup
+    // ── Health check step (like OpenClaw) ────────────────────────────────────
     console.log(chalk.gray('\n  Running health check...\n'));
+    const healthResults: Record<string, string> = {};
     try {
       const { runDoctor } = await import('../commands/doctor');
-      await runDoctor(true); // auto-fix fixable issues
-    } catch { /* non-fatal */ }
+      await runDoctor(true);
+      healthResults.doctor = 'ok';
+    } catch { healthResults.doctor = 'failed'; }
+
+    // Test gateway reachability if running
+    if (data.gatewayConfig && (options.startNow || data.installDaemon)) {
+      try {
+        const http = await import('http');
+        const port = data.gatewayConfig.port || 18789;
+        const reachable = await new Promise<boolean>(resolve => {
+          const req = http.get(`http://127.0.0.1:${port}/api/status`, () => resolve(true));
+          req.on('error', () => resolve(false));
+          req.setTimeout(3000, () => { req.destroy(); resolve(false); });
+        });
+        healthResults.gateway = reachable ? 'reachable' : 'unreachable';
+        if (reachable) console.log(chalk.green(`  ✔  Gateway reachable at port ${port}`));
+        else console.log(chalk.yellow(`  ⚠  Gateway not yet reachable at port ${port} — it may still be starting`));
+      } catch { healthResults.gateway = 'error'; }
+    }
+
+    // ── JSON output (--json flag) ─────────────────────────────────────────────
+    if (options.jsonOutput) {
+      const result = {
+        ok: true,
+        version: '4.0.2',
+        provider: data.providerConfig?.providerId,
+        model: data.providerConfig?.modelId,
+        gateway: data.gatewayConfig ? {
+          port: data.gatewayConfig.port,
+          bind: data.gatewayConfig.bind,
+        } : null,
+        channels: Object.keys(data.channelConfigs || {}),
+        hooks: data.hooks || [],
+        daemonInstalled: !!(data.installDaemon || options.installDaemon),
+        health: healthResults,
+      };
+      process.stdout.write(JSON.stringify(result, null, 2) + '\n');
+      return;
+    }
 
     this.showSuccessScreen(data);
   }
