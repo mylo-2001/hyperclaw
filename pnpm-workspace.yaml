@@ -1,0 +1,5 @@
+# pnpm workspace (alternative to npm workspaces)
+packages:
+  - 'apps/*'
+  - 'packages/*'
+  - 'extensions/*'

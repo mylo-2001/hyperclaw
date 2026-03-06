@@ -1,0 +1,28 @@
+---
+title: Troubleshooting
+description: Common issues and fixes.
+---
+
+## Gateway unreachable
+
+- Ensure `hyperclaw daemon start` is running
+- Check port 18789 is not blocked
+- Run `hyperclaw doctor --fix`
+
+## No API key
+
+```bash
+hyperclaw config set-key
+```
+
+Or set `ANTHROPIC_API_KEY` / `OPENROUTER_API_KEY` in env.
+
+## Channel not receiving messages
+
+- Verify channel webhook URL and credentials
+- Check gateway token in config
+- Run `hyperclaw doctor` for policy issues
+
+## Token / cost tracking
+
+Costs are recorded per session. View via `/api/costs` or the Web Dashboard.

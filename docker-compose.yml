@@ -1,0 +1,64 @@
+# HyperClaw — multi-image stack
+# Usage:
+#   docker-compose up -d gateway     # production gateway
+#   docker-compose up -d sandbox     # sandboxed agent (no PC tools)
+#   docker-compose up -d             # full stack (gateway + sandbox)
+
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: hyperclaw:gateway
+    ports:
+      - "18789:18789"
+    volumes:
+      - hyperclaw-data:/root/.hyperclaw
+    environment:
+      - NODE_ENV=production
+      - HYPERCLAW_PORT=18789
+      - HYPERCLAW_BIND=0.0.0.0
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:18789/api/status"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  sandbox:
+    build:
+      context: .
+      dockerfile: Dockerfile.sandbox
+    image: hyperclaw:sandbox
+    profiles:
+      - sandbox
+    volumes:
+      - hyperclaw-data:/root/.hyperclaw
+    environment:
+      - NODE_ENV=production
+      - HYPERCLAW_SANDBOX=1
+      - HYPERCLAW_PORT=18789
+      - HYPERCLAW_BIND=0.0.0.0
+    restart: unless-stopped
+
+  # Optional: gateway with Puppeteer (Chromium) for browser tools
+  gateway-browser:
+    build:
+      context: .
+      dockerfile: Dockerfile.browser
+    image: hyperclaw:gateway-browser
+    profiles:
+      - browser
+    ports:
+      - "18790:18789"
+    volumes:
+      - hyperclaw-data:/root/.hyperclaw
+    environment:
+      - NODE_ENV=production
+      - HYPERCLAW_PORT=18789
+      - HYPERCLAW_BIND=0.0.0.0
+    restart: unless-stopped
+
+volumes:
+  hyperclaw-data:

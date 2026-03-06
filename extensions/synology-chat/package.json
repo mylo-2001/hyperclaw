@@ -1,0 +1,7 @@
+{
+  "name": "@hyperclaw/extension-synology-chat",
+  "version": "1.0.0",
+  "description": "HyperClaw extension: Synology Chat channel support",
+  "main": "index.ts",
+  "license": "MIT"
+}

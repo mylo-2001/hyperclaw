@@ -1,0 +1,7 @@
+{
+  "name": "@hyperclaw/extension-imessage",
+  "version": "1.0.0",
+  "description": "HyperClaw extension: iMessage via BlueBubbles (re-export bridge)",
+  "main": "src/connector.ts",
+  "license": "MIT"
+}

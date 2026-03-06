@@ -1,0 +1,7 @@
+{
+  "name": "@hyperclaw/extension-nostr",
+  "version": "1.0.0",
+  "description": "HyperClaw extension: nostr channel support",
+  "main": "index.ts",
+  "license": "MIT"
+}

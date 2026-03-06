@@ -1,0 +1,32 @@
+---
+title: Architecture
+description: Gateway, components, and data flow.
+---
+
+## High-level
+
+```
+CLI (hyperclaw) → Gateway (Node, port 18789) → Inference | Channels | Extensions
+```
+
+- **Gateway**: HTTP + WebSocket, sessions, auth, routing
+- **Inference**: Anthropic, OpenRouter, Ollama — tool loop, streaming
+- **Channels**: Telegram, Discord, Slack, webhooks
+- **Extensions**: Skills, MCP, connectors
+
+## Components
+
+| Component | Path | Role |
+|-----------|------|------|
+| CLI | src/cli/ | init, run, doctor, daemon |
+| Gateway | packages/gateway/ | server.ts, manager.ts |
+| Agent | packages/core/src/agent/ | engine, inference, tools |
+| Channels | src/channels/ | Telegram, Discord runners |
+
+## Data Flow
+
+1. User sends message (CLI, WebSocket, webhook)
+2. Gateway routes to `callAgent`
+3. Engine loads context (SOUL, MEMORY, skills), resolves tools
+4. Inference calls LLM, executes tools in a loop
+5. Response streamed back, cost tracked per session

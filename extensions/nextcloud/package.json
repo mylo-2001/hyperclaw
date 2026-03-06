@@ -1,0 +1,7 @@
+{
+  "name": "@hyperclaw/extension-nextcloud",
+  "version": "1.0.0",
+  "description": "HyperClaw extension: Nextcloud Talk channel support",
+  "main": "index.ts",
+  "license": "MIT"
+}

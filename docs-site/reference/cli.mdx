@@ -1,0 +1,42 @@
+---
+title: CLI Reference
+description: All hyperclaw commands.
+---
+
+## Core Commands
+
+| Command | Description |
+|---------|-------------|
+| `hyperclaw init` | Setup wizard — config, API keys, gateway token |
+| `hyperclaw run <message>` | Run agent once with a prompt |
+| `hyperclaw doctor` | Health check — misconfigs, risky DM policies |
+| `hyperclaw doctor --fix` | Auto-repair fixable issues |
+
+## Daemon & Gateway
+
+| Command | Description |
+|---------|-------------|
+| `hyperclaw daemon start` | Start gateway + channels |
+| `hyperclaw daemon stop` | Stop the daemon |
+| `hyperclaw daemon restart` | Restart daemon |
+| `hyperclaw gateway status` | Show gateway status |
+| `hyperclaw gateway config` | Configure bind, Tailscale, token |
+
+## Cloud & Developer Keys
+
+| Command | Description |
+|---------|-------------|
+| `hyperclaw deploy --platform fly` | Deploy gateway to Fly.io |
+| `hyperclaw deploy --platform render` | Show Render deploy instructions |
+| `hyperclaw developer-key create` | Create API key for embed/third-party apps |
+| `hyperclaw developer-key list` | List developer keys |
+| `hyperclaw developer-key revoke <id>` | Revoke a key |
+
+## Other
+
+| Command | Description |
+|---------|-------------|
+| `hyperclaw config set-key` | Set provider API key |
+| `hyperclaw channels list` | List enabled channels |
+| `hyperclaw hub` | Browse and install skills |
+| `hyperclaw memory show` | View MEMORY.md |

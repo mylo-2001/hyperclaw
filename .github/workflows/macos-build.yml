@@ -1,0 +1,42 @@
+name: macOS App Build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/macos/**'
+      - '.github/workflows/macos-build.yml'
+  pull_request:
+    paths:
+      - 'apps/macos/**'
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run macos:test
+
+  build:
+    needs: test
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run macos:build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hyperclaw-macos
+          path: |
+            apps/macos/dist/*.dmg
+            apps/macos/dist/*.zip
+            apps/macos/dist/mac/

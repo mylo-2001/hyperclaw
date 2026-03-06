@@ -1,0 +1,13 @@
+{
+  "name": "@hyperclaw/irc",
+  "version": "4.0.0",
+  "private": true,
+  "main": "src/connector.ts",
+  "dependencies": {
+    "irc": "^0.5.2",
+    "chalk": "^5.3.0"
+  },
+  "devDependencies": {
+    "@types/irc": "^0.5.4"
+  }
+}

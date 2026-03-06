@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HyperClaw Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body{background:#0f172a;color:#e2e8f0;font-family:system-ui}</style>
+</head>
+<body class="min-h-screen p-8">
+  <h1 class="text-2xl font-bold text-cyan-400 mb-6">🦅 HyperClaw Dashboard</h1>
+  <div id="content" class="grid gap-4 md:grid-cols-2 max-w-4xl">
+    <div class="bg-slate-800 rounded-lg p-4">
+      <h2 class="text-lg font-semibold text-cyan-300 mb-2">Gateway</h2>
+      <pre id="status" class="text-sm text-slate-300 overflow-auto">Loading...</pre>
+    </div>
+    <div class="bg-slate-800 rounded-lg p-4">
+      <h2 class="text-lg font-semibold text-cyan-300 mb-2">Quick links</h2>
+      <ul class="space-y-2 text-cyan-400">
+        <li><a href="/chat" class="hover:underline">/chat</a> — Web chat</li>
+        <li><a href="/api/status" class="hover:underline">/api/status</a> — API status</li>
+      </ul>
+    </div>
+  </div>
+  <script>
+    const port = location.port || 18789;
+    const apiUrl = `http://${location.hostname}:${port}`;
+    fetch(apiUrl + '/api/status').then(r => r.json()).then(d => {
+      document.getElementById('status').textContent = JSON.stringify(d, null, 2);
+    }).catch(() => document.getElementById('status').textContent = 'Gateway unreachable');
+  </script>
+</body>
+</html>

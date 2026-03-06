@@ -1,0 +1,4 @@
+# Apps no longer maintained — excluded from active development
+# Used by CI/docs to avoid treating these as production paths.
+
+apps/macos-menubar

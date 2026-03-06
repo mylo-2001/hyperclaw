@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connect — HyperClaw</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', sans-serif; background: #0a0f1a; color: #e2e8f0; min-width: 360px; }
+    h1 { font-size: 18px; font-weight: 600; margin: 0 0 20px; color: #06b6d4; }
+    label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px; }
+    input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: #fff; font-size: 14px; margin-bottom: 16px; }
+    input:focus { outline: none; border-color: #06b6d4; }
+    input[type="password"] { font-family: monospace; }
+    button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; background: #06b6d4; color: #0a0f1a; }
+    button:hover { background: #22d3ee; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #status { font-size: 12px; color: #94a3b8; margin-top: 12px; min-height: 20px; }
+    #status.ok { color: #10b981; }
+    #status.err { color: #ef4444; }
+    .hint { font-size: 11px; color: #64748b; margin-top: -8px; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <h1>Connect to Gateway</h1>
+  <label>Gateway URL</label>
+  <input type="text" id="url" placeholder="http://localhost:18789">
+  <p class="hint">Run: hyperclaw daemon start</p>
+  <label>Auth Token (optional)</label>
+  <input type="password" id="token" placeholder="Leave empty if no token set">
+  <p class="hint">Get via: hyperclaw gateway config</p>
+  <button id="connect">Connect</button>
+  <div id="status"></div>
+  <script>
+    const urlEl = document.getElementById('url');
+    const tokenEl = document.getElementById('token');
+    const btn = document.getElementById('connect');
+    const status = document.getElementById('status');
+
+    (async () => {
+      const u = await window.hyperclaw.store.get('gatewayUrl');
+      const t = await window.hyperclaw.store.get('authToken');
+      if (u) urlEl.value = u;
+      if (t) tokenEl.value = t;
+    })();
+
+    btn.onclick = async () => {
+      const baseUrl = (urlEl.value.trim() || 'http://localhost:18789').replace(/\/$/, '');
+      const token = tokenEl.value.trim();
+      btn.disabled = true;
+      status.textContent = 'Connecting…';
+      status.className = '';
+      const result = await window.hyperclaw.connect.test(baseUrl, token);
+      if (result.ok) {
+        await window.hyperclaw.store.set('gatewayUrl', baseUrl);
+        await window.hyperclaw.store.set('authToken', token);
+        window.hyperclaw.connect.reconnect();
+        status.textContent = result.msg || 'Connected';
+        status.className = 'ok';
+      } else {
+        status.textContent = result.msg || 'Failed';
+        status.className = 'err';
+      }
+      btn.disabled = false;
+    };
+    window.connectSetStatus = (ok, msg) => {
+      status.className = ok ? 'ok' : 'err';
+      status.textContent = msg;
+      btn.disabled = false;
+    };
+  </script>
+</body>
+</html>

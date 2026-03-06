@@ -1,0 +1,29 @@
+---
+title: Security
+description: DM policies, elevation, audit.
+---
+
+## DM Policy
+
+- `dmPolicy: "allowlist"` — only allowFrom sources
+- `dmPolicy: "blocklist"` — block blockFrom sources
+- Empty allowlist with allowlist mode is an error — run `hyperclaw doctor`
+
+## Elevation
+
+Elevated mode enables destructive tools (shell, file write). Config:
+
+```json
+{
+  "tools": {
+    "elevated": {
+      "enabled": true,
+      "allowFrom": ["cli", "web"]
+    }
+  }
+}
+```
+
+## Audit
+
+PC access actions logged to `~/.hyperclaw/logs/pc-access.log`.

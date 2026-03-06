@@ -1,0 +1,7 @@
+{
+  "name": "@hyperclaw/extension-matrix",
+  "version": "1.0.0",
+  "description": "HyperClaw extension: matrix channel support",
+  "main": "index.ts",
+  "license": "MIT"
+}

@@ -1,0 +1,36 @@
+---
+title: Gateway
+description: WebSocket control plane, sessions, presence.
+---
+
+The Gateway runs on port 18789 (configurable) and handles:
+
+- **Sessions** — WebSocket connections, auth, presence
+- **HTTP API** — /api/status, /api/chat, /api/costs, /api/traces
+- **Webhooks** — /webhook/:channel for inbound events
+- **Channel runners** — Telegram, Discord, etc. connect via the gateway
+
+## Start
+
+```bash
+hyperclaw daemon start
+```
+
+Or programmatically: `startGateway()` from `@hyperclaw/gateway`.
+
+## Auth
+
+Set `gateway.authToken` in config. Clients send:
+
+```
+Authorization: Bearer <token>
+```
+
+## Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| /api/status | GET | Gateway status |
+| /api/chat | POST | Send message, get response |
+| /api/costs | GET | Token/cost summary |
+| /api/traces | GET | Run traces (if enabled) |

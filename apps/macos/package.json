@@ -1,0 +1,52 @@
+{
+  "name": "@hyperclaw/macos",
+  "version": "4.0.0",
+  "description": "HyperClaw menu bar app — production macOS helper",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build:mac": "electron-builder --mac",
+    "pack": "electron-builder --dir",
+    "test": "vitest run --config vitest.config.js",
+    "appcast": "node scripts/generate-appcast.js"
+  },
+  "build": {
+    "appId": "ai.hyperclaw.macos",
+    "productName": "HyperClaw",
+    "extends": null,
+    "mac": {
+      "category": "public.app-category.utilities",
+      "icon": "icons/icon.icns",
+      "target": ["dmg", "zip"],
+      "extendInfo": {
+        "LSUIElement": true,
+        "NSMicrophoneUsageDescription": "HyperClaw uses the microphone for Voice PTT."
+      },
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.inherit.plist"
+    },
+    "dmg": {
+      "title": "HyperClaw ${version}"
+    },
+    "publish": {
+      "provider": "github",
+      "releaseType": "release",
+      "vPrefixedTagName": true
+    }
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.2.0",
+    "node-notifier": "^10.0.1",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "vitest": "^1.6.0"
+  }
+}

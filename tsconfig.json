@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "baseUrl": ".",
+    "paths": {
+      "hyperclaw/core": ["./packages/core/src/index.ts"],
+      "hyperclaw/gateway": ["./packages/gateway/src/index.ts"],
+      "@hyperclaw/shared": ["./packages/shared/src/index.ts"]
+    },
+    "module": "commonjs",
+    "lib": ["ES2020", "DOM"],
+    "outDir": "./dist",
+    "rootDir": ".",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "noImplicitAny": false
+  },
+  "include": ["src/**/*", "extensions/**/*.ts", "packages/**/src/**/*"],
+  "exclude": ["node_modules", "dist", "apps"]
+}

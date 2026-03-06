@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HyperClaw Chat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    body{background:#0f172a;color:#e2e8f0;font-family:system-ui}
+    .msg-user{background:linear-gradient(135deg,#0891b2 0%,#06b6d4 100%)}
+    .msg-asst{background:#1e293b;border:1px solid #334155}
+    .typing span{animation:dot 1.4s infinite}
+    .typing span:nth-child(2){animation-delay:.2s}
+    .typing span:nth-child(3){animation-delay:.4s}
+    @keyframes dot{0%,80%,100%{opacity:.3}40%{opacity:1}}
+    .prose pre{background:#0f172a;padding:.75rem;border-radius:6px;overflow-x:auto}
+    .prose code{background:#1e293b;padding:.1em .3em;border-radius:4px;font-size:.9em}
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+  <header class="p-4 border-b border-slate-700 flex items-center justify-between flex-wrap gap-2">
+    <div class="flex items-center gap-3">
+      <span class="text-2xl">🦅</span>
+      <div>
+        <h1 class="text-xl font-bold text-cyan-400">HyperClaw Chat</h1>
+        <p id="status" class="text-sm text-slate-400">Connecting...</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 text-sm">
+      <span id="ws-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+      <span id="ws-status">WebSocket</span>
+      <span id="agent-info" class="text-slate-500"></span>
+    </div>
+  </header>
+  <main class="flex-1 overflow-y-auto p-4 space-y-4" id="messages"></main>
+  <footer class="p-4 border-t border-slate-700">
+    <form id="form" class="flex gap-2 items-end">
+      <div class="flex-1">
+        <textarea id="input" rows="1" placeholder="Message HyperClaw..." 
+          class="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+          style="min-height:48px;max-height:120px" autocomplete="off"></textarea>
+      </div>
+      <button type="submit" id="send-btn" class="bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 px-5 py-3 rounded-xl font-medium h-12">
+        ↑
+      </button>
+    </form>
+  </footer>
+  <script>
+    const port = location.port || 18789;
+    const wsUrl = `ws://${location.hostname}:${port}`;
+    const apiUrl = `http://${location.hostname}:${port}`;
+    const messagesEl = document.getElementById('messages');
+    const statusEl = document.getElementById('status');
+    const wsDot = document.getElementById('ws-dot');
+    const wsStatus = document.getElementById('ws-status');
+    const agentInfo = document.getElementById('agent-info');
+    const form = document.getElementById('form');
+    const input = document.getElementById('input');
+    const sendBtn = document.getElementById('send-btn');
+
+    let ws = null;
+    let isStreaming = false;
+
+    function setWsConnected(ok) {
+      wsDot.className = 'w-2 h-2 rounded-full ' + (ok ? 'bg-cyan-400 animate-pulse' : 'bg-red-500');
+      wsStatus.textContent = ok ? 'Connected' : 'Disconnected';
+    }
+
+    function addMsg(role, content, streaming = false) {
+      const div = document.createElement('div');
+      div.className = 'flex gap-3 ' + (role === 'user' ? 'flex-row-reverse' : '');
+      const bubble = document.createElement('div');
+      bubble.className = 'max-w-[85%] rounded-2xl px-4 py-3 ' + (role === 'user' ? 'msg-user text-slate-900' : 'msg-asst');
+      if (role === 'assistant' && !streaming) {
+        bubble.innerHTML = '<div class="prose prose-invert prose-sm max-w-none">' + marked.parse(content || '') + '</div>';
+      } else {
+        bubble.textContent = content || '';
+      }
+      if (role === 'assistant') {
+        const icon = document.createElement('div');
+        icon.className = 'w-8 h-8 rounded-full bg-cyan-900/30 flex items-center justify-center flex-shrink-0';
+        icon.textContent = '🦅';
+        div.appendChild(icon);
+      }
+      div.appendChild(bubble);
+      div.dataset.streaming = streaming ? '1' : '0';
+      messagesEl.appendChild(div);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      return bubble;
+    }
+
+    function addTyping() {
+      const div = document.createElement('div');
+      div.className = 'flex gap-3';
+      div.id = 'typing-indicator';
+      div.innerHTML = '<div class="w-8 h-8 rounded-full bg-cyan-900/30 flex items-center justify-center">🦅</div><div class="msg-asst rounded-2xl px-4 py-3"><span class="typing"><span>.</span><span>.</span><span>.</span></span></div>';
+      messagesEl.appendChild(div);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function removeTyping() {
+      document.getElementById('typing-indicator')?.remove();
+    }
+
+    function connectWs() {
+      ws = new WebSocket(wsUrl);
+      ws.onopen = () => {
+        setWsConnected(true);
+        statusEl.textContent = 'Connected';
+      };
+      ws.onclose = () => {
+        setWsConnected(false);
+        statusEl.textContent = 'Disconnected — reconnecting…';
+        setTimeout(connectWs, 3000);
+      };
+      ws.onerror = () => setWsConnected(false);
+      ws.onmessage = (e) => {
+        try {
+          const msg = JSON.parse(e.data);
+          if (msg.type === 'connect.ok' || msg.type === 'auth.ok') {
+            statusEl.textContent = 'Ready';
+          } else if (msg.type === 'chat:chunk') {
+            const last = messagesEl.querySelector('[data-streaming="1"]');
+            if (last) {
+              last.textContent = (last.textContent || '') + (msg.content || '');
+            } else {
+              removeTyping();
+              const bubble = addMsg('assistant', msg.content || '', true);
+              bubble.dataset.streaming = '1';
+            }
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+          } else if (msg.type === 'chat:response') {
+            removeTyping();
+            const last = messagesEl.querySelector('[data-streaming="1"]');
+            if (last) {
+              last.dataset.streaming = '0';
+              last.innerHTML = '<div class="prose prose-invert prose-sm max-w-none">' + marked.parse(last.textContent || msg.content || '') + '</div>';
+            } else {
+              addMsg('assistant', msg.content || '');
+            }
+            isStreaming = false;
+            sendBtn.disabled = false;
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+          } else if (msg.type === 'error') {
+            removeTyping();
+            addMsg('assistant', 'Error: ' + (msg.message || 'Unknown'));
+            isStreaming = false;
+            sendBtn.disabled = false;
+          }
+        } catch (_) {}
+      };
+    }
+
+    function sendViaWs(text) {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return false;
+      ws.send(JSON.stringify({ type: 'chat:message', content: text, source: 'webchat' }));
+      return true;
+    }
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const msg = input.value.trim();
+      if (!msg || isStreaming) return;
+      addMsg('user', msg);
+      input.value = '';
+      input.style.height = 'auto';
+      sendBtn.disabled = true;
+      isStreaming = true;
+      addTyping();
+
+      if (sendViaWs(msg)) {
+        // WebSocket handles response
+      } else {
+        // Fallback to REST
+        removeTyping();
+        statusEl.textContent = 'Thinking...';
+        try {
+          const res = await fetch(apiUrl + '/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: msg })
+          });
+          const data = await res.json();
+          addMsg('assistant', data.response || data.error || '(no response)');
+          statusEl.textContent = 'Ready';
+        } catch (err) {
+          addMsg('assistant', 'Error: ' + err.message);
+          statusEl.textContent = 'Error';
+        }
+        isStreaming = false;
+        sendBtn.disabled = false;
+      }
+    };
+
+    input.addEventListener('input', () => {
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        form.dispatchEvent(new Event('submit'));
+      }
+    });
+
+    connectWs();
+    fetch(apiUrl + '/api/status').then(r => r.json()).then(d => {
+      agentInfo.textContent = d.agentName ? `${d.agentName} • ${d.model || ''}` : '';
+    }).catch(() => {});
+  </script>
+</body>
+</html>

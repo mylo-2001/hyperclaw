@@ -1,0 +1,7 @@
+{
+  "name": "@hyperclaw/extension-imessage-native",
+  "version": "1.0.0",
+  "description": "HyperClaw iMessage via imsg CLI (macOS native, no BlueBubbles)",
+  "main": "index.ts",
+  "license": "MIT"
+}

@@ -1,0 +1,10 @@
+{
+  "name": "@hyperclaw/extension-whatsapp-baileys",
+  "version": "1.0.0",
+  "description": "HyperClaw: WhatsApp via Baileys (WhatsApp Web)",
+  "main": "src/connector.ts",
+  "license": "MIT",
+  "optionalDependencies": {
+    "@whiskeysockets/baileys": "^7.0.0"
+  }
+}

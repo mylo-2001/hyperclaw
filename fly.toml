@@ -1,0 +1,25 @@
+# Fly.io — HyperClaw deployment
+# fly launch (first time), fly deploy (updates)
+# Fly sets PORT=8080; gateway reads process.env.PORT (see startGateway)
+# Local default: 18789 
+
+app = "hyperclaw"
+
+[build]
+
+[env]
+  NODE_ENV = "production"
+  HYPERCLAW_BIND = "0.0.0.0"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1

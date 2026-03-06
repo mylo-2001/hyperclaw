@@ -1,0 +1,7 @@
+{
+  "name": "@hyperclaw/extension-feishu",
+  "version": "1.0.0",
+  "description": "HyperClaw extension: feishu channel support",
+  "main": "index.ts",
+  "license": "MIT"
+}

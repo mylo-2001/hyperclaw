@@ -1,0 +1,7 @@
+{
+  "name": "@hyperclaw/extension-mattermost",
+  "version": "1.0.0",
+  "description": "HyperClaw extension: Mattermost channel support",
+  "main": "index.ts",
+  "license": "MIT"
+}

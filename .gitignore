@@ -1,0 +1,73 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+credentials/*.json
+credentials/*.key
+!credentials/.gitkeep
+
+# HyperClaw runtime
+.hyperclaw/
+*.pid
+*.log
+logs/
+
+# IDE & OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Test & coverage
+coverage/
+.nyc_output/
+*.lcov
+
+# Optional deps (extensions may install separately)
+apps/*/node_modules/
+
+# Tauri / native
+apps/macos-menubar/src-tauri/target/
+apps/*/src-tauri/target/
+
+# Android
+*.apk
+*.aab
+apps/android/.gradle/
+apps/android/app/build/
+apps/android/build/
+local.properties
+
+# iOS
+apps/ios/Pods/
+apps/ios/build/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+
+# Internal docs (not for public repo)
+docs/FULL-ACCESS-CHECKLIST.md
+docs/OPENCLAW-PARITY-STATUS.md
+READMEbuilt.md
+AGENTS.md
+
+# Workspace templates (personal / runtime-generated)
+workspace-templates/USER.md
+workspace-templates/HEARTBEAT.md
+
+# Changelog (template placeholder)
+changelog/fragments/sample.md
+
+# Portable Node.js runtime (binary artifacts, not for repo)
+node-portable/

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  HyperClaw appcast.xml — Sparkle-compatible auto-update feed.
+  The macOS app checks this URL on launch to detect new versions.
+
+  Configure in tauri.conf.json / electron-builder.yml:
+    updater.endpoints: ["https://your-domain.com/appcast.xml"]
+
+  To sign an update (required for Sparkle 2):
+    sign_update <path-to-dmg> --ed-key <private-key>
+    → outputs the sparkle:edSignature value below.
+
+  Fields:
+    version          = semver (shown to user)
+    shortVersionString = display string
+    url              = direct download URL for the .dmg or .zip
+    sparkle:edSignature = Ed25519 signature from sign_update tool
+    length           = byte size of the download
+-->
+<rss version="2.0"
+     xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"
+     xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>HyperClaw</title>
+    <link>https://hyperclaw.ai/appcast.xml</link>
+    <description>HyperClaw macOS app releases</description>
+    <language>en</language>
+
+    <!-- ── Stable channel ──────────────────────────────────────────────────── -->
+
+    <item>
+      <title>HyperClaw 4.0.0</title>
+      <pubDate>Thu, 06 Mar 2026 00:00:00 +0000</pubDate>
+      <sparkle:channel>stable</sparkle:channel>
+      <sparkle:version>4.0.0</sparkle:version>
+      <sparkle:shortVersionString>4.0.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <h2>HyperClaw v4.0.0</h2>
+        <ul>
+          <li>Initial v4 release — 27 channels, multi-agent routing</li>
+          <li>Voice Wake + Talk Mode overlay on iOS/macOS</li>
+          <li>iOS node depth: contacts, calendar, motion</li>
+          <li>Skill sandbox isolation + ClawHub registry</li>
+          <li>macOS menu bar app (Tauri) with gateway control</li>
+        </ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/your-org/hyperclaw/releases/download/v4.0.0/HyperClaw-4.0.0.dmg"
+        sparkle:version="4.0.0"
+        sparkle:shortVersionString="4.0.0"
+        sparkle:edSignature="REPLACE_WITH_ED25519_SIGNATURE"
+        type="application/octet-stream"
+        length="0"
+      />
+    </item>
+
+    <!-- ── Beta channel ────────────────────────────────────────────────────── -->
+    <!--
+    <item>
+      <title>HyperClaw 4.1.0-beta.1</title>
+      <pubDate>Thu, 06 Mar 2026 12:00:00 +0000</pubDate>
+      <sparkle:channel>beta</sparkle:channel>
+      <sparkle:version>4.1.0-beta.1</sparkle:version>
+      <sparkle:shortVersionString>4.1.0 beta 1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <h2>HyperClaw 4.1.0 beta 1</h2>
+        <ul>
+          <li>Beta: skill sandbox isolation (Docker per-skill)</li>
+          <li>Beta: Talk Mode continuous voice improvements</li>
+        </ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/your-org/hyperclaw/releases/download/v4.1.0-beta.1/HyperClaw-4.1.0-beta.1.dmg"
+        sparkle:version="4100010"
+        sparkle:shortVersionString="4.1.0 beta 1"
+        sparkle:edSignature="REPLACE_WITH_ED25519_SIGNATURE"
+        type="application/octet-stream"
+        length="0"
+      />
+    </item>
+    -->
+
+  </channel>
+</rss>

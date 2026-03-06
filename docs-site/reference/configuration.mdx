@@ -1,0 +1,38 @@
+---
+title: Configuration Reference
+description: Full config schema.
+---
+
+## Schema
+
+```json
+{
+  "provider": {
+    "providerId": "anthropic | openrouter | local | ollama | custom",
+    "modelId": "string",
+    "apiKey": "string or $ENV_VAR",
+    "baseUrl": "string (for custom/ollama)"
+  },
+  "gateway": {
+    "port": 18789,
+    "authToken": "string",
+    "tailscale": { "enabled": false, "hostname": "" }
+  },
+  "channels": [],
+  "tools": {
+    "profile": "full | messaging | coding | minimal",
+    "allow": [],
+    "deny": []
+  },
+  "observability": {
+    "traces": false
+  }
+}
+```
+
+## Environment Variables
+
+- `ANTHROPIC_API_KEY` — Anthropic API key
+- `OPENROUTER_API_KEY` — OpenRouter API key
+- `HYPERCLAW_GATEWAY_TOKEN` — Gateway auth token
+- `HYPERCLAW_HOME` — Override config directory (default `~/.hyperclaw`)

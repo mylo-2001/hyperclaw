@@ -1,0 +1,23 @@
+---
+title: Deployment
+description: Docker, Fly.io, Render.
+---
+
+## Docker
+
+Build and run the gateway in a container. Ensure:
+
+- Volume for `~/.hyperclaw`
+- Env vars: `ANTHROPIC_API_KEY`, `HYPERCLAW_GATEWAY_TOKEN`
+- Expose port 18789
+
+## Fly.io / Render
+
+Deploy the Node app. Set secrets for API keys and gateway token. Use `hyperclaw daemon start` as the start command.
+
+## Managed Hosting
+
+Cloud deploy and developer API keys are available. See [docs/managed-hosting.md](../../docs/managed-hosting.md):
+
+- **Cloud deploy**: `hyperclaw deploy --platform fly` or Render
+- **Developer keys**: `hyperclaw developer-key create` for embed-in-any-app

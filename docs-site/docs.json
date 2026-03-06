@@ -1,0 +1,61 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "HyperClaw",
+  "logo": {
+    "dark": "/logo/dark.svg",
+    "light": "/logo/light.svg"
+  },
+  "favicon": "/favicon.ico",
+  "colors": {
+    "primary": "#dc2626",
+    "light": "#ef4444",
+    "dark": "#991b1b"
+  },
+  "topbarLinks": [
+    {
+      "name": "GitHub",
+      "url": "https://github.com/hyperclaw/hyperclaw"
+    }
+  ],
+  "anchors": [
+    { "name": "GitHub", "icon": "github", "url": "https://github.com/hyperclaw/hyperclaw" }
+  ],
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": [
+        "intro",
+        "guides/quickstart",
+        "guides/configuration"
+      ]
+    },
+    {
+      "group": "Features",
+      "pages": [
+        "guides/architecture",
+        "guides/gateway",
+        "guides/memory-integration",
+        "guides/security"
+      ]
+    },
+    {
+      "group": "Platforms",
+      "pages": [
+        "guides/mobile-desktop-apps",
+        "guides/deployment",
+        "guides/troubleshooting"
+      ]
+    },
+    {
+      "group": "Reference",
+      "pages": [
+        "reference/cli",
+        "reference/api",
+        "reference/configuration"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "github": "https://github.com/hyperclaw/hyperclaw"
+  }
+}

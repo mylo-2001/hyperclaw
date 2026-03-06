@@ -1,0 +1,9 @@
+{
+  "name": "@hyperclaw/google-chat",
+  "version": "4.0.0",
+  "private": true,
+  "main": "src/connector.ts",
+  "dependencies": {
+    "chalk": "^5.3.0"
+  }
+}

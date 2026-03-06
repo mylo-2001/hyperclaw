@@ -1,0 +1,50 @@
+---
+title: API Reference
+description: Gateway HTTP/WebSocket API.
+---
+
+## Base URL
+
+`http://localhost:18789` (or your configured port)
+
+## Endpoints
+
+### GET /api/status
+
+Returns gateway status: port, model, sessions, uptime.
+
+### POST /api/chat
+
+Send a message to the agent.
+
+```json
+{
+  "message": "Hello"
+}
+```
+
+Response: `{ "response": "..." }`
+
+### GET /api/costs
+
+Token usage and cost summary. Query params:
+
+- `sessionId` (optional) — per-session summary
+
+Response: `{ "summary": { "totalInput", "totalOutput", "totalCostUsd", "totalRuns" } }`
+
+### GET /api/traces
+
+Agent run traces (requires observability enabled). Query params:
+
+- `limit` — max traces to return (default 50)
+
+## Authentication
+
+For protected endpoints, send:
+
+```
+Authorization: Bearer <gateway_token>
+```
+
+The token is set in `hyperclaw.json` under `gateway.authToken`.

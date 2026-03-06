@@ -1,0 +1,54 @@
+---
+title: Quick Start
+description: Install HyperClaw and run your first agent.
+---
+
+## Prerequisites
+
+- Node.js 18+ or Bun
+- An API key from Anthropic, OpenRouter, or a local provider (Ollama)
+
+## Install
+
+```bash
+npm install -g hyperclaw
+# or
+pnpm add -g hyperclaw
+```
+
+## Initialize
+
+```bash
+hyperclaw init
+```
+
+This creates `~/.hyperclaw/` and walks you through:
+
+- API key setup
+- Gateway token (for WebSocket auth)
+- Optional channels (Telegram, Discord, etc.)
+
+## Run
+
+```bash
+# One-off prompt
+hyperclaw run "Summarize the top 3 news headlines today"
+
+# Interactive daemon (gateway + channels)
+hyperclaw daemon start
+```
+
+## Web UI
+
+With the daemon running:
+
+1. Open http://localhost:18789 in your browser
+2. Or run the Web app: `cd apps/web && npm run dev`
+3. Connect to the gateway and chat
+
+## Verify
+
+```bash
+hyperclaw doctor
+hyperclaw doctor --fix   # auto-repair issues
+```

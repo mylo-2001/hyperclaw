@@ -1,0 +1,17 @@
+# Render.com — Blueprint
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: hyperclaw
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: node dist/run-main.js gateway:serve
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HYPERCLAW_PORT
+        value: 10000
+      - key: HYPERCLAW_BIND
+        value: 0.0.0.0
+    healthCheckPath: /api/status

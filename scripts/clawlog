@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# clawlog — stream HyperClaw gateway logs with pretty formatting
+# Usage: clawlog [lines] [--follow]
+set -euo pipefail
+
+LOGFILE="$HOME/.hyperclaw/logs/hyperclaw.log"
+LINES="${1:-50}"
+FOLLOW="${2:-}"
+
+if [ ! -f "$LOGFILE" ]; then
+  echo "  No log file at $LOGFILE"
+  echo "  Start the daemon first: hyperclaw daemon start"
+  exit 1
+fi
+
+format_line() {
+  local line="$1"
+  # Try to parse JSON log entry
+  if command -v jq &>/dev/null && echo "$line" | jq -e . &>/dev/null; then
+    ts=$(echo "$line" | jq -r '.ts // ""' | cut -c12-23)
+    level=$(echo "$line" | jq -r '.level // "info"' | tr '[:lower:]' '[:upper:]')
+    mod=$(echo "$line" | jq -r '.module // ""')
+    msg=$(echo "$line" | jq -r '.message // ""')
+    case "$level" in
+      ERROR)   color="\033[31m" ;;
+      WARN)    color="\033[33m" ;;
+      INFO)    color="\033[36m" ;;
+      *)       color="\033[90m" ;;
+    esac
+    echo -e "  \033[90m$ts\033[0m ${color}${level}\033[0m \033[34m[$mod]\033[0m $msg"
+  else
+    echo "  $line"
+  fi
+}
+
+if [ "$FOLLOW" = "--follow" ] || [ "$FOLLOW" = "-f" ]; then
+  echo -e "  \033[1;36m📡 Streaming logs (Ctrl+C to stop)\033[0m\n"
+  tail -f "$LOGFILE" | while IFS= read -r line; do
+    format_line "$line"
+  done
+else
+  echo -e "  \033[1;36m📋 Last $LINES log entries\033[0m\n"
+  tail -n "$LINES" "$LOGFILE" | while IFS= read -r line; do
+    format_line "$line"
+  done
+fi

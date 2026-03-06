@@ -1,0 +1,8 @@
+{
+  "identifier": "default",
+  "description": "Default capability for HyperClaw menu bar",
+  "windows": ["main"],
+  "permissions": [
+    "core:default"
+  ]
+}

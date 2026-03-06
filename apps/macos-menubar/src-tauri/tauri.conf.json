@@ -1,0 +1,51 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "HyperClaw",
+  "version": "4.0.0",
+  "identifier": "ai.hyperclaw.menubar",
+  "build": {
+    "beforeBuildCommand": "",
+    "beforeDevCommand": "npx -y serve ../public -l 1420",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../public"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "HyperClaw",
+        "width": 400,
+        "height": 300,
+        "resizable": true,
+        "fullscreen": false,
+        "visible": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
+    "macOS": {
+      "minimumSystemVersion": "10.15"
+    },
+    "shortDescription": "HyperClaw menu bar — bridge to gateway",
+    "longDescription": "HyperClaw macOS menu bar app. Status, connect to iOS/Android nodes."
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "pubkey": "REPLACE_WITH_SPARKLE_ED25519_PUBLIC_KEY",
+      "endpoints": [
+        "https://hyperclaw.ai/appcast.xml"
+      ],
+      "dialog": true,
+      "windows": {
+        "installerArgs": [],
+        "installMode": "passive"
+      }
+    }
+  }
+}

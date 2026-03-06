@@ -1,0 +1,7 @@
+{
+  "name": "@hyperclaw/extension-twitch",
+  "version": "1.0.0",
+  "description": "HyperClaw extension: Twitch chat channel support",
+  "main": "index.ts",
+  "license": "MIT"
+}

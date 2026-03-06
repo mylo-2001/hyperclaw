@@ -1,0 +1,136 @@
+{
+  "name": "hyperclaw",
+  "version": "4.0.0",
+  "description": "⚡ HyperClaw — AI Gateway Platform. The Lobster Evolution 🦅",
+  "main": "dist/run-main.js",
+  "bin": {
+    "hyperclaw": "dist/run-main.js"
+  },
+  "files": [
+    "dist/",
+    "scripts/",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mylo-2001/hyperclaw.git"
+  },
+  "homepage": "https://github.com/mylo-2001/hyperclaw#readme",
+  "bugs": {
+    "url": "https://github.com/mylo-2001/hyperclaw/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsdown --config tsdown.config.mjs",
+    "build:tsc": "tsc --outDir dist",
+    "start": "node dist/run-main.js",
+    "dev": "ts-node src/cli/run-main.ts",
+    "gateway:watch": "nodemon --ext ts --exec 'ts-node src/cli/run-main.ts gateway status'",
+    "web:dev": "cd apps/web && npm run dev",
+    "web:build": "cd apps/web && npm run build",
+    "macos:build": "cd apps/macos && npm install && npm run build",
+    "macos:test": "cd apps/macos && npm run test",
+    "sdk:build": "tsdown src/sdk/index.ts --outDir dist/sdk --format cjs && tsdown src/sdk/index.ts --outDir dist/sdk --format esm",
+    "core:build": "tsc --noEmit -p packages/core/tsconfig.json",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build && npm run sdk:build && npm run core:build",
+    "postinstall": "node scripts/postinstall.js 2>/dev/null || true",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:unit": "vitest run --config vitest.unit.config.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:channels": "vitest run --config vitest.channels.config.ts",
+    "test:gateway": "vitest run --config vitest.gateway.config.ts",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
+    "typecheck": "tsc --noEmit",
+    "packages:build": "tsc --noEmit -p packages/shared/tsconfig.json 2>/dev/null; tsc --noEmit -p packages/core/tsconfig.json 2>/dev/null; tsc --noEmit -p packages/gateway/tsconfig.json 2>/dev/null",
+    "shared:build": "tsc --noEmit -p packages/shared/tsconfig.json",
+    "gateway:build": "tsc --noEmit -p packages/gateway/tsconfig.json",
+    "test:packages": "vitest run --config vitest.unit.config.ts"
+  },
+  "exports": {
+    ".": "./dist/run-main.js",
+    "./sdk": "./dist/sdk/index.js",
+    "./core": "./packages/core/src/index.ts",
+    "./gateway": "./packages/gateway/src/index.ts"
+  },
+  "typesVersions": {
+    "*": {
+      "sdk": [
+        "./dist/sdk/index.d.ts"
+      ],
+      "core": [
+        "./packages/core/src/index.ts"
+      ],
+      "gateway": [
+        "./packages/gateway/src/index.ts"
+      ]
+    }
+  },
+  "keywords": [
+    "ai",
+    "assistant",
+    "cli",
+    "gateway",
+    "agent",
+    "multi-channel",
+    "lobster",
+    "hyperclaw",
+    "typescript",
+    "monorepo",
+    "mcp"
+  ],
+  "author": "HyperClaw Team",
+  "license": "MIT",
+  "dependencies": {
+    "@types/ws": "^8.5.12",
+    "axios": "^1.7.0",
+    "boxen": "^5.1.2",
+    "chalk": "^4.1.2",
+    "commander": "^12.0.0",
+    "figlet": "^1.5.2",
+    "fs-extra": "^11.2.0",
+    "gradient-string": "^2.0.2",
+    "inquirer": "^8.2.7",
+    "node-cron": "^3.0.3",
+    "ora": "^5.4.1",
+    "tar": "^7.0.0",
+    "ws": "^8.18.0"
+  },
+  "optionalDependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@whiskeysockets/baileys": "^7.0.0",
+    "discord.js": "^14.25.1",
+    "irc": "^0.5.2",
+    "pdf-parse": "^1.1.1",
+    "puppeteer": "^23.0.0",
+    "tail": "^2.2.6",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/figlet": "^1.5.8",
+    "@types/fs-extra": "^11.0.4",
+    "@types/inquirer": "^8.2.10",
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.5.8",
+    "@vitest/coverage-v8": "^1.6.0",
+    "nodemon": "^3.0.0",
+    "sharp": "^0.34.5",
+    "ts-node": "^10.9.2",
+    "tsdown": "^0.3.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "extensions/*"
+  ]
+}

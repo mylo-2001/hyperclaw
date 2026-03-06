@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- HyperClaw Android: UI is built with Jetpack Compose in MainActivity.kt -->
+<!-- This layout exists for build compatibility; Compose setContent() handles the actual UI. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" />

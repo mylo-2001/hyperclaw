@@ -1,0 +1,43 @@
+---
+title: Configuration
+description: hyperclaw.json, API keys, channels, and tools.
+---
+
+The main config file is `~/.hyperclaw/hyperclaw.json`. Create it with `hyperclaw init`.
+
+## Provider
+
+```json
+{
+  "provider": {
+    "providerId": "anthropic",
+    "modelId": "claude-sonnet-4-5",
+    "apiKey": "$ANTHROPIC_API_KEY"
+  }
+}
+```
+
+- `providerId`: `anthropic` | `openrouter` | `local` | `ollama` | `custom`
+- `modelId`: e.g. `claude-sonnet-4-5`, `openrouter/auto`
+- `apiKey`: env var reference or literal (prefer env)
+
+## Gateway
+
+```json
+{
+  "gateway": {
+    "port": 18789,
+    "authToken": "$HYPERCLAW_GATEWAY_TOKEN"
+  }
+}
+```
+
+## Channels
+
+Add Telegram, Discord, Slack, etc. See [docs/configuration.md](/docs/configuration) for channel-specific setup.
+
+## Tools & Policy
+
+- `tools.profile`: `full` | `messaging` | `coding` | `minimal`
+- `tools.allow`: allowlist of tool names
+- `tools.deny`: blocklist

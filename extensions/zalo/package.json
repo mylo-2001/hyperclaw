@@ -1,0 +1,7 @@
+{
+  "name": "@hyperclaw/extension-zalo",
+  "version": "1.0.0",
+  "description": "HyperClaw extension: zalo channel support",
+  "main": "index.ts",
+  "license": "MIT"
+}

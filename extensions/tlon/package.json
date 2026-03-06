@@ -1,0 +1,7 @@
+{
+  "name": "@hyperclaw/extension-tlon",
+  "version": "1.0.0",
+  "description": "HyperClaw extension: Tlon (Urbit Groups) channel support",
+  "main": "index.ts",
+  "license": "MIT"
+}

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Devices — HyperClaw</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', sans-serif; background: #0a0f1a; color: #e2e8f0; min-width: 400px; }
+    h1 { font-size: 18px; font-weight: 600; margin: 0 0 20px; color: #06b6d4; }
+    #gateway { font-size: 12px; color: #94a3b8; margin-bottom: 16px; padding: 8px 12px; background: #1e293b; border-radius: 8px; }
+    #gateway.online { border-left: 3px solid #10b981; }
+    #gateway.offline { border-left: 3px solid #64748b; }
+    #list { display: flex; flex-direction: column; gap: 12px; }
+    .node { background: #1e293b; border-radius: 8px; padding: 12px; border: 1px solid #334155; }
+    .node .id { font-weight: 600; color: #06b6d4; }
+    .node .meta { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+    .node .caps { font-size: 11px; color: #64748b; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+    .node .caps span { background: #334155; padding: 2px 6px; border-radius: 4px; }
+    .empty { color: #64748b; font-size: 14px; padding: 24px 0; }
+    .btn { padding: 8px 16px; font-size: 12px; background: #334155; color: #e2e8f0; border: none; border-radius: 6px; cursor: pointer; margin-right: 8px; }
+    .btn:hover { background: #475569; }
+    .btn.primary { background: #06b6d4; color: #0a0f1a; }
+  </style>
+</head>
+<body>
+  <h1>Devices</h1>
+  <div id="gateway"></div>
+  <div style="margin-bottom: 16px">
+    <button class="btn primary" id="refresh">Refresh</button>
+  </div>
+  <div id="list"></div>
+  <script>
+    function timeAgo(iso) {
+      if (!iso) return '—';
+      const s = Math.floor((Date.now() - new Date(iso)) / 1000);
+      if (s < 60) return 'now';
+      if (s < 3600) return Math.floor(s / 60) + 'm ago';
+      return Math.floor(s / 3600) + 'h ago';
+    }
+    function capsList(c) {
+      if (!c || typeof c !== 'object') return [];
+      return Object.entries(c).filter(([, v]) => v).map(([k]) => k);
+    }
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    async function load() {
+      const list = document.getElementById('list');
+      const gw = document.getElementById('gateway');
+      try {
+        const status = await window.hyperclaw.api.getGatewayStatus();
+        if (status && status.running) {
+          gw.className = 'online';
+          gw.textContent = `Gateway: port ${status.port} · ${status.sessions} session(s) · uptime ${status.uptime || '—'}`;
+        } else {
+          gw.className = 'offline';
+          gw.textContent = 'Gateway unreachable. Start: hyperclaw daemon start';
+        }
+      } catch {
+        gw.className = 'offline';
+        gw.textContent = 'Gateway unreachable.';
+      }
+
+      try {
+        const nodes = await window.hyperclaw.api.getNodes();
+        if (!nodes || nodes.length === 0) {
+          list.innerHTML = '<div class="empty">No mobile nodes connected. Use iOS/Android app → Connect tab to pair.</div>';
+          return;
+        }
+        list.innerHTML = nodes.map(n => {
+          const caps = capsList(n.capabilities);
+          return `
+          <div class="node">
+            <div class="id">${escapeHtml(n.nodeId)}</div>
+            <div class="meta">${n.platform || '?'} · ${n.deviceName || '—'}</div>
+            <div class="meta">Connected ${timeAgo(n.connectedAt)} · last seen ${timeAgo(n.lastSeenAt)}</div>
+            ${caps.length ? '<div class="caps">' + caps.map(c => '<span>' + escapeHtml(c) + '</span>').join('') + '</div>' : ''}
+          </div>
+        `}).join('');
+      } catch (e) {
+        list.innerHTML = '<div class="empty">Failed to load devices.</div>';
+      }
+    }
+    document.getElementById('refresh').onclick = load;
+    load();
+    setInterval(load, 10000);
+  </script>
+</body>
+</html>

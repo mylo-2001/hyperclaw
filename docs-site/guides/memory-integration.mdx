@@ -1,0 +1,21 @@
+---
+title: Memory Integration
+description: MEMORY.md, knowledge graph, persistent context.
+---
+
+## Workspace Files
+
+- **SOUL.md** — Identity, personality
+- **AGENTS.md** — Instructions, rules
+- **MEMORY.md** — Facts, notes (append-only)
+- **USER.md** — Per-user profile (optional)
+
+These are loaded into the agent context on every run.
+
+## Knowledge Graph
+
+Facts from MEMORY and tool calls are indexed for cross-session retrieval. Use `memory_graph_add` and `memory_graph_query` tools.
+
+## Auto Memory Extraction
+
+After each turn, the agent can extract facts and append to MEMORY.md via `AutoMemory.extract()`.

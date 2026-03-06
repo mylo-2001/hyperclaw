@@ -1,0 +1,46 @@
+# HyperClaw Gateway with Puppeteer/Chromium — for browser_snapshot, browser_action
+# Build:   docker build -f Dockerfile.browser -t hyperclaw:gateway-browser .
+# Run:     docker run -p 18789:18789 -v ~/.hyperclaw:/root/.hyperclaw hyperclaw:gateway-browser
+
+FROM node:22-slim AS builder
+
+WORKDIR /app
+COPY package.json ./
+RUN npm install 2>/dev/null || npm install
+COPY tsconfig.json ./
+COPY src ./src
+COPY static ./static
+RUN npm run build:tsc 2>/dev/null || npm run build
+
+# ─── Runtime: Debian slim + Chromium for Puppeteer ───────────────────────────
+FROM node:22-slim AS runtime
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    chromium \
+    ca-certificates \
+    fonts-liberation \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
+WORKDIR /app
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY package.json ./
+
+RUN addgroup --system hyperclaw && adduser --system hyperclaw --ingroup hyperclaw
+RUN mkdir -p /data/hyperclaw && chown -R hyperclaw:hyperclaw /data
+
+USER hyperclaw
+
+ENV HYPERCLAW_PORT=18789
+ENV HYPERCLAW_BIND=0.0.0.0
+ENV HYPERCLAW_DIR=/data/hyperclaw
+ENV NODE_ENV=production
+
+EXPOSE 18789
+
+ENTRYPOINT ["node", "dist/run-main.js"]
+CMD ["gateway:serve"]
