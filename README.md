@@ -303,6 +303,42 @@ Send these in any connected channel (Telegram, Discord, Slack, etc.):
 | `/verbose on\|off` | Verbose mode |
 | `/usage off\|tokens\|full` | Per-response usage footer |
 
+## HyperClaw Bot commands
+
+Control the gateway remotely via your Telegram or Discord bot (`hyperclaw bot start`):
+
+| Command | Description |
+|---------|-------------|
+| `/status` | Gateway + daemon status |
+| `/restart` | Restart the gateway |
+| `/logs [n]` | Last N log lines (default 20) |
+| `/channels` | List configured channels |
+| `/approve <ch> <code>` | Approve a DM pairing code |
+| `/hook list` | List all hooks |
+| `/hook on <id>` | Enable a hook |
+| `/hook off <id>` | Disable a hook |
+| `/agent <msg>` | Send a message to the AI agent |
+| `/activation` | Show current group activation mode |
+| `/activation mention` | Bot responds only to @mentions and replies _(default)_ |
+| `/activation always` | Bot responds to all messages in a group |
+| `/security` | Security audit summary |
+| `/help` | List all commands |
+
+## Agent-to-Agent (session tools)
+
+When the gateway is running, the agent has access to session tools for agent-to-agent communication:
+
+| Tool | Description |
+|------|-------------|
+| `sessions_list` | List all active WebSocket sessions connected to the gateway |
+| `sessions_send` | Send a message to another session (by session ID) |
+| `sessions_history` | Get the chat transcript of a session (`"self"` for current) |
+
+Example — ask the agent to ping another session:
+```
+"List all connected sessions and send a hello to the first one"
+```
+
 ---
 
 ## From source

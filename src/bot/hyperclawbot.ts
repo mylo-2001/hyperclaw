@@ -5,18 +5,19 @@
  * HyperClaw from your phone, even when away from the terminal.
  *
  * Commands:
- *   /status          — gateway + daemon status
- *   /restart         — restart gateway
- *   /logs [n]        — last N log lines
- *   /approve <ch> <code> — approve DM pairing
- *   /channels        — list active channels
- *   /hook list       — list hooks
- *   /hook on <id>    — enable hook
- *   /hook off <id>   — disable hook
- *   /agent <msg>     — send message to AI agent
- *   /secrets audit   — secrets status
- *   /security        — security audit summary
- *   /help            — list commands
+ *   /status               — gateway + daemon status
+ *   /restart              — restart gateway
+ *   /logs [n]             — last N log lines
+ *   /approve <ch> <code>  — approve DM pairing
+ *   /channels             — list active channels
+ *   /hook list            — list hooks
+ *   /hook on <id>         — enable hook
+ *   /hook off <id>        — disable hook
+ *   /agent <msg>          — send message to AI agent
+ *   /activation [mention|always] — set group activation mode
+ *   /secrets audit        — secrets status
+ *   /security             — security audit summary
+ *   /help                 — list commands
  *
  * Start: hyperclaw bot start
  */
@@ -33,6 +34,8 @@ const BOT_PID_FILE = path.join(HC_DIR, 'hyperclawbot.pid');
 
 export type BotPlatform = 'telegram' | 'discord';
 
+export type ActivationMode = 'mention' | 'always';
+
 export interface HyperClawBotConfig {
   platform: BotPlatform;
   token: string;
@@ -40,6 +43,7 @@ export interface HyperClawBotConfig {
   gatewayUrl: string;
   gatewayToken?: string;
   enabled: boolean;
+  activationMode?: ActivationMode;  // 'mention' (default) or 'always'
   createdAt: string;
 }
 
@@ -208,6 +212,8 @@ export class TelegramHyperClawBot {
   private shouldRespondInGroup(msg: NonNullable<TelegramUpdate['message']>): boolean {
     const chatType = (msg.chat as { type?: string }).type || '';
     if (chatType !== 'group' && chatType !== 'supergroup') return true;
+    // 'always' mode → respond to everything in group
+    if ((this.config.activationMode ?? 'mention') === 'always') return true;
     // Reply to bot → activate
     if (msg.reply_to_message?.from?.is_bot) return true;
     // @mention → activate
@@ -324,6 +330,24 @@ export class TelegramHyperClawBot {
         response = '🔐 Run locally: `hyperclaw security audit --deep`';
         break;
 
+      case 'activation': {
+        const mode = args[0]?.toLowerCase();
+        if (mode === 'mention' || mode === 'always') {
+          this.config.activationMode = mode as ActivationMode;
+          await saveBotConfig(this.config);
+          response = `✅ Activation mode set to *${mode}*\n\n` +
+            (mode === 'always'
+              ? '🔊 Bot will respond to _all_ messages in groups.'
+              : '🔇 Bot will only respond to @mentions and replies in groups.');
+        } else {
+          const current = this.config.activationMode ?? 'mention';
+          response = `🎛 *Activation Mode*\n\nCurrent: *${current}*\n\n` +
+            `• /activation mention — respond only to @mentions and replies _(default)_\n` +
+            `• /activation always — respond to all messages in groups`;
+        }
+        break;
+      }
+
       default:
         response = `❓ Unknown command: /${cmd}\n\nTry /help`;
     }
@@ -439,6 +463,25 @@ export class DiscordHyperClawBot {
       case 'security':
         response = '🔐 Run locally: `hyperclaw security audit --deep`';
         break;
+
+      case 'activation': {
+        const mode = args[0]?.toLowerCase();
+        if (mode === 'mention' || mode === 'always') {
+          this.config.activationMode = mode as ActivationMode;
+          await saveBotConfig(this.config);
+          response = `✅ Activation mode set to **${mode}**\n` +
+            (mode === 'always'
+              ? '🔊 Bot will respond to _all_ messages in groups.'
+              : '🔇 Bot will only respond to @mentions and replies in groups.');
+        } else {
+          const current = this.config.activationMode ?? 'mention';
+          response = `🎛 **Activation Mode**\nCurrent: **${current}**\n\n` +
+            `• /activation mention — @mentions and replies only _(default)_\n` +
+            `• /activation always — all messages in groups`;
+        }
+        break;
+      }
+
       default:
         response = `❓ Unknown command: /${cmd}\n\nTry /help`;
     }

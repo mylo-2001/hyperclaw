@@ -855,3 +855,36 @@ export async function startGateway(opts: { daemonMode?: boolean; deps: GatewayDe
 }
 
 export function getActiveServer() { return activeServer; }
+
+// Extend GatewayServer prototype with ISessionServer methods (used by agent sessions tools)
+GatewayServer.prototype.getSessionsList = function () {
+  const out: object[] = [];
+  for (const [id, s] of (this as any).sessions as Map<string, Session>) {
+    out.push({
+      id,
+      source: s.source,
+      connectedAt: s.connectedAt,
+      lastActiveAt: s.lastActiveAt,
+      talkMode: s.talkMode ?? false,
+      nodeId: s.nodeId ?? null,
+    });
+  }
+  return out;
+};
+
+GatewayServer.prototype.sendToSession = function (id: string, msg: unknown): boolean {
+  const session = ((this as any).sessions as Map<string, Session>).get(id);
+  if (!session || session.socket.readyState !== 1 /* OPEN */) return false;
+  try {
+    session.socket.send(JSON.stringify(msg));
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+GatewayServer.prototype.getSessionHistory = function (id: string, limit: number): unknown[] | undefined {
+  const history = ((this as any).transcripts as Map<string, Array<{ role: string; content: string }>>).get(id);
+  if (!history) return undefined;
+  return history.slice(-limit);
+};
