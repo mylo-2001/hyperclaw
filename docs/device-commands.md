@@ -1,28 +1,28 @@
 # Device Commands — pc-access tools
 
-Εργαλεία συσκευής που δίνει το HyperClaw στον agent όταν `pcAccess.enabled = true`.
+Device tools available to the agent when `pcAccess.enabled = true`.
 
-## Υποστηριζόμενα
+## Supported
 
-| Εργαλείο | Περιγραφή | Πλατφόρμα |
-|----------|-----------|-----------|
-| `camera_capture` | Φωτογραφία από webcam | macOS (imagesnap/ffmpeg), Linux (ffmpeg) |
-| `screen_record` | Εγγραφή οθόνης (duration σε sec) | macOS (screencapture -V) |
-| `contacts_list` | Λίστα επαφών | macOS (Contacts.app) |
-| `calendar_events` | Προσεχείς εκδηλώσεις ημερολογίου | macOS (icalBuddy ή Calendar.app) |
-| `photos_recent` | Πρόσφατες φωτογραφίες | macOS (Photos Library + mdfind) |
-| `app_updates` | Έλεγχος ενημερώσεων (brew, mas) | macOS/Linux |
-| `screenshot` | Στιγμιότυπο οθόνης | macOS, Linux |
-| `clipboard` | Ανάγνωση/εγγραφή clipboard | macOS, Linux, Windows |
-| `open` | Άνοιγμα app/URL/file | Όλες |
+| Tool | Description | Platform |
+|------|-------------|----------|
+| `camera_capture` | Photo from webcam | macOS (imagesnap/ffmpeg), Linux (ffmpeg) |
+| `screen_record` | Screen recording (duration in sec) | macOS (screencapture -V) |
+| `contacts_list` | List contacts | macOS (Contacts.app) |
+| `calendar_events` | Upcoming calendar events | macOS (icalBuddy or Calendar.app) |
+| `photos_recent` | Recent photos | macOS (Photos Library + mdfind) |
+| `app_updates` | Check updates (brew, mas) | macOS/Linux |
+| `screenshot` | Screen snapshot | macOS, Linux |
+| `clipboard` | Read/write clipboard | macOS, Linux, Windows |
+| `open` | Open app/URL/file | All |
 | `notify` | Desktop notification | macOS, Linux |
 
-## Προαπαιτούμενα
+## Prerequisites
 
-- **Camera:** `brew install imagesnap` ή `ffmpeg`
-- **Calendar (πλούσια έξοδος):** `brew install ical-buddy`
+- **Camera:** `brew install imagesnap` or `ffmpeg`
+- **Calendar (rich output):** `brew install ical-buddy`
 - **App updates (Mac App Store):** `brew install mas`
 
 ## SMS
 
-Το SMS send/receive γίνεται μέσω του **SMS channel** (Twilio). Ο agent στέλνει μηνύματα μέσω του channel, όχι μέσω pc-access tool.
+SMS send/receive is done via the **SMS channel** (Twilio). The agent sends messages via the channel, not via a pc-access tool.

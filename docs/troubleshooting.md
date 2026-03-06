@@ -1,83 +1,83 @@
 # Troubleshooting — HyperClaw
 
-Συχνά προβλήματα και λύσεις.
+Common issues and solutions.
 
 ---
 
-## Gateway δεν ξεκινά
+## Gateway won't start
 
 ### "Gateway not running"
-- Εκτέλεσε `hyperclaw daemon start` ή `hyperclaw gateway start`
-- Έλεγξε port: default `18789`. Αν χρησιμοποιείται, άλλαξε στο `~/.hyperclaw/hyperclaw.json` → `gateway.port`
-- `hyperclaw doctor` για health check
+- Run `hyperclaw daemon start` or `hyperclaw gateway start`
+- Check port: default `18789`. If in use, change in `~/.hyperclaw/hyperclaw.json` → `gateway.port`
+- Run `hyperclaw doctor` for a health check
 
 ### "Address already in use"
-- Κάποιο άλλο process ακούει στο ίδιο port:
+- Another process is listening on the same port:
   - Windows: `netstat -ano | findstr :18789`
   - Linux/macOS: `lsof -i :18789`
-- Σταμάτα το process ή άλλαξε port
+- Stop the process or change the port
 
-### Daemon σταματάει αμέσως
-- Έλεγξε logs: `~/.hyperclaw/logs/gateway.log`, `gateway.err`
-- Αν λείπει config: τρέξε `hyperclaw onboard`
-- Έλεγξε API key: `hyperclaw config show` — πρέπει να υπάρχει `provider.apiKey` ή env `OPENROUTER_API_KEY` / `ANTHROPIC_API_KEY`
+### Daemon stops immediately
+- Check logs: `~/.hyperclaw/logs/gateway.log`, `gateway.err`
+- If config is missing: run `hyperclaw onboard`
+- Check API key: `hyperclaw config show` — `provider.apiKey` or env `OPENROUTER_API_KEY` / `ANTHROPIC_API_KEY` must be set
 
 ---
 
 ## API / Model errors
 
 ### "No API key configured"
-- Ρύθμισε key: `hyperclaw config set-key provider.apiKey=sk-xxx`
-- Ή env: `OPENROUTER_API_KEY` ή `ANTHROPIC_API_KEY`
-- Δες `.env.example` για όλες τις μεταβλητές
+- Set key: `hyperclaw config set-key provider.apiKey=sk-xxx`
+- Or env: `OPENROUTER_API_KEY` or `ANTHROPIC_API_KEY`
+- See `.env.example` for all variables
 
 ### "Model not found" / 404
-- Έλεγξε ότι το model ID είναι σωστό (π.χ. `anthropic/claude-sonnet-4`)
-- OpenRouter: χρησιμοποίησε IDs από https://openrouter.ai/models
+- Check that the model ID is correct (e.g. `anthropic/claude-sonnet-4`)
+- OpenRouter: use IDs from https://openrouter.ai/models
 
 ### Rate limits / 429
-- Περίμενε λίγο και ξαναπρόσπαθε
-- Άλλαξε model ή provider αν συνεχίζει
+- Wait a moment and try again
+- Switch model or provider if it persists
 
 ---
 
 ## Channels
 
-### Channel δεν λαμβάνει/στέλνει μηνύματα
-- Έλεγξε config: `channels.<channel>.enabled === true`
-- Για Telegram/Discord: σωστό bot token
-- Για WhatsApp: `hyperclaw channels login` — link device
-- DM policy: αν `pairing`, κάνε approve με `hyperclaw pairing approve <channel> <code>`
+### Channel not receiving/sending messages
+- Check config: `channels.<channel>.enabled === true`
+- For Telegram/Discord: correct bot token
+- For WhatsApp: `hyperclaw channels login` — link device
+- DM policy: if `pairing`, approve with `hyperclaw pairing approve <channel> <code>`
 
 ### Webhook 404
-- Gateway πρέπει να τρέχει
+- Gateway must be running
 - URL: `http://localhost:18789/webhook/<channelId>`
-- Έλεγξε ότι το channel έχει σωστό `webhookUrl` στο config
+- Check that the channel has a valid `webhookUrl` in config
 
 ---
 
 ## Config & paths
 
-### Πού αποθηκεύεται το config;
+### Where is config stored?
 - Config: `~/.hyperclaw/hyperclaw.json`
 - Credentials: `~/.hyperclaw/credentials/`
 - Logs: `~/.hyperclaw/logs/`
-- Override με `HYPERCLAW_HOME` ή `HYPERCLAW_CONFIG_PATH`
+- Override with `HYPERCLAW_HOME` or `HYPERCLAW_CONFIG_PATH`
 
-### Config δεν φορτώνει
-- Έλεγξε syntax JSON: `cat ~/.hyperclaw/hyperclaw.json | jq .`
-- Αν είναι corrupted: backup και `hyperclaw onboard` ξανά
+### Config not loading
+- Check JSON syntax: `cat ~/.hyperclaw/hyperclaw.json | jq .`
+- If corrupted: backup and run `hyperclaw onboard` again
 
 ---
 
 ## Systemd / LaunchAgent
 
-### Linux: service δεν τρέχει
+### Linux: service not running
 - User service: `systemctl --user status hyperclaw`
-- Lingering: `loginctl enable-linger $USER` για να τρέχει χωρίς login
-- `journalctl --user -u hyperclaw -f` για logs
+- Lingering: `loginctl enable-linger $USER` to run without login
+- `journalctl --user -u hyperclaw -f` for logs
 
-### macOS: LaunchAgent δεν ξεκινά
+### macOS: LaunchAgent not starting
 - `launchctl list | grep hyperclaw`
 - Plist: `~/Library/LaunchAgents/ai.hyperclaw.gateway.plist`
 - Load: `launchctl load ~/Library/LaunchAgents/ai.hyperclaw.gateway.plist`
@@ -85,15 +85,15 @@
 
 ---
 
-## Γενικά
+## General
 
 ### `hyperclaw doctor`
-Τρέχε πάντα για διάγνωση:
+Always run for diagnostics:
 ```bash
 hyperclaw doctor
-hyperclaw doctor --fix   # auto-repair όπου μπορεί
+hyperclaw doctor --fix   # auto-repair where possible
 ```
 
 ### Debug mode
-- `hyperclaw gateway start` — τρέχει foreground με output
-- Ρύθμισε `verbose: true` στο config για extra logs
+- `hyperclaw gateway start` — runs in foreground with output
+- Set `verbose: true` in config for extra logs

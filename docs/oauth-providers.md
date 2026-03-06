@@ -1,10 +1,10 @@
-# OAuth for AI providers
+﻿# OAuth for AI providers
 
-Αντί για API key μπορείς να χρησιμοποιήσεις OAuth (access token + refresh).
+Instead of an API key you can use OAuth (access token + refresh).
 
-## Ρύθμιση
+## Setup
 
-1. **Αρχείο token** — `~/.hyperclaw/oauth-<providerId>.json`:
+1. **Token file** — `~/.hyperclaw/oauth-<providerId>.json`:
 
 ```json
 {
@@ -32,39 +32,39 @@
 
 Αν δεν δώσεις `oauthTokenPath`, χρησιμοποιείται αυτόματα `~/.hyperclaw/oauth-<providerId>.json`.
 
-## Πλήρες OAuth flow (browser)
+## Full OAuth flow (browser)
 
 ```bash
-# Δημιουργία OAuth client: https://console.cloud.google.com/apis/credentials
+# Create OAuth client: https://console.cloud.google.com/apis/credentials
 export GOOGLE_OAUTH_CLIENT_ID="your-client-id.apps.googleusercontent.com"
-export GOOGLE_OAUTH_CLIENT_SECRET="your-client-secret"   # optional για PKCE
+export GOOGLE_OAUTH_CLIENT_SECRET="your-client-secret"   # optional for PKCE
 
 hyperclaw auth oauth google
 ```
 
-Ανοίγει browser, ολοκληρώνεις consent, τα tokens αποθηκεύονται αυτόματα.
+Opens browser, complete consent, tokens are saved automatically.
 
-## Χειροκίνητη αποθήκευση tokens (oauth-set)
+## Manual token save (oauth-set)
 
 ```bash
 hyperclaw auth oauth-set google --token "ya29.xxx" --refresh "1//xxx" --expires-in 3600 --token-url "https://oauth2.googleapis.com/token"
 ```
 
-Μετά ρύθμισε στο hyperclaw.json: `"authType": "oauth"`, `"providerId": "google"`.
+Then set in hyperclaw.json: `"authType": "oauth"`, `"providerId": "google"`.
 
-## Refresh
+## Token refresh
 
-Όταν το `expires_at` έχει λήξει και υπάρχει `refresh_token` και `token_url`, το HyperClaw κάνει αυτόματα POST για νέο `access_token` και ενημερώνει το αρχείο.
+When expires_at has expired and refresh_token and token_url are present, HyperClaw automatically POSTs for a new access_token and updates the file.
 
-## Υποστηριζόμενα
+## Supported
 
 - **Google** — `hyperclaw auth oauth google`, `token_url`: `https://oauth2.googleapis.com/token`
-- **Google Gmail** — `hyperclaw auth oauth google-gmail`, για Gmail Pub/Sub watch (ίδια credentials)
-- **Microsoft/Azure** — `hyperclaw auth oauth microsoft`, για Azure OpenAI/Azure AD
-- Άλλα providers: όρισε `token_url` στο token file αν έχουν refresh endpoint.
+- **Google Gmail** — `hyperclaw auth oauth google-gmail`, for Gmail Pub/Sub watch (same credentials)
+- **Microsoft/Azure** — `hyperclaw auth oauth microsoft`, for Azure OpenAI/Azure AD
+- Other providers: set token_url in the token file if they have a refresh endpoint.
 
 ## Anthropic / OpenAI
 
 - **API keys** — `hyperclaw auth add anthropic` ή `hyperclaw auth add openai` (default)
-- **Anthropic setup token** (Claude Pro/Max) — `hyperclaw auth setup-token anthropic` (paste από `claude setup-token`)
-- **OpenAI** — μόνο API keys, δεν υπάρχει OAuth για API
+- **Anthropic setup token** (Claude Pro/Max) — `hyperclaw auth setup-token anthropic` (paste from claude setup-token)
+- **OpenAI** — API keys only, no OAuth for the API

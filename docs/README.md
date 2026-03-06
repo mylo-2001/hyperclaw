@@ -1,4 +1,4 @@
-# HyperClaw Documentation
+﻿# HyperClaw Documentation
 
 | Section | Description |
 |---------|-------------|
@@ -7,7 +7,7 @@
 | [Configuration](configuration.md) | Full config reference |
 | [Troubleshooting](troubleshooting.md) | Common issues and fixes |
 | [Security](security.md) | DM policy, keys, sandbox |
-| [API Keys](API-KEYS-README.md) | Wizard, storage, skills — πλήρης οδηγός |
+| [API Keys](API-KEYS-README.md) | Wizard, storage, skills — full guide |
 | [Channels](channels/README.md) | Setup guides per channel |
 | [Browser](browser.md) | Puppeteer tools (browser_snapshot, browser_action) |
 | [Deployment](deployment.md) | Docker, Fly.io, Render |

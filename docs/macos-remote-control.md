@@ -1,40 +1,40 @@
 # macOS remote control — Gateway via SSH
 
-Έλεγχος του HyperClaw gateway από το macOS app (ή άλλο client) μέσω SSH.
+Control the HyperClaw gateway from the macOS app (or another client) via SSH.
 
-## Τρόποι
+## Methods
 
 ### 1. SSH port forwarding
 
-Στο Mac από το οποίο τρέχει το HyperClaw daemon, ανοίξτε tunnel προς το host όπου τρέχει το gateway:
+On the Mac where the HyperClaw daemon is running, open a tunnel to the host where the gateway runs:
 
 ```bash
 ssh -L 18789:127.0.0.1:18789 user@remote-host
 ```
 
-Στη συνέχεια στο macOS app ορίστε gateway URL: `http://127.0.0.1:18789`. Όλες οι κλήσεις (status, chat, WebSocket) περνούν μέσω του tunnel.
+Then in the macOS app set the gateway URL to `http://127.0.0.1:18789`. All calls (status, chat, WebSocket) go through the tunnel.
 
-### 2. CLI μέσω SSH
+### 2. CLI via SSH
 
-Για status, restart κ.λπ. από το macOS app (ή script):
+For status, restart, etc. from the macOS app (or a script):
 
 ```bash
 ssh user@remote-host "hyperclaw gateway status"
 ssh user@remote-host "hyperclaw daemon restart"
 ```
 
-Ρύθμισε SSH keys ώστε να μην ζητάει password.
+Set up SSH keys so no password is required.
 
-### 3. API με auth
+### 3. API with auth
 
-Αν το gateway έχει `gateway.authToken`:
+If the gateway has `gateway.authToken`:
 
-- `GET /api/status` — χωρίς auth
-- `POST /api/remote/restart` — απαιτεί `Authorization: Bearer <token>`· επιστρέφει οδηγίες για restart μέσω SSH
+- `GET /api/status` — no auth required
+- `POST /api/remote/restart` — requires `Authorization: Bearer <token>`; returns instructions for restart via SSH
 
-## Παράδειγμα (macOS app)
+## Example (macOS app)
 
-1. Ο χρήστης δίνει remote host (user@host).
-2. Το app κάνει `ssh -L 18789:127.0.0.1:18789 user@host -N` στο background.
-3. Συνδέεται στο WebSocket/HTTP στο `http://127.0.0.1:18789`.
-4. Για restart: είτε `ssh user@host "hyperclaw daemon restart"` είτε εμφάνιση οδηγιών από `POST /api/remote/restart`.
+1. User provides remote host (user@host).
+2. App runs `ssh -L 18789:127.0.0.1:18789 user@host -N` in the background.
+3. Connects to WebSocket/HTTP at `http://127.0.0.1:18789`.
+4. For restart: either `ssh user@host "hyperclaw daemon restart"` or show instructions from `POST /api/remote/restart`.

@@ -1,20 +1,20 @@
-# Moltbook & ClawTasks
+﻿# Moltbook & ClawTasks
 
-Ενσωμάτωση με κοινωνικό δίκτυο agents (Moltbook) και bounty marketplace (ClawTasks), σε στυλ HyperClaw.
+Integration with agent social network (Moltbook) and bounty marketplace (ClawTasks), HyperClaw style.
 
 ## Moltbook (social feed)
 
 - **Μεταβλητή:** `MOLTBOOK_API_URL` — base URL του Moltbook backend
 - **Εργαλεία agent:** `moltbook_feed` (λίστα posts), `moltbook_post` (δημοσίευση)
-- Όταν το URL δεν είναι ρυθμισμένο, τα tools επιστρέφουν μήνυμα "not configured"
+- When URL is not configured, tools return "not configured"
 
 ## ClawTasks (bounties)
 
 - **Μεταβλητή:** `CLAW_TASKS_API_URL` — base URL του ClawTasks backend
 - **Εργαλεία agent:** `claw_tasks_list` (ανοιχτά bounties), `claw_tasks_claim` (claim by ID)
-- Για claim απαιτείται agent auth (token στο config ή env)
+- Claim requires agent auth (token in config or env)
 
-## Παράδειγμα
+## Example
 
 ```bash
 export MOLTBOOK_API_URL=https://moltbook.example.com
@@ -22,8 +22,8 @@ export CLAW_TASKS_API_URL=https://clawtasks.example.com
 hyperclaw gateway start
 ```
 
-Ο agent μπορεί τότε να ζητήσει "show me the Moltbook feed" ή "list open bounties" και να καλέσει τα αντίστοιχα tools.
+The agent can then request "show me the Moltbook feed" or "list open bounties" and call the corresponding tools.
 
-## Backend
+## Backends
 
-Τα backends (Moltbook, ClawTasks) δεν περιλαμβάνονται στο HyperClaw. Μπορείς να τρέξεις δικό σου API που υλοποιεί τα endpoints που περιγράφονται στα `src/services/moltbook.ts` και `src/services/claw-tasks.ts`, ή να χρησιμοποιήσεις κάποιο community instance όταν διατεθεί.
+The backends (Moltbook, ClawTasks) are not included in HyperClaw. You can run your own API implementing the endpoints described in src/services/moltbook.ts and src/services/claw-tasks.ts, or use a community instance when available.

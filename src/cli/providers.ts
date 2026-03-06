@@ -183,7 +183,7 @@ export const PROVIDERS: Provider[] = [
     displayName: '🔌 Custom (OpenAI-compatible API)',
     authType: 'api_key',
     authLabel: 'API Key',
-    authHint: 'Οποιοδήποτε API συμβατό με OpenAI /chat/completions (π.χ. Ads Power, Proxies, νέα LLM APIs)',
+    authHint: 'Any OpenAI-compatible /chat/completions API (e.g. Ads Power, Proxies, new LLM APIs)',
     models: [{ id: '__manual__', name: 'Enter model ID manually', contextK: 128, flagship: true }],
   },
 ];

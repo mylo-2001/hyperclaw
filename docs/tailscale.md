@@ -1,24 +1,24 @@
 # Tailscale Serve / Funnel — HyperClaw
 
-Εξαγωγή του gateway στο διαδίκτυο μέσω Tailscale για ασφαλή remote access χωρίς ανοιχτά ports.
+Expose the gateway to the internet via Tailscale for secure remote access without open ports.
 
 ---
 
-## Tailscale Serve (στο δίκτυο σου)
+## Tailscale Serve (your private network)
 
-1. Εγκατάστησε [Tailscale](https://tailscale.com/download)
-2. Σύνδεση: `tailscale login`
+1. Install [Tailscale](https://tailscale.com/download)
+2. Connect: `tailscale login`
 3. Serve:
    ```bash
    tailscale serve https / http://127.0.0.1:18789
    ```
-4. Το gateway θα είναι διαθέσιμο στο Tailscale hostname σου (π.χ. `https://your-machine.tailnet-name.ts.net`)
+4. The gateway will be available at your Tailscale hostname (e.g. `https://your-machine.tailnet-name.ts.net`)
 
 ---
 
-## Tailscale Funnel (δημόσιο)
+## Tailscale Funnel (public)
 
-⚠️ Προσοχή: Το Funnel ανοίγει πρόσβαση σε όλους. Χρησιμοποίησε `authToken` στο gateway config.
+⚠️ Warning: Funnel opens access to everyone. Always use `authToken` in gateway config.
 
 ```bash
 tailscale funnel 443
@@ -27,9 +27,9 @@ tailscale serve https / http://127.0.0.1:18789
 
 ---
 
-## Ρυθμίσεις gateway
+## Gateway settings
 
-Στο `hyperclaw.json`:
+In `hyperclaw.json`:
 ```json
 {
   "gateway": {
@@ -40,4 +40,4 @@ tailscale serve https / http://127.0.0.1:18789
 }
 ```
 
-Όταν χρησιμοποιείς Tailscale Funnel, πάντα έβαλε `authToken` για προστασία.
+When using Tailscale Funnel, always set `authToken` for protection.

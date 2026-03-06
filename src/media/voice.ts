@@ -106,8 +106,8 @@ export class VoiceEngine {
     console.log(chalk.gray(`   Status:     ${chalk.green('Ready')}`));
 
     if (this.lang === 'el') {
-      console.log(chalk.cyan('\n🇬🇷 Ελληνική υποστήριξη ενεργοποιημένη!'));
-      console.log(chalk.gray(`   Πείτε "${this.wakeWord}" για να ξυπνήσετε τον βοηθό.`));
+      console.log(chalk.cyan('\n🇬🇷 Greek language support enabled!'));
+      console.log(chalk.gray(`   Say "${this.wakeWord}" to wake up the assistant.`));
     }
 
     console.log();

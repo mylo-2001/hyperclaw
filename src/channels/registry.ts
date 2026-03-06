@@ -1,4 +1,4 @@
-import chalk from 'chalk';
+﻿import chalk from 'chalk';
 import os from 'os';
 
 export type ChannelStatus = 'configured' | 'recommended' | 'available' | 'unavailable';
@@ -31,11 +31,11 @@ export const CHANNELS: ChannelDef[] = [
     tokenLabel: 'Telegram Bot Token',
     tokenHint: 'Get from @BotFather → /newbot',
     setupSteps: [
-      '1. Άνοιξε το Telegram και ψάξε για @BotFather (είναι ο επίσημος bot για δημιουργία bots).',
-      '2. Ξεκίνα συνομιλία με /start και πληκτρολόγησε /newbot για να δημιουργήσεις νέο bot.',
-      '3. Δώσε ένα όνομα στο bot (π.χ. "My HyperClaw Bot") και μετά ένα username που να τελειώνει σε "bot" (π.χ. my_hyperclaw_bot).',
-      '4. Ο @BotFather θα σου στείλει το Bot Token — μια συμβολοσειρά που ξεκινά με 7xxxxxx:AAH... Κράτα το μυστικό!',
-      '5. Αντιγράψε το token και κολλήστε το παρακάτω.',
+      '1. Open Telegram and search for @BotFather (the official bot for creating bots).',
+      '2. Start a conversation with /start and type /newbot to create a new bot.',
+      '3. Give the bot a name (e.g. "My HyperClaw Bot") and a username ending in "bot" (e.g. my_hyperclaw_bot).',
+      '4. @BotFather will send you the Bot Token — a string starting with 7xxxxxx:AAH... Keep it secret!',
+      '5. Copy the token and paste it below.',
       '',
       '  🔗 t.me/BotFather'
     ],
@@ -52,16 +52,16 @@ export const CHANNELS: ChannelDef[] = [
     tokenLabel: 'Discord Bot Token',
     tokenHint: 'discord.com/developers/applications',
     setupSteps: [
-      '1. Πήγαινε στο Discord Developer Portal: https://discord.com/developers/applications',
-      '2. Κλικ "New Application", δώσε όνομα και δημιούργησέ το.',
-      '3. Στο μενού αριστερά: Bot → Add Bot.',
-      '4. Κλικ "Reset Token" και αντιγράψε το token (Κράτα το μυστικό!).',
-      '5. Στο Settings → OAuth2 → General, αντιγράψε το Application ID (Client ID).',
-      '6. Προαιρετικά: Για να προσθέσεις το bot σε server, Bot → OAuth2 → URL Generator, scope: bot.',
+      '1. Go to Discord Developer Portal: https://discord.com/developers/applications',
+      '2. Click "New Application", give it a name and create it.',
+      '3. Left menu: Bot → Add Bot.',
+      '4. Click "Reset Token" and copy the token (keep it secret!).',
+      '5. Settings → OAuth2 → General, copy the Application ID (Client ID).',
+      '6. Optional: To add the bot to a server, Bot → OAuth2 → URL Generator, scope: bot.',
       '',
       '  🔗 discord.com/developers/applications'
     ],
-    extraFields: [{ name: 'clientId', label: 'Client ID (Application ID)', hint: 'Από OAuth2 → General', required: true }],
+    extraFields: [{ name: 'clientId', label: 'Client ID (Application ID)', hint: 'From OAuth2 → General', required: true }],
     status: 'recommended',
     npmPackage: 'discord.js'
   },
@@ -75,11 +75,11 @@ export const CHANNELS: ChannelDef[] = [
     tokenLabel: 'WhatsApp Business API key',
     tokenHint: 'business.whatsapp.com',
     setupSteps: [
-      '1. Πήγαινε στο Meta for Developers: https://developers.facebook.com/',
+      '1. Go to Meta for Developers: https://developers.facebook.com/',
       '2. My Apps → Create App → Business type.',
-      '3. Προσθήκη προϊόντος: WhatsApp → Get started.',
-      '4. Στο WhatsApp → API Setup: αντιγράψε το Temporary access token ή δημιούργησε μόνιμο.',
-      '5. Χρειάζεσαι επίσης Phone Number ID και WhatsApp Business Account ID.',
+      '3. Add product: WhatsApp → Get started.',
+      '4. WhatsApp → API Setup: copy the Temporary access token or create a permanent one.',
+      '5. You also need a Phone Number ID and WhatsApp Business Account ID.',
       '',
       '  🔗 developers.facebook.com — business.whatsapp.com'
     ],
@@ -94,11 +94,11 @@ export const CHANNELS: ChannelDef[] = [
     supportsDM: true,
     platforms: ['all'],
     setupSteps: [
-      '1. Δεν χρειάζεσαι Meta Business API — χρησιμοποιεί WhatsApp Web.',
-      '2. Βεβαιώσου ότι έχεις εγκατεστημένο: npm install @whiskeysockets/baileys',
-      '3. Ξεκίνα το gateway. Στην πρώτη σύνδεση θα εμφανιστεί QR code.',
-      '4. Σκάνε το QR με το κινητό σου (WhatsApp → Linked Devices → Link a device).',
-      '5. Μετά τη σύνδεση το session αποθηκεύεται — δεν χρειάζεται ξανά QR.',
+      '1. No Meta Business API needed — uses WhatsApp Web.',
+      '2. Make sure you have installed: npm install @whiskeysockets/baileys',
+      '3. Start the gateway. On first connection a QR code will appear.',
+      '4. Scan the QR with your phone (WhatsApp → Linked Devices → Link a device).',
+      '5. After connecting, the session is saved — no QR needed again.',
       '',
       '  📖 docs: github.com/WhiskeySockets/Baileys'
     ],
@@ -116,11 +116,11 @@ export const CHANNELS: ChannelDef[] = [
     tokenLabel: 'Slack Bot Token (xoxb-...)',
     extraFields: [{ name: 'signingSecret', label: 'Signing Secret', required: true }],
     setupSteps: [
-      '1. Πήγαινε στο api.slack.com/apps → Create New App → From scratch.',
-      '2. Δώσε όνομα και διάλεξε workspace.',
-      '3. OAuth & Permissions: Προσθήκη Bot Token Scopes (chat:write, users:read, im:read, im:history κ.λπ.).',
-      '4. Install App στο workspace — αντιγράψε το "Bot User OAuth Token" (ξεκινά με xoxb-).',
-      '5. Basic Information → App Credentials → Signing Secret — αντιγράψε το.',
+      '1. Go to api.slack.com/apps → Create New App → From scratch.',
+      '2. Give it a name and choose a workspace.',
+      '3. OAuth & Permissions: Add Bot Token Scopes (chat:write, users:read, im:read, im:history, etc.).',
+      '4. Install App to workspace — copy the "Bot User OAuth Token" (starts with xoxb-).',
+      '5. Basic Information → App Credentials → Signing Secret — copy it.',
       '',
       '  🔗 api.slack.com/apps'
     ],
@@ -137,10 +137,10 @@ export const CHANNELS: ChannelDef[] = [
     tokenLabel: 'Signal phone number',
     tokenHint: 'Requires signal-cli installed',
     setupSteps: [
-      '1. Εγκατάσταση signal-cli: https://github.com/AsamK/signal-cli',
-      '2. Εγγραφή αριθμού: signal-cli -a +30XXXXXXXXX register',
-      '3. Ήλεκτρονική επαλήθευση (αν υπάρχει) ή κωδικός από SMS.',
-      '4. Εδώ γράψε τον αριθμό τηλεφώνου (π.χ. +30XXXXXXXXX).',
+      '1. Install signal-cli: https://github.com/AsamK/signal-cli',
+      '2. Register number: signal-cli -a +1XXXXXXXXX register',
+      '3. Verify electronically (if available) or via SMS code.',
+      '4. Enter your phone number here (e.g. +1XXXXXXXXX).',
       '',
       '  🔗 github.com/AsamK/signal-cli'
     ],
@@ -155,10 +155,10 @@ export const CHANNELS: ChannelDef[] = [
     supportsDM: true,
     platforms: ['darwin'],
     setupSteps: [
-      '1. macOS μόνο. Χρειάζεσαι BlueBubbles (bluebubbles.app) ή Beeper bridge.',
-      '2. BlueBubbles: εγκατάσταση στο Mac, έλεγχος server URL και API key.',
-      '3. Ή Beeper: σύνδεση με iMessage μέσω Beeper desktop app.',
-      '4. Ρύθμισε server URL και token στην διαμόρφωση του channel.',
+      '1. macOS only. You need BlueBubbles (bluebubbles.app) or Beeper bridge.',
+      '2. BlueBubbles: install on Mac, check server URL and API key.',
+      '3. Or Beeper: connect to iMessage via Beeper desktop app.',
+      '4. Set server URL and token in the channel configuration.',
       '',
       '  🔗 bluebubbles.app — beeper.com'
     ],
@@ -179,10 +179,10 @@ export const CHANNELS: ChannelDef[] = [
       { name: 'accessToken', label: 'Access Token', required: true }
     ],
     setupSteps: [
-      '1. Δημιούργησε λογαριασμό bot σε matrix.org ή άλλο homeserver.',
+      '1. Create a bot account on matrix.org or another homeserver.',
       '2. Access token: Element/SchildiChat → Settings → Help & About → Access Token.',
-      '3. Ή μέσω API: POST /_matrix/client/r0/login με type=m.login.password.',
-      '4. Homeserver URL: https://matrix.org ή το URL του server σου.',
+      '3. Or via API: POST /_matrix/client/r0/login with type=m.login.password.',
+      '4. Homeserver URL: https://matrix.org or your server URL.',
       '',
       '  🔗 matrix.org — element.io'
     ],
@@ -203,9 +203,9 @@ export const CHANNELS: ChannelDef[] = [
       { name: 'channels', label: 'Default channels (#room)', required: false }
     ],
     setupSteps: [
-      '1. Διάλεξε IRC server (π.χ. irc.libera.chat, irc.oftc.net).',
-      '2. Χρειάζεσαι nickname για το bot και προαιρετικά channel για να μπεί.',
-      '3. Κάποιοι servers χρειάζονται επαλήθευση πριν το /join.',
+      '1. Choose an IRC server (e.g. irc.libera.chat, irc.oftc.net).',
+      '2. You need a nickname for the bot and optionally a channel to join.',
+      '3. Some servers require authentication before /join.',
       '',
       '  🔗 libera.chat — oftc.net'
     ],
@@ -222,11 +222,11 @@ export const CHANNELS: ChannelDef[] = [
     tokenLabel: 'Personal Access Token (or Bot token)',
     tokenHint: 'Account Settings > Security > Personal Access Tokens',
     setupSteps: [
-      '1. Στο Mattermost: Προφίλ → Account Settings → Security → Personal Access Tokens.',
-      '2. Create token — αντιγράψε το (δεν εμφανίζεται ξανά).',
+      '1. In Mattermost: Profile → Account Settings → Security → Personal Access Tokens.',
+      '2. Create token — copy it (not shown again).',
       '3. Integrations → Outgoing Webhooks → Add outgoing webhook.',
-      '4. Σημείωσε το webhook URL και το Trigger Word. Το token από το webhook χρειάζεται για επαλήθευση.',
-      '5. Webhook URL για gateway: https://<gateway>/webhook/mattermost',
+      '4. Note the webhook URL and Trigger Word. The webhook token is needed for verification.',
+      '5. Webhook URL for gateway: https://<gateway>/webhook/mattermost',
       '',
       '  🔗 docs.mattermost.com'
     ],
@@ -247,9 +247,9 @@ export const CHANNELS: ChannelDef[] = [
     platforms: ['all'],
     tokenLabel: 'Google Chat webhook URL',
     setupSteps: [
-      '1. Στο Google Chat: Room → Manage webhooks → Add webhook.',
-      '2. Δώσε όνομα και αντιγράψε το Webhook URL.',
-      '3. Κόλλησε το URL παρακάτω.',
+      '1. In Google Chat: Room → Manage webhooks → Add webhook.',
+      '2. Give it a name and copy the Webhook URL.',
+      '3. Paste the URL below.',
       '',
       '  🔗 chat.google.com'
     ],
@@ -264,9 +264,9 @@ export const CHANNELS: ChannelDef[] = [
     platforms: ['all'],
     tokenLabel: 'Teams incoming webhook URL',
     setupSteps: [
-      '1. Στο Teams: Channel → Connectors → Incoming Webhook → Configure.',
-      '2. Δώσε όνομα και αντιγράψε το Webhook URL.',
-      '3. Κόλλησε το URL παρακάτω.',
+      '1. In Teams: Channel → Connectors → Incoming Webhook → Configure.',
+      '2. Give it a name and copy the Webhook URL.',
+      '3. Paste the URL below.',
       '',
       '  🔗 docs.microsoft.com/microsoftteams/platform/webhooks-and-connectors'
     ],
@@ -282,9 +282,9 @@ export const CHANNELS: ChannelDef[] = [
     tokenLabel: 'Nostr private key (nsec)',
     extraFields: [{ name: 'relay', label: 'Relay URL', hint: 'wss://relay.damus.io', required: true }],
     setupSteps: [
-      '1. Χρειάζεσαι Nostr private key (nsec1...). Μπορείς να δημιουργήσεις με Damus, Amethyst ή iris.to.',
-      '2. Επιλογή Relay: π.χ. wss://relay.damus.io, wss://relay.nostr.band.',
-      '3. ΜΗΝ μοιράζεσαι το nsec — είναι το ιδιωτικό κλειδί σου.',
+      '1. You need a Nostr private key (nsec1...). Create one with Damus, Amethyst or iris.to.',
+      '2. Choose a Relay: e.g. wss://relay.damus.io, wss://relay.nostr.band.',
+      '3. NEVER share your nsec — it is your private key.',
       '',
       '  🔗 nostr.com — damus.io'
     ],
@@ -301,10 +301,10 @@ export const CHANNELS: ChannelDef[] = [
     tokenLabel: 'LINE Channel access token',
     extraFields: [{ name: 'secret', label: 'Channel Secret', required: true }],
     setupSteps: [
-      '1. Πήγαινε στο developers.line.biz → Console → Create provider & channel.',
-      '2. Messaging API channel → Ορισμός Basic settings.',
-      '3. Channel access token: Issue ή Regenerate — αντιγράψε το.',
-      '4. Channel secret: από Basic settings — αντιγράψε το.',
+      '1. Go to developers.line.biz → Console → Create provider & channel.',
+      '2. Messaging API channel → Configure Basic settings.',
+      '3. Channel access token: Issue or Regenerate — copy it.',
+      '4. Channel secret: from Basic settings — copy it.',
       '',
       '  🔗 developers.line.biz'
     ],
@@ -321,9 +321,9 @@ export const CHANNELS: ChannelDef[] = [
     tokenLabel: 'Feishu App ID',
     extraFields: [{ name: 'appSecret', label: 'App Secret', required: true }],
     setupSteps: [
-      '1. Πήγαινε στο open.feishu.cn → Create enterprise app.',
-      '2. Credentials: αντιγράψε App ID και App Secret.',
-      '3. Ενεργοποίηση δικαιωμάτων: im:message, im:message.group_at_msg κ.λπ.',
+      '1. Go to open.feishu.cn → Create enterprise app.',
+      '2. Credentials: copy App ID and App Secret.',
+      '3. Enable permissions: im:message, im:message.group_at_msg etc.',
       '',
       '  🔗 open.feishu.cn'
     ],
@@ -501,8 +501,8 @@ export const CHANNELS: ChannelDef[] = [
       { name: 'password', label: 'App Password', required: true }
     ],
     setupSteps: [
-      '1. Δημιούργησε App Password: Nextcloud → Προφίλ → Security → App passwords.',
-      '2. Χρειάζεσαι URL του Nextcloud, username και App Password.',
+      '1. Create App Password: Nextcloud → Profile → Security → App passwords.',
+      '2. You need the Nextcloud URL, username and App Password.',
       '',
       '  🔗 nextcloud.com'
     ],
@@ -518,8 +518,8 @@ export const CHANNELS: ChannelDef[] = [
     tokenLabel: 'Zalo OA Access Token',
     setupSteps: [
       '1. Zalo Official Account (OA): developers.zalo.me → My Apps.',
-      '2. Δημιουργία εφαρμογής και σύνδεση με OA.',
-      '3. Access Token από το Zalo API (OAuth flow ή test token για ανάπτυξη).',
+      '2. Create an app and connect it to your OA.',
+      '3. Access Token from Zalo API (OAuth flow or test token for development).',
       '',
       '  🔗 developers.zalo.me'
     ],
@@ -549,10 +549,10 @@ export const CHANNELS: ChannelDef[] = [
       { name: 'imapHost', label: 'IMAP host (for reading)', required: false }
     ],
     setupSteps: [
-      '1. Χρειάζεσαι SMTP server (Gmail, Outlook, SendGrid, Mailgun, ή custom).',
-      '2. Gmail: ενεργοποίηση 2FA, δημιουργία App Password (myaccount.google.com/apppasswords).',
-      '3. SMTP host: smtp.gmail.com, smtp.office365.com, ή το host του provider σου.',
-      '4. Για IMAP (ανάγνωση email): imap.gmail.com κ.λπ.',
+      '1. You need an SMTP server (Gmail, Outlook, SendGrid, Mailgun, or custom).',
+      '2. Gmail: enable 2FA, create App Password (myaccount.google.com/apppasswords).',
+      '3. SMTP host: smtp.gmail.com, smtp.office365.com, or your provider host.',
+      '4. For IMAP (reading email): imap.gmail.com etc.',
       '',
       '  🔗 support.google.com/accounts/answer/185833'
     ],
@@ -623,10 +623,10 @@ export const ZALO_PERSONAL: ChannelDef = {
   tokenLabel: 'Zalo Personal cookie token',
   tokenHint: 'Extract from browser',
   setupSteps: [
-    '1. Unofficial API — χρησιμοποιεί browser cookies. Μπορεί να χαλάσει με ενημερώσεις Zalo.',
-    '2. Άνοιξε Zalo Web στο browser, Developer Tools → Application → Cookies.',
-    '3. Ψάξε για token/cookie που χρησιμοποιεί το Zalo για auth.',
-    '4. Δες docs/channels/zalo-personal.md για λεπτομέρειες.',
+    '1. Unofficial API — uses browser cookies. May break with Zalo updates.',
+    '2. Open Zalo Web in browser, Developer Tools → Application → Cookies.',
+    '3. Look for the token/cookie Zalo uses for auth.',
+    '4. See docs/channels/zalo-personal.md for details.',
     '',
     '  ⚠️  Unofficial — use at your own risk'
   ],

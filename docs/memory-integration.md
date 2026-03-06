@@ -1,10 +1,10 @@
 # Memory Integration — Obsidian, Raycast, Hazel
 
-Ενσωμάτωση του HyperClaw MEMORY.md με Obsidian vault, Raycast search και Hazel.
+Sync HyperClaw MEMORY.md with an Obsidian vault, Raycast search, and Hazel.
 
-## Ενεργοποίηση
+## Enable
 
-Κατά το **onboard** (`hyperclaw init` ή `hyperclaw onboard`), ρωτάει προαιρετικά για vault path. Εναλλακτικά, ορίζεις manual στο `~/.hyperclaw/hyperclaw.json`:
+During **onboard** (`hyperclaw onboard`), you are optionally asked for a vault path. Or set it manually in `~/.hyperclaw/hyperclaw.json`:
 
 ```json
 {
@@ -16,25 +16,25 @@
 }
 ```
 
-## Τι γίνεται
+## What happens
 
-1. **MEMORY.md sync** — Το `~/.hyperclaw/MEMORY.md` αντιγράφεται στο vault ως `HyperClaw-MEMORY.md` (ανανεώσιμο, editable).
-2. **Daily notes** — Δημιουργούνται αρχεία `HyperClaw/YYYY-MM-DD.md` με session summaries και νέα facts.
-3. **Searchable** — Το Raycast indexει φακέλους όπως `Documents`· αν το vault είναι εκεί, οι σημειώσεις είναι searchable.
-4. **Hazel** — Μπορείς να ορίσεις rules στο `vaultDir` (π.χ. move, tag) όταν προστεθούν νέα αρχεία.
+1. **MEMORY.md sync** — `~/.hyperclaw/MEMORY.md` is copied to the vault as `HyperClaw-MEMORY.md` (updateable, editable).
+2. **Daily notes** — Files `HyperClaw/YYYY-MM-DD.md` are created with session summaries and new facts.
+3. **Searchable** — Raycast indexes folders like `Documents`; if the vault is there, notes are searchable.
+4. **Hazel** — You can set rules on `vaultDir` (e.g. move, tag) when new files are added.
 
 ## Obsidian
 
-- Βάλε το `vaultDir` στη διαδρομή του Obsidian vault σου.
-- Οι daily notes εμφανίζονται ως `HyperClaw/2025-03-03.md`.
-- Το `HyperClaw-MEMORY.md` μπορείς να το linkάρεις από άλλες σημειώσεις.
+- Set `vaultDir` to your Obsidian vault path.
+- Daily notes appear as `HyperClaw/2025-03-03.md`.
+- `HyperClaw-MEMORY.md` can be linked from other notes.
 
 ## Raycast
 
-- Αν το vault είναι σε indexed folder (π.χ. `~/Documents`), οι σημειώσεις εμφανίζονται στο Raycast search.
-- Μπορείς να δημιουργήσεις extension που τρέχει `hyperclaw memory search <query>` για targeted search.
+- If the vault is in an indexed folder (e.g. `~/Documents`), notes appear in Raycast search.
+- You can create an extension that runs `hyperclaw memory search <query>` for targeted search.
 
 ## Hazel
 
-- Δημιούργησε rule στο `vaultDir` για τα αρχεία `HyperClaw/*.md`.
-- Π.χ. "Τρέξε script" όταν προστεθεί νέο αρχείο — για sync, backup κ.λπ.
+- Create a rule on `vaultDir` for `HyperClaw/*.md` files.
+- E.g. "Run script" when a new file is added — for sync, backup, etc.

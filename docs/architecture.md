@@ -1,6 +1,6 @@
 # Architecture — HyperClaw
 
-Σύντομη επισκόπηση της αρχιτεκτονικής.
+A brief overview of the HyperClaw architecture.
 
 ---
 
@@ -50,9 +50,9 @@
 - `memory-auto.ts` — auto memory extraction
 
 ### Channels (`src/channels/`, `extensions/`)
-- Registry με channel metadata
-- Connectors: Telegram, Discord, WhatsApp, κλπ. (stubs ή πλήρη)
-- Pairing store για DM policy
+- Registry with channel metadata
+- Connectors: Telegram, Discord, WhatsApp, etc. (stubs or full)
+- Pairing store for DM policy
 
 ### Config & Secrets
 - Config: `~/.hyperclaw/hyperclaw.json`

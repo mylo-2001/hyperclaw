@@ -5,7 +5,7 @@ Thanks for your interest! 🦅
 ## Quick Start
 
 ```bash
-git clone https://github.com/yourusername/hyperclaw
+git clone https://github.com/mylo-2001/hyperclaw
 cd hyperclaw
 npm install
 npm run dev -- status    # test it works

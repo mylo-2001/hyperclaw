@@ -36,8 +36,8 @@ export async function channelsAdd(channelId?: string): Promise<void> {
   const ch = getChannel(id!);
   if (!ch) {
     console.log(chalk.red(`  ✖  Unknown channel: ${id}`));
-    console.log(chalk.gray('  Διαθέσιμα: ' + CHANNELS.map(c => c.id).join(', ')));
-    console.log(chalk.gray('  Εντολή: hyperclaw channels add <id>\n'));
+    console.log(chalk.gray('  Available: ' + CHANNELS.map(c => c.id).join(', ')));
+    console.log(chalk.gray('  Command: hyperclaw channels add <id>\n'));
     return;
   }
 
@@ -45,7 +45,7 @@ export async function channelsAdd(channelId?: string): Promise<void> {
   if (ch.notes) console.log(chalk.gray(`  ℹ  ${ch.notes}\n`));
 
   if (ch.setupSteps && ch.setupSteps.length > 0) {
-    console.log(chalk.bold('  Βήματα ρύθμισης:\n'));
+    console.log(chalk.bold('  Setup steps:\n'));
     for (const step of ch.setupSteps) {
       if (step.trim() === '') continue;
       if (step.startsWith('  🔗')) console.log(chalk.cyan(step));

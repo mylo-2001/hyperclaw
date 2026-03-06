@@ -2,12 +2,12 @@
 
 ## Talk Mode (ElevenLabs TTS)
 
-Φωνητικές απαντήσεις αντί για μόνο κείμενο.
+Voice responses instead of text only.
 
-1. Δημιουργία λογαριασμού στο [elevenlabs.io](https://elevenlabs.io)
-2. API key στο config ή `ELEVENLABS_API_KEY`
-3. WebSocket: στείλε `talk:enable` για να ενεργοποιήσεις Talk Mode
-4. Οι απαντήσεις έρχονται και ως `chat:audio` (base64 MP3)
+1. Create an account at [elevenlabs.io](https://elevenlabs.io)
+2. Add API key to config or set `ELEVENLABS_API_KEY`
+3. WebSocket: send `talk:enable` to activate Talk Mode
+4. Responses also arrive as `chat:audio` (base64 MP3)
 
 Config (`hyperclaw.json`):
 
@@ -21,20 +21,20 @@ Config (`hyperclaw.json`):
 }
 ```
 
-REST: `POST /api/v1/tts` με body `{ "text": "…" }` επιστρέφει `{ "format": "mp3", "data": "base64…" }`.
+REST: `POST /api/v1/tts` with body `{ "text": "…" }` returns `{ "format": "mp3", "data": "base64…" }`.
 
 ---
 
 ## Voice Wake — PTT & Always-on
 
-- **Push-to-talk:** Πάτα Start, μίλα, πάτα Stop
-- **Always-on (continuous):** Μείνε σε λειτουργία continuous — μετά κάθε προφορά ξαναξεκινά η ακρόαση αυτόματα
+- **Push-to-talk:** Press Start, speak, press Stop
+- **Always-on (continuous):** Stay in continuous mode — listening restarts automatically after each utterance
 
-Υποστηρίζεται στο macOS menu bar (Voice Wake window) και σε iOS/Android (Voice tab).
+Supported in the macOS menu bar (Voice Wake window) and on iOS/Android (Voice tab).
 
 ### Wake word
 
-Το wake word ορίζεται στο wizard (`hyperclaw init` / `hyperclaw onboard`) ή στο config:
+The wake word is set in the wizard (`hyperclaw onboard`) or in config:
 
 ```json
 {
@@ -45,4 +45,4 @@ REST: `POST /api/v1/tts` με body `{ "text": "…" }` επιστρέφει `{ "
 }
 ```
 
-Το `hyperclaw voice` χρησιμοποιεί το wake word από το config αν δεν περαστεί `-w` / `--wake-word`. Εναλλακτικά: χρήση [Porcupine](https://picovoice.ai/docs/porcupine/) (Picovoice) για πραγματική wake-word ακρόαση.
+`hyperclaw voice` uses the wake word from config if `-w` / `--wake-word` is not passed. Alternative: use [Porcupine](https://picovoice.ai/docs/porcupine/) (Picovoice) for real hardware wake-word detection.

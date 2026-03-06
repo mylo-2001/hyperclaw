@@ -1,6 +1,6 @@
-# Configuration — HyperClaw
+﻿# Configuration — HyperClaw
 
-Full config reference. Αρχείο: `~/.hyperclaw/hyperclaw.json`.
+Full config reference. File: `~/.hyperclaw/hyperclaw.json`.
 
 ---
 
@@ -25,7 +25,7 @@ Full config reference. Αρχείο: `~/.hyperclaw/hyperclaw.json`.
 |-----|------|-------------|
 | `providerId` | string | `openrouter` \| `anthropic` \| `openai` \| `google` \| `xai` \| `cloudflare` \| `litellm` \| `local` |
 | `modelId` | string | e.g. `anthropic/claude-sonnet-4`, `gpt-4o` |
-| `apiKey` | string | API key (ή από env) |
+| `apiKey` | string | API key (or from env) |
 | `authType` | string | `api_key` (default) \| `oauth` — use OAuth token file instead of apiKey |
 | `oauthTokenPath` | string | Path to JSON with `access_token`, `refresh_token`, `expires_at`, `token_url` (default: `~/.hyperclaw/oauth-<providerId>.json`) |
 | `baseUrl` | string | Optional: custom API base |
@@ -190,16 +190,16 @@ Enables auto-sync of MEMORY.md to Obsidian, searchable notes via Raycast, and Ha
 
 ## Custom API keys (auth add)
 
-Για υπηρεσίες που δεν υποστηρίζονται built-in, χρησιμοποίησε `hyperclaw auth add`:
+For services not supported built-in, use `hyperclaw auth add`:
 
 ```bash
-hyperclaw auth add <service_id>              # Ζητάει το API key interactively
-hyperclaw auth add tavily --key tvly-xxx    # Με --key
+hyperclaw auth add <service_id>              # Prompts for API key interactively
+hyperclaw auth add tavily --key tvly-xxx    # With --key
 hyperclaw auth add my-api --key sk-xxx --base-url https://api.example.com
-hyperclaw auth remove <service_id>          # Αφαίρεση
+hyperclaw auth remove <service_id>          # Remove
 ```
 
-Αποθηκεύει σε `~/.hyperclaw/credentials/<service_id>.json` και στο `.env` ως `<SERVICE_ID>_API_KEY`. Τα skills και το agent διαβάζουν από `process.env.<SERVICE_ID>_API_KEY` χωρίς custom skills.
+Saves to `~/.hyperclaw/credentials/<service_id>.json` και στο `.env` ως `<SERVICE_ID>_API_KEY`. Τα skills και το agent διαβάζουν από `process.env.<SERVICE_ID>_API_KEY` χωρίς custom skills.
 
 ---
 
@@ -209,10 +209,10 @@ hyperclaw auth remove <service_id>          # Αφαίρεση
 hyperclaw config show          # Show config (masked)
 hyperclaw config set-key KEY=value
 hyperclaw config schema        # Schema
-hyperclaw auth add <service_id>   # Προσθήκη custom API key
+hyperclaw auth add <service_id>   # Add custom API key
 hyperclaw auth oauth google    # Full OAuth flow (browser)
 hyperclaw auth oauth-set <provider>  # Manual token save
-hyperclaw secrets credentials     # Λίστα credentials
+hyperclaw secrets credentials     # List credentials
 hyperclaw menu-bar             # Launch macOS menu bar app (from repo)
 ```
 
@@ -220,14 +220,14 @@ hyperclaw menu-bar             # Launch macOS menu bar app (from repo)
 
 ## Nix
 
-Εγκατάσταση μέσω Nix:
+Install via Nix:
 
 ```bash
-# Με flake
+# With flake
 nix build .#
-# ή nix profile install .#
+# or nix profile install .#
 
-# Χωρίς flake (default.nix)
+# Without flake (default.nix)
 nix-env -i -f default.nix
 ```
 

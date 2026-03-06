@@ -1,19 +1,19 @@
 # Gmail Pub/Sub — Real-time email triggers
 
-Αντί για IMAP polling, το Gmail Pub/Sub σου δίνει real-time ειδοποιήσεις όταν έρχεται νέο mail.
+Instead of IMAP polling, Gmail Pub/Sub gives you real-time notifications when new mail arrives.
 
 ## Setup
 
 1. **Google Cloud Console**
-   - Δημιούργησε project
-   - Ενεργοποίησε Gmail API και Cloud Pub/Sub API
-   - Δημιούργησε Pub/Sub topic (π.χ. `gmail-push`)
-   - Δώσε publish rights στο `gmail-api-push@system.gserviceaccount.com`
+   - Create a project
+   - Enable Gmail API and Cloud Pub/Sub API
+   - Create a Pub/Sub topic (e.g. `gmail-push`)
+   - Grant publish rights to `gmail-api-push@system.gserviceaccount.com`
 
 2. **Push subscription**
-   - Δημιούργησε subscription τύπου **Push**
+   - Create a **Push** type subscription
    - Endpoint URL: `https://your-server/webhook/gmail-pubsub`
-   - Το server σου πρέπει να είναι publicly accessible (ngrok, Tailscale Funnel, κ.λπ.)
+   - Your server must be publicly accessible (ngrok, Tailscale Funnel, etc.)
 
 3. **OAuth + Gmail watch**
    ```bash
@@ -24,9 +24,9 @@
    ```
 
 4. **HyperClaw**
-   - Ενεργοποίησε το `email` channel (IMAP + SMTP όπως πριν)
-   - Όταν το Pub/Sub στέλνει push στο `/webhook/gmail-pubsub`, το email connector κάνει **άμεσο poll**
+   - Enable the `email` channel (IMAP + SMTP as usual)
+   - When Pub/Sub sends a push to `/webhook/gmail-pubsub`, the email connector does an **immediate poll**
 
-## Σημείωση
+## Note
 
-Το email connector χρησιμοποιεί **IMAP** για fetch. Το Gmail Pub/Sub απλά λέει "νέο mail" — μετά γίνεται IMAP poll.
+The email connector uses **IMAP** for fetching. Gmail Pub/Sub simply signals "new mail arrived" — then IMAP poll fetches it.

@@ -1168,7 +1168,7 @@ authCmd.command('add <service_id>')
     const steps = guide?.setupSteps ?? GENERIC_API_KEY_STEPS;
 
     console.log(chalk.bold.hex('#06b6d4')(`\n  🔑 Add API key: ${guide?.name ?? serviceId}\n`));
-    console.log(chalk.bold('  Βήματα:\n'));
+    console.log(chalk.bold('  Steps:\n'));
     for (const step of steps) {
       if (step.startsWith('  🔗')) console.log(chalk.hex('#06b6d4')(step));
       else if (step.startsWith('  💡')) console.log(chalk.gray(step));

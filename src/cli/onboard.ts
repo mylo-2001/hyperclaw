@@ -451,11 +451,11 @@ export class HyperClawWizard {
       const { wantGmailOAuth } = await inquirer.prompt([{
         type: 'confirm',
         name: 'wantGmailOAuth',
-        message: 'Θέλεις Gmail OAuth για Pub/Sub real-time (αποστολή μέσω hyperclaw gmail watch-setup);',
+        message: 'Enable Gmail OAuth for Pub/Sub real-time (send via hyperclaw gmail watch-setup)?',
         default: false
       }]);
       if (wantGmailOAuth) {
-        console.log(chalk.gray('  Συντρέχει OAuth flow για google-gmail...'));
+        console.log(chalk.gray('  Running OAuth flow for google-gmail...'));
         try {
           const { runOAuthFlow } = await import('../services/oauth-flow');
           const { writeOAuthToken } = await import('../services/oauth-provider');
@@ -468,9 +468,9 @@ export class HyperClawWizard {
             expires_at,
             token_url: 'https://oauth2.googleapis.com/token'
           });
-          console.log(chalk.green('  ✔  Gmail OAuth configured — μετά: hyperclaw gmail watch-setup'));
+          console.log(chalk.green('  ✔  Gmail OAuth configured — next: hyperclaw gmail watch-setup'));
         } catch (e: any) {
-          console.log(chalk.yellow(`  ⚠  OAuth απέτυχε — μπορείς να το τρέξεις μετά: hyperclaw auth oauth google-gmail`));
+          console.log(chalk.yellow(`  ⚠  OAuth failed — you can run it later: hyperclaw auth oauth google-gmail`));
         }
       }
     }
@@ -479,17 +479,17 @@ export class HyperClawWizard {
   }
 
   private async configureServiceApiKeys(): Promise<Record<string, string>> {
-    console.log(chalk.hex('#06b6d4')('\n  🔑 Service API Keys — οποιοδήποτε app με API key\n'));
-    console.log(chalk.gray('  Αποθηκεύονται ασφαλώς στο config. Πώς λειτουργούν:\n'));
-    console.log(chalk.gray('  • Wizard: εδώ προσθέτεις keys\n'));
+    console.log(chalk.hex('#06b6d4')('\n  🔑 Service API Keys — any app with an API key\n'));
+    console.log(chalk.gray('  Stored securely in config. How they work:\n'));
+    console.log(chalk.gray('  • Wizard: add keys here\n'));
     console.log(chalk.gray('  • Config: ~/.hyperclaw/hyperclaw.json → skills.apiKeys\n'));
-    console.log(chalk.gray('  • Env: HACKERONE_*, BUGCROWD_*, SYNACK_*, ή CUSTOM_ID_API_KEY\n'));
-    console.log(chalk.gray('  • Tools: τα built-in tools τα διαβάζουν αυτόματα για research.\n'));
+    console.log(chalk.gray('  • Env: HACKERONE_*, BUGCROWD_*, SYNACK_*, or CUSTOM_ID_API_KEY\n'));
+    console.log(chalk.gray('  • Tools: built-in tools read them automatically for research.\n'));
 
     const { wantServiceKeys } = await inquirer.prompt([{
       type: 'confirm',
       name: 'wantServiceKeys',
-      message: 'Θέλεις να προσθέσεις API keys (HackerOne, Bugcrowd, Synack, ή custom app);',
+      message: 'Add API keys for external services (HackerOne, Bugcrowd, Synack, or custom)?',
       default: false
     }]);
 
@@ -497,15 +497,15 @@ export class HyperClawWizard {
 
     const KNOWN_SERVICES = [
       { id: 'hackerone', name: 'HackerOne', hint: 'username:token (Basic auth)' },
-      { id: 'bugcrowd', name: 'Bugcrowd', hint: 'Token από Bugcrowd API Credentials' },
-      { id: 'synack', name: 'Synack', hint: 'API token από Synack' },
-      { id: '__custom__', name: 'Άλλο (custom)', hint: 'Οποιαδήποτε εφαρμογή με API key' },
+      { id: 'bugcrowd', name: 'Bugcrowd', hint: 'Token from Bugcrowd API Credentials' },
+      { id: 'synack', name: 'Synack', hint: 'API token from Synack' },
+      { id: '__custom__', name: 'Other (custom)', hint: 'Any app with an API key' },
     ];
 
     const { servicesToAdd } = await inquirer.prompt([{
       type: 'checkbox',
       name: 'servicesToAdd',
-      message: 'Επίλεξε services:',
+      message: 'Select services:',
       choices: KNOWN_SERVICES.filter(s => s.id !== '__custom__').map(s => ({
         name: `${s.name}  ${chalk.gray(`(${s.hint})`)}`,
         value: s.id
@@ -528,19 +528,19 @@ export class HyperClawWizard {
     }
 
     const { addCustom } = await inquirer.prompt([{
-      type: 'confirm', name: 'addCustom', message: 'Πρόσθεσε custom service (οποιοδήποτε app);', default: false
+      type: 'confirm', name: 'addCustom', message: 'Add a custom service (any app)?', default: false
     }]);
 
     if (addCustom) {
       const { customId, customKey } = await inquirer.prompt([
-        { type: 'input', name: 'customId', message: 'Service ID (π.χ. my-app, ads-power):', validate: (v: string) => /^[a-z0-9_-]+$/i.test(v?.trim() || '') || 'Μόνο γράμματα, αριθμοί, - _' },
+        { type: 'input', name: 'customId', message: 'Service ID (e.g. my-app, ads-power):', validate: (v: string) => /^[a-z0-9_-]+$/i.test(v?.trim() || '') || 'Letters, numbers, - _ only' },
         { type: 'password', name: 'customKey', message: 'API key:', mask: '●', validate: (v: string) => v.trim().length > 3 || 'Required' }
       ]);
       apiKeys[customId.trim().toLowerCase()] = customKey.trim();
     }
 
     if (Object.keys(apiKeys).length > 0) {
-      console.log(chalk.green(`  ✔  Αποθηκεύτηκαν ${Object.keys(apiKeys).length} API key(s)`));
+      console.log(chalk.green(`  ✔  Saved ${Object.keys(apiKeys).length} API key(s)`));
     }
     return apiKeys;
   }
@@ -549,14 +549,14 @@ export class HyperClawWizard {
     console.log(chalk.hex('#06b6d4')('\n  🤖 HyperClaw Bot — Remote control via Telegram\n'));
     const trans = getTranscriptionProviders();
     if (trans.length > 0) {
-      console.log(chalk.gray('  🎤 Voice notes: ' + trans.map(p => `${p.displayName}`).join(', ') + ' — αν έχεις το API key τους, οι φωνητικές θα μετατραπούν σε κείμενο.'));
+      console.log(chalk.gray('  🎤 Voice notes: ' + trans.map(p => `${p.displayName}`).join(', ') + ' — if you have their API key, voice messages will be transcribed to text.'));
       console.log();
     }
 
     const { wantHyperClawBot } = await inquirer.prompt([{
       type: 'confirm',
       name: 'wantHyperClawBot',
-      message: 'Θέλεις HyperClaw Bot για remote control (status, restart, /agent από κινητό);',
+      message: 'Enable HyperClaw Bot for remote control (status, restart, /agent from mobile)?',
       default: false
     }]);
 
@@ -565,13 +565,13 @@ export class HyperClawWizard {
     const { token } = await inquirer.prompt([{
       type: 'input',
       name: 'token',
-      message: 'Telegram Bot token (από @BotFather):',
+      message: 'Telegram Bot token (from @BotFather):',
       validate: (v: string) => v.trim().length > 10 || 'Required'
     }]);
     const { userIds } = await inquirer.prompt([{
       type: 'input',
       name: 'userIds',
-      message: 'Allowed user IDs (comma-separated, κενό = όλοι):',
+      message: 'Allowed user IDs (comma-separated, leave empty = everyone):',
       default: ''
     }]);
 
@@ -596,7 +596,7 @@ export class HyperClawWizard {
     const { wantTalkMode } = await inquirer.prompt([{
       type: 'confirm',
       name: 'wantTalkMode',
-      message: 'Θέλεις Talk Mode (φωνητικές απαντήσεις μέσω ElevenLabs);',
+      message: 'Enable Talk Mode (voice responses via ElevenLabs)?',
       default: false
     }]);
 
@@ -662,7 +662,7 @@ export class HyperClawWizard {
       },
       {
         type: 'list', name: 'language', message: 'Primary language:',
-        choices: ['English', 'Greek / Ελληνικά', 'Spanish', 'French', 'German', 'Chinese', 'Japanese', 'Arabic']
+        choices: ['English', 'Greek', 'Spanish', 'French', 'German', 'Chinese', 'Japanese', 'Arabic']
       }
     ]);
 

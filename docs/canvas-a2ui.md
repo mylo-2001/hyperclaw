@@ -1,6 +1,6 @@
 # Canvas + A2UI v0.8
 
-Το HyperClaw canvas εκθέτει A2UI v0.8-compatible API για AI-driven UI streaming.
+HyperClaw canvas exposes an A2UI v0.8-compatible API for AI-driven UI streaming.
 
 ## Endpoints
 
@@ -9,8 +9,8 @@
 
 ## A2UI format
 
-Ένα beginRendering message περιέχει surfaceId, surfaces (flat list), dataModel.
+A `beginRendering` message contains `surfaceId`, `surfaces` (flat list), `dataModel`.
 
-Τύποι: chart, table, form, markdown, image, custom, script.
+Types: `chart`, `table`, `form`, `markdown`, `image`, `custom`, `script`.
 
 Ref: https://a2ui.org/specification/v0.8-a2ui/

@@ -1,38 +1,38 @@
-# Connect Tab πρωτόκολλο — Mobile Nodes
+# Connect Tab Protocol — Mobile Nodes
 
-Το πρωτόκολλο Connect tab επιτρέπει στα mobile apps (iOS/Android) να συνδέονται με το HyperClaw gateway ως *mobile nodes* και να λαμβάνουν εντολές (photo, location, κτλ.) από τον AI agent.
+The Connect tab protocol allows mobile apps (iOS/Android) to connect to the HyperClaw gateway as *mobile nodes* and receive commands (photo, location, etc.) from the AI agent.
 
-## Επισκόπηση
+## Overview
 
-| Συστατικό | Περιγραφή |
-|-----------|-----------|
-| **Gateway** | WebSocket server (`ws://localhost:18789` ή Tailscale) |
-| **Node** | Mobile app session που στέλνει `node:register` |
-| **API** | `GET /api/nodes` — λίστα συνδεδεμένων nodes |
+| Component | Description |
+|-----------|-------------|
+| **Gateway** | WebSocket server (`ws://localhost:18789` or Tailscale) |
+| **Node** | Mobile app session that sends `node:register` |
+| **API** | `GET /api/nodes` — list connected nodes |
 
 ## WebSocket messages
 
 ### Node → Gateway
 
-- **`node:register`** — Καταχώρηση ως mobile node:
+- **`node:register`** — Register as a mobile node:
   ```json
   { "type": "node:register", "nodeId": "iPhone-1", "platform": "ios", "deviceName": "My iPhone", "capabilities": { "camera": true, "location": true } }
   ```
 
 ### Gateway → Node
 
-- **`node:registered`** — Επιβεβαίωση καταχώρησης:
+- **`node:registered`** — Registration confirmed:
   ```json
   { "type": "node:registered", "nodeId": "iPhone-1" }
   ```
-- **`node:command`** — Εντολή προς το device (από node_command tool):
+- **`node:command`** — Command to device (from node_command tool):
   ```json
   { "type": "node:command", "id": "cmd-123", "command": "take_photo" }
   ```
 
 ### Node → Gateway (response)
 
-- **`node:command:result`** — Αποτέλεσμα εντολής:
+- **`node:command:result`** — Command result:
   ```json
   { "type": "node:command:result", "id": "cmd-123", "ok": true, "data": { "photoBase64": "..." } }
   ```
@@ -40,7 +40,7 @@
 ## CLI
 
 ```bash
-# Λίστα συνδεδεμένων nodes
+# List connected nodes
 hyperclaw nodes
 ```
 
@@ -51,14 +51,14 @@ GET /api/nodes
 → { "nodes": [ { "nodeId", "platform", "capabilities", "deviceName", "connectedAt" } ] }
 ```
 
-## Ρύθμιση
+## Setup
 
-1. Ξεκίνα το gateway: `hyperclaw daemon start`
-2. Άνοιξε το iOS/Android app → Connect tab
-3. Σύνδεσε με `ws://<gateway-host>:18789` (ή Tailscale URL)
-4. Ο AI agent μπορεί να στείλει εντολές μέσω του `node_command` tool
+1. Start the gateway: `hyperclaw daemon start`
+2. Open the iOS/Android app → Connect tab
+3. Connect to `ws://<gateway-host>:18789` (or Tailscale URL)
+4. The AI agent can send commands via the `node_command` tool
 
-## Δείτε επίσης
+## See also
 
 - [mobile-desktop-apps.md](mobile-desktop-apps.md)
 - [NodeRegistry](../src/services/nodes-registry.ts)

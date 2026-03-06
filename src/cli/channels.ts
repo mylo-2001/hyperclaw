@@ -71,7 +71,7 @@ export const CHANNEL_DEFS: ChannelDef[] = [
     tokenLabel: 'Slack Bot Token (xoxb-...)', tokenHint: 'api.slack.com/apps',
     setupSteps: [
       '1. api.slack.com/apps → Create App → Bot',
-      '2. Install App → αντιγράψε Bot Token (xoxb-)',
+      '2. Install App → copy Bot Token (xoxb-)',
       '3. Basic Information → Signing Secret',
       '  🔗 api.slack.com/apps'
     ],

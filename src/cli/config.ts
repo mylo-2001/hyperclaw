@@ -1,4 +1,4 @@
-/**
+﻿/**
  * src/cli/config.ts
  * ConfigStore — live config mutation + reload, secret scrubbing, key rotation.
  * HyperClaw live config plane (not just read — also writes & notifies gateway).
@@ -68,7 +68,7 @@ export interface HyperClawConfig {
   skills?: {
     installed: string[];
     vtApiKey?: string;
-    /** API keys για οποιοδήποτε app (HackerOne, Bugcrowd, Synack, custom). Τα tools τα διαβάζουν. */
+    /** API keys for any app (HackerOne, Bugcrowd, Synack, custom). Tools read these automatically. */
     apiKeys?: Record<string, string>;
   };
   talkMode?: {

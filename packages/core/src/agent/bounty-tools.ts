@@ -1,7 +1,7 @@
-/**
+﻿/**
  * src/agent/bounty-tools.ts
- * Service API tools — HackerOne, Bugcrowd, Synack + generic tools για οποιαδήποτε υπηρεσία με API key.
- * Τα keys από skills.apiKeys ή env (HACKERONE_*, BUGCROWD_*, CUSTOM_SERVICE_API_KEY, etc).
+ * Service API tools — HackerOne, Bugcrowd, Synack + generic tools for any service with an API key.
+ * Keys from skills.apiKeys or env (HACKERONE_*, BUGCROWD_*, CUSTOM_SERVICE_API_KEY, etc).
  */
 
 import https from 'https';
@@ -109,7 +109,7 @@ export function getBountyTools(cfg: { skills?: { apiKeys?: Record<string, string
     });
   }
 
-  // Γενικό tool για οποιαδήποτε υπηρεσία με API key στο skills.apiKeys
+  // Generic tool for any service with an API key in skills.apiKeys
   const apiKeys = cfg?.skills?.apiKeys ?? {};
   const genericServiceIds = Object.keys(apiKeys).filter(id => !KNOWN_BOUNTY_SERVICES.includes(id.toLowerCase()));
   if (genericServiceIds.length > 0) {

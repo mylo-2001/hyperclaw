@@ -1,34 +1,34 @@
 # iMessage native (imsg CLI)
 
-iMessage χωρίς BlueBubbles — απευθείας μέσω **imsg** CLI στο macOS.
+iMessage without BlueBubbles — directly via the **imsg** CLI on macOS.
 
-## Απαιτήσεις
+## Requirements
 
 - macOS 14+
-- **imsg** εγκατεστημένο: [github.com/steipete/imsg](https://github.com/steipete/imsg) — `git clone ... && make build`
-- Full Disk Access για Terminal/Node (για ανάγνωση Messages DB)
-- Automation: το Node/Terminal να μπορεί να ελέγχει το Messages.app
+- **imsg** installed: [github.com/steipete/imsg](https://github.com/steipete/imsg) — `git clone ... && make build`
+- Full Disk Access for Terminal/Node (to read Messages DB)
+- Automation: Node/Terminal must be able to control Messages.app
 
-## Ρύθμιση
+## Setup
 
-1. Πρόσθεσε το channel `imessage-native` στα enabled channels:
+1. Add the `imessage-native` channel to enabled channels:
 
 ```bash
 hyperclaw channels add imessage-native
 ```
 
-2. Στο `hyperclaw.json` ή από UI, ενεργοποίησε το channel. Δεν χρειάζεται token — το imsg τρέχει τοπικά.
+2. In `hyperclaw.json` or from UI, enable the channel. No token needed — imsg runs locally.
 
-3. (Προαιρετικό) `IMSG_PATH` αν το imsg δεν είναι στο PATH.
+3. (Optional) Set `IMSG_PATH` if imsg is not in PATH.
 
-## Σύγκριση με BlueBubbles
+## Comparison with BlueBubbles
 
 | | BlueBubbles (imessage) | imessage-native |
-|--|------------------------|------------------|
-| Εγκατάσταση | BlueBubbles server στο Mac | Μόνο imsg binary |
-| Δίκτυο | Απαιτείται πρόσβαση στο Mac (HTTP/WS) | Τοπικό, καμία υπηρεσία |
-| Άδειες | Messages.app μέσω server | Full Disk + Automation |
+|--|------------------------|-----------------|
+| Setup | BlueBubbles server on Mac | imsg binary only |
+| Network | Requires access to Mac (HTTP/WS) | Local, no service |
+| Permissions | Messages.app via server | Full Disk + Automation |
 
 ## Pairing
 
-Όπως και στα άλλα channels: το πρώτο μήνυμα από νέο αριθμό θα λάβει pairing code. Εκτέλεσε `hyperclaw pairing approve imessage-native <CODE>` για να εγκριθεί.
+Same as other channels: the first message from a new number will receive a pairing code. Run `hyperclaw pairing approve imessage-native <CODE>` to approve.

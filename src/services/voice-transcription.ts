@@ -163,5 +163,5 @@ export async function transcribeVoiceNote(
     }
   }
 
-  return '[Voice note — add OPENAI_API_KEY or GOOGLE_AI_API_KEY (ή διάλεξε OpenAI/Google provider στο wizard) για transcription]';
+  return '[Voice note — add OPENAI_API_KEY or GOOGLE_AI_API_KEY (or select OpenAI/Google provider in the wizard) for transcription]';
 }
