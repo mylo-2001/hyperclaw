@@ -12,7 +12,7 @@
 
 **Please do NOT open a public GitHub issue for security vulnerabilities.**
 
-Report security issues by emailing: **security@hyperclaw.ai**
+Report security issues by emailing: **securityhyperclaw.ai@gmail.com**
 
 Include:
 - Description of the vulnerability
