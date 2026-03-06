@@ -10,6 +10,7 @@
   <img src="https://img.shields.io/badge/node-%E2%89%A522-green?style=flat-square" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-gray?style=flat-square" alt="license">
   <img src="https://img.shields.io/badge/typescript-5.4-3178c6?style=flat-square&logo=typescript&logoColor=white" alt="typescript">
+  <img src="https://img.shields.io/badge/security-ethical%20hacking-red?style=flat-square&logo=hackthebox&logoColor=white" alt="security">
 </p>
 
 <p align="center">
@@ -21,7 +22,8 @@
 </p>
 
 <p align="center">
-  <em>If you want a personal, single-user assistant that feels local, fast, and always-on, this is it.</em>
+  <em>If you want a personal, single-user assistant that feels local, fast, and always-on, this is it.</em><br>
+  <em>Built for developers, security researchers, and power users who want full control.</em>
 </p>
 
 <p align="center">
@@ -33,6 +35,21 @@
   <a href="docs/tailscale.md">Tailscale</a> ·
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
+
+---
+
+## Use cases
+
+| Use case | How |
+|----------|-----|
+| **Personal assistant** | Chat via Telegram/Discord, voice on macOS/iOS, always-on daemon |
+| **Bug bounty & OSINT** | HackerOne/Bugcrowd/Synack API keys, web-search skill, clipboard & screenshot tools |
+| **Ethical hacking / pentest** | PC access tools (bash, file read/write), sandboxed execution, MCP tool servers |
+| **Cybersecurity research** | Automate recon, triage findings, draft reports — all from your phone via Telegram |
+| **Developer productivity** | Code review, GitHub integration, local shell access, memory across sessions |
+| **Home automation** | Cron skills, morning briefing, calendar events, device commands (macOS/Android) |
+
+> HyperClaw runs **locally on your machine** — your data, your keys, your control.
 
 ---
 
@@ -62,17 +79,20 @@ Works on **macOS, Linux, and Windows** (via WSL2 recommended). Compatible with n
 # 1. Run the onboarding wizard (first time)
 hyperclaw onboard
 
-# 2. Start the gateway (stays running in foreground)
+# 2a. Start the gateway in foreground
 hyperclaw gateway --port 18789 --verbose
 
-# 3. Or install as a background daemon (launchd / systemd)
-hyperclaw daemon install && hyperclaw daemon start
+# 2b. Or run as a background daemon (auto-start on boot)
+hyperclaw daemon start
 
-# 4. Talk to your assistant
+# 3. Talk to your assistant
 hyperclaw agent --message "What can you do?"
 
-# 5. Send a message to a connected channel
-hyperclaw message send --to +1234567890 --message "Hello from HyperClaw"
+# 4. Security / bug bounty — run recon from your phone
+# Just message your Telegram bot: "search HackerOne for targets on acme.com"
+
+# 5. Check status
+hyperclaw doctor
 ```
 
 Upgrading? Run `hyperclaw doctor` to check and migrate.
@@ -213,7 +233,7 @@ Full guide: [docs/security.md](docs/security.md)
 ## Features
 
 - **Local-first Gateway** — single control plane for sessions, channels, tools, and events
-- **Multi-channel inbox** — 14+ channels, unified session model
+- **Multi-channel inbox** — 27+ channels, unified session model
 - **Multi-agent routing** — route channels/accounts to isolated agent workspaces
 - **Extended thinking** — Claude extended thinking with `/think high` in chat
 - **Voice** — Talk Mode with ElevenLabs TTS + system TTS fallback
