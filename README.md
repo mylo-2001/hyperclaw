@@ -332,10 +332,19 @@ docker build -f Dockerfile.sandbox -t hyperclaw:sandbox .
 ```
 hyperclaw/
 ├── src/                    # Core CLI, gateway, channels, tools
-│   ├── cli/                # CLI entry point + commands
+│   ├── cli/                # CLI entry point + onboarding wizard
 │   ├── gateway/            # Gateway server + manager (re-exports)
 │   ├── channels/           # Channel connectors + registry
-│   └── services/           # MCP, memory, heartbeat, cron
+│   ├── services/           # MCP, memory, heartbeat, cron
+│   ├── agent/              # Agent loop, orchestrator, tool dispatch
+│   ├── canvas/             # A2UI Canvas renderer
+│   ├── commands/           # CLI sub-commands (channels, pairing…)
+│   ├── hooks/              # Lifecycle hooks (boot, cron, memory)
+│   ├── infra/              # Tool policy, destructive gate, secrets
+│   ├── media/              # Voice, TTS, STT, audio
+│   ├── routing/            # Session routing + multi-agent dispatch
+│   ├── security/           # Auth, sandboxing, DM policy
+│   └── …                  # (sdk, types, webhooks, logging, plugins…)
 ├── packages/
 │   ├── core/               # Inference engine, agent loop
 │   ├── gateway/            # Gateway package (standalone)
@@ -344,9 +353,12 @@ hyperclaw/
 │   ├── ios/                # iOS node app
 │   ├── android/            # Android node app
 │   ├── macos/              # macOS menu bar app
-│   └── macos-menubar/      # Tauri macOS menu bar
+│   ├── macos-menubar/      # Tauri macOS menu bar
+│   └── web/                # Web UI (React + Vite)
 ├── extensions/             # Channel connectors (Telegram, Discord…)
 ├── skills/                 # Bundled skills (reminders, translator)
+├── workspace-templates/    # Agent config templates (AGENTS.md, SOUL.md, TOOLS.md…)
+├── scripts/                # Build + utility scripts
 ├── tests/                  # Vitest — unit / integration / e2e
 └── docs/                   # Full documentation
 ```

@@ -1,4 +1,4 @@
-﻿# Configuration — HyperClaw
+# Configuration — HyperClaw
 
 Full config reference. File: `~/.hyperclaw/hyperclaw.json`.
 
@@ -199,7 +199,7 @@ hyperclaw auth add my-api --key sk-xxx --base-url https://api.example.com
 hyperclaw auth remove <service_id>          # Remove
 ```
 
-Saves to `~/.hyperclaw/credentials/<service_id>.json` και στο `.env` ως `<SERVICE_ID>_API_KEY`. Τα skills και το agent διαβάζουν από `process.env.<SERVICE_ID>_API_KEY` χωρίς custom skills.
+Saves to `~/.hyperclaw/credentials/<service_id>.json` and to `.env` as `<SERVICE_ID>_API_KEY`. Skills and the agent read from `process.env.<SERVICE_ID>_API_KEY` without custom skills.
 
 ---
 
@@ -231,4 +231,4 @@ nix build .#
 nix-env -i -f default.nix
 ```
 
-Για να υπολογίσεις το `npmDepsHash`: τρέξε `./scripts/nix-update-hash.sh` (σε Linux/macOS) ή `nix build .# 2>&1` και αντικατέστησε το hash στο σφάλμα.
+To compute `npmDepsHash`: run `./scripts/nix-update-hash.sh` (on Linux/macOS) or `nix build .# 2>&1` and replace the hash shown in the error.

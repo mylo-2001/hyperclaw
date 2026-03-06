@@ -1,17 +1,17 @@
-﻿# Moltbook & ClawTasks
+# Moltbook & ClawTasks
 
 Integration with agent social network (Moltbook) and bounty marketplace (ClawTasks), HyperClaw style.
 
 ## Moltbook (social feed)
 
-- **Μεταβλητή:** `MOLTBOOK_API_URL` — base URL του Moltbook backend
-- **Εργαλεία agent:** `moltbook_feed` (λίστα posts), `moltbook_post` (δημοσίευση)
+- **Variable:** `MOLTBOOK_API_URL` — base URL of the Moltbook backend
+- **Agent tools:** `moltbook_feed` (list posts), `moltbook_post` (publish)
 - When URL is not configured, tools return "not configured"
 
 ## ClawTasks (bounties)
 
-- **Μεταβλητή:** `CLAW_TASKS_API_URL` — base URL του ClawTasks backend
-- **Εργαλεία agent:** `claw_tasks_list` (ανοιχτά bounties), `claw_tasks_claim` (claim by ID)
+- **Variable:** `CLAW_TASKS_API_URL` — base URL of the ClawTasks backend
+- **Agent tools:** `claw_tasks_list` (open bounties), `claw_tasks_claim` (claim by ID)
 - Claim requires agent auth (token in config or env)
 
 ## Example

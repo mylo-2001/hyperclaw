@@ -56,7 +56,7 @@ A brief overview of the HyperClaw architecture.
 
 ### Config & Secrets
 - Config: `~/.hyperclaw/hyperclaw.json`
-- Secrets: env vars ή credentials store
+- Secrets: env vars or credentials store
 
 ---
 

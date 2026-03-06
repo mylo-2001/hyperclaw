@@ -1,4 +1,4 @@
-﻿# OAuth for AI providers
+# OAuth for AI providers
 
 Instead of an API key you can use OAuth (access token + refresh).
 
@@ -30,7 +30,7 @@ Instead of an API key you can use OAuth (access token + refresh).
 }
 ```
 
-Αν δεν δώσεις `oauthTokenPath`, χρησιμοποιείται αυτόματα `~/.hyperclaw/oauth-<providerId>.json`.
+If you omit `oauthTokenPath`, the default path `~/.hyperclaw/oauth-<providerId>.json` is used automatically.
 
 ## Full OAuth flow (browser)
 
@@ -65,6 +65,6 @@ When expires_at has expired and refresh_token and token_url are present, HyperCl
 
 ## Anthropic / OpenAI
 
-- **API keys** — `hyperclaw auth add anthropic` ή `hyperclaw auth add openai` (default)
+- **API keys** — `hyperclaw auth add anthropic` or `hyperclaw auth add openai` (default)
 - **Anthropic setup token** (Claude Pro/Max) — `hyperclaw auth setup-token anthropic` (paste from claude setup-token)
 - **OpenAI** — API keys only, no OAuth for the API
