@@ -13,26 +13,34 @@ on:
 jobs:
   test:
     runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: apps/macos
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
+          cache-dependency-path: apps/macos/package-lock.json
       - run: npm ci
-      - run: npm run macos:test
+      - run: npm test
 
   build:
     needs: test
     runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: apps/macos
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
+          cache-dependency-path: apps/macos/package-lock.json
       - run: npm ci
-      - run: npm run macos:build
+      - run: npm run build:mac
       - uses: actions/upload-artifact@v4
         with:
           name: hyperclaw-macos
