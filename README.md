@@ -44,7 +44,11 @@ Runtime: Node ≥ 22.
 npm install -g hyperclaw@latest
 # or: pnpm add -g hyperclaw@latest
 
+# First-time setup wizard
 hyperclaw onboard
+
+# Or install with daemon (auto-start on boot, full PC access)
+hyperclaw onboard --install-daemon
 ```
 
 The wizard guides you step by step — provider, model, gateway, channels, and skills.
@@ -77,7 +81,7 @@ Upgrading? Run `hyperclaw doctor` to check and migrate.
 
 ## Channels
 
-HyperClaw connects to the channels you already use (30 channels):
+HyperClaw connects to the channels you already use (27 channels):
 
 | Channel | Status | Notes |
 |---------|--------|-------|
@@ -109,8 +113,6 @@ HyperClaw connects to the channels you already use (30 channels):
 | 🎙️ Voice Call | ✅ Available | Terminal voice session |
 | 🌐 Chrome Extension | ✅ Available | Browser sidebar |
 
-Also available: `synology-chat`, `twitch`, `tlon`.
-
 Add a channel:
 
 ```bash
@@ -127,7 +129,7 @@ Google Chat / Matrix / IRC / Mattermost / Teams / Nostr / WebChat
                │
                ▼
 ┌──────────────────────────────────┐
-│           HyperClaw Gateway       │
+│           HyperClaw Gateway      │
 │        ws://127.0.0.1:18789      │
 │  sessions · auth · routing       │
 │  tools · cron · webhooks         │
@@ -240,42 +242,15 @@ The Gateway alone delivers a great experience. Apps add extra features:
 
 ### iOS node (optional)
 
-- Pairs over Gateway WebSocket (Bonjour discovery + manual + auth token)
-- Chat + transcript restore + Canvas + Voice
-- Registers as an iOS mobile node for gateway/device workflows
+- Pairs over Gateway WebSocket (Bonjour discovery + manual)
+- Canvas surface + Voice
+- Camera and screen capture tools
 
 ### Android node (optional)
 
 - Connect/Chat/Voice tabs + Canvas
 - Camera, screen capture, device commands
 - Notifications, contacts, calendar, photos
-
-Mobile app docs:
-
-- [apps/ios/README.md](apps/ios/README.md)
-- [apps/android/README.md](apps/android/README.md)
-- [docs/mobile-desktop-apps.md](docs/mobile-desktop-apps.md)
-
----
-
-## Plugin Registry & Community
-
-HyperClaw ships both a bundled skill marketplace and a community registry flow.
-
-```bash
-hyperclaw hub
-hyperclaw hub --marketplace
-hyperclaw skill search weather
-hyperclaw skill install github
-hyperclaw skill list
-```
-
-- Bundled + risk-scored skill catalog
-- ClawHub-compatible remote search/install flow
-- Workspace installs under `~/.hyperclaw/workspace/skills`
-- Plugin/skill SDK for community authors
-
-More: [docs/plugin-registry-community.md](docs/plugin-registry-community.md)
 
 ---
 
@@ -297,7 +272,7 @@ Send these in any connected channel (Telegram, Discord, Slack, etc.):
 ## From source
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/hyperclaw.git
+git clone https://github.com/mylo-2001/hyperclaw.git
 cd hyperclaw
 
 pnpm install
