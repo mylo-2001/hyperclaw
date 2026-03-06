@@ -1,0 +1,93 @@
+name: Bug Report
+description: Something is broken — help us fix it
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug!
+        Please fill in as much detail as possible so we can reproduce and fix it quickly.
+
+  - type: input
+    id: version
+    attributes:
+      label: HyperClaw version
+      description: Run `hyperclaw --version` and paste the output
+      placeholder: "4.0.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows (native)
+        - Windows (WSL2)
+        - macOS
+        - Linux
+        - Docker
+    validations:
+      required: true
+
+  - type: dropdown
+    id: provider
+    attributes:
+      label: AI provider
+      options:
+        - Anthropic (Claude)
+        - OpenAI (GPT)
+        - xAI (Grok)
+        - OpenRouter
+        - Groq
+        - Custom / other
+        - Not applicable
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug
+      placeholder: "When I run `hyperclaw onboard`, it crashes with..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+      placeholder: "The wizard should open and ask for my API key"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Run `npm install -g hyperclaw@latest`
+        2. Run `hyperclaw onboard`
+        3. Select Telegram channel
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error output / logs
+      description: Paste the full error message or terminal output
+      render: shell
+    validations:
+      required: false
+
+  - type: input
+    id: node
+    attributes:
+      label: Node.js version
+      description: Run `node --version`
+      placeholder: "v22.14.0"
+    validations:
+      required: false

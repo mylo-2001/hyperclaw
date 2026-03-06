@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Ask a question / general help
+    url: https://github.com/mylo-2001/hyperclaw/discussions
+    about: Use Discussions for questions, ideas, and show-and-tell
+  - name: Security vulnerability
+    url: https://github.com/mylo-2001/hyperclaw/security/advisories/new
+    about: Please report security issues privately via GitHub Security Advisories
