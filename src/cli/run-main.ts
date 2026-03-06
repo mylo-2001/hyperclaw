@@ -1,5 +1,4 @@
-﻿#!/usr/bin/env node
-/**
+﻿/**
  * src/cli/run-main.ts
  * HyperClaw CLI — full command surface.
  *
