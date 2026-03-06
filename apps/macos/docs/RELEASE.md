@@ -14,8 +14,8 @@
 ### Versioning
 
 1. **Bump version** in `apps/macos/package.json`
-2. **Commit and tag**: `git tag v4.0.1`
-3. **Push tag**: `git push origin v4.0.1`
+2. **Commit and tag**: `git tag v4.0.2`
+3. **Push tag**: `git push origin v4.0.2`
 4. **GitHub Action** `.github/workflows/macos-release.yml` runs:
    - Builds the app
    - Creates a GitHub Release

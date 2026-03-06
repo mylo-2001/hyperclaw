@@ -1,4 +1,4 @@
-﻿/**
+/**
  * apps/web/src/App.tsx
  * HyperClaw Web UI — TanStack Router + TanStack Query
  * Routes: / (chat), /dashboard, /canvas, /hub, /memory, /settings
@@ -171,7 +171,7 @@ function Sidebar({ page, setPage }: { page: Page; setPage: (p: Page) => void }) 
           <span className="text-2xl">🦅</span>
           <div>
             <div className="text-sm font-bold text-red-400 tracking-wide">HyperClaw</div>
-            <div className="text-xs text-gray-500">v4.0.1</div>
+            <div className="text-xs text-gray-500">v4.0.2</div>
           </div>
         </div>
       </div>

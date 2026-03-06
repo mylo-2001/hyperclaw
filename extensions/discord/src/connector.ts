@@ -1,4 +1,4 @@
-﻿/**
+/**
  * extensions/discord/src/connector.ts
  * REAL Discord connector — Discord Gateway WebSocket API v10.
  * No SDK. Uses native wss:// with heartbeat, identify, reconnect.
@@ -71,7 +71,7 @@ function discordRest(token: string, method: string, endpoint: string, body?: obj
       method,
       headers: {
         'Authorization': `Bot ${token}`,
-        'User-Agent': 'HyperClaw/4.0.1 (https://hyperclaw.ai)',
+        'User-Agent': 'HyperClaw/4.0.2 (https://hyperclaw.ai)',
         ...(payload ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } : {})
       }
     }, (res) => {
@@ -153,7 +153,7 @@ export class DiscordConnector extends EventEmitter {
 
   private async openWebSocket(url: string): Promise<void> {
     this.ws = new WebSocket(url, {
-      headers: { 'User-Agent': 'HyperClaw/4.0.1' }
+      headers: { 'User-Agent': 'HyperClaw/4.0.2' }
     });
 
     this.ws.on('message', async (data) => {

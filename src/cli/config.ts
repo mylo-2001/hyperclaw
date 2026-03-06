@@ -25,8 +25,12 @@ export interface HyperClawConfig {
   providers?: Array<{
     providerId: string;
     apiKey?: string;
+    /** Extra API keys for rotation/failover — gateway cycles through them on rate limit */
+    apiKeys?: string[];
     modelId?: string;
     baseUrl?: string;
+    /** Extended thinking / reasoning config (Anthropic, OpenAI o-series) */
+    thinking?: { enabled: boolean; budgetTokens: number };
   }>;
   gateway?: {
     port: number;
@@ -36,6 +40,14 @@ export interface HyperClawConfig {
     runtime: 'node' | 'bun' | 'deno';
     enabledChannels: string[];
     hooks: boolean;
+    /** SSH reverse tunnel for remote access (alternative to Tailscale) */
+    sshTunnel?: { enabled: boolean; host: string; user: string; remotePort: number };
+  };
+  /** Docker sandboxing for group chat sessions */
+  groupSandbox?: {
+    enabled: boolean;
+    image?: string;
+    memoryLimit?: string;
   };
   channelConfigs?: Record<string, any>;
   pcAccess?: {
@@ -77,6 +89,8 @@ export interface HyperClawConfig {
     modelId?: string;
   };
   hatchMode?: string;
+  updateChannel?: 'stable' | 'beta' | 'dev';
+  rateLimit?: { maxPerMinute?: number; maxPerHour?: number };
   installedAt?: string;
 }
 

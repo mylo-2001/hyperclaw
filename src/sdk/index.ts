@@ -1,4 +1,4 @@
-﻿/**
+/**
  * src/sdk/index.ts
  * HyperClaw Plugin SDK — public API for building extensions and skills.
  * Export this as @hyperclaw/sdk for plugin developers.
@@ -180,5 +180,5 @@ export function defineTool(tool: Omit<Tool, 'id'> & { id?: string }): Tool {
 
 // ─── Version ─────────────────────────────────────────────────────────────────
 
-export const SDK_VERSION = '4.0.1';
-export const SDK_COMPAT = '>=4.0.1';
+export const SDK_VERSION = '4.0.2';
+export const SDK_COMPAT = '>=4.0.2';

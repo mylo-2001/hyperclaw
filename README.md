@@ -1,4 +1,4 @@
-﻿<p align="center">
+<p align="center">
   <img src="assets/icon.png" width="120" alt="HyperClaw">
   <br>
   <h1 align="center">🦅 HyperClaw — Personal AI Assistant</h1>
@@ -6,7 +6,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/build-passing-brightgreen?style=flat-square" alt="build">
-  <img src="https://img.shields.io/badge/release-v4.0.1-blue?style=flat-square" alt="release">
+  <img src="https://img.shields.io/badge/release-v4.0.2-blue?style=flat-square" alt="release">
   <img src="https://img.shields.io/badge/node-%E2%89%A522-green?style=flat-square" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-gray?style=flat-square" alt="license">
   <img src="https://img.shields.io/badge/typescript-5.4-3178c6?style=flat-square&logo=typescript&logoColor=white" alt="typescript">
@@ -55,7 +55,7 @@
 
 ## Install
 
-Runtime: Node ≥ 22.
+Runtime: Node ≥ 22. Runs **natively on Windows, macOS, and Linux** — no WSL2 required.
 
 ```bash
 npm install -g hyperclaw@latest
@@ -68,8 +68,11 @@ hyperclaw onboard
 hyperclaw onboard --install-daemon
 ```
 
+> **Windows users**: HyperClaw runs natively via Node.js. No WSL2, no admin rights needed.
+> The daemon uses **Task Scheduler** and runs as your user account with full desktop access.
+
 The wizard guides you step by step — provider, model, gateway, channels, and skills.
-Works on **macOS, Linux, and Windows** (via WSL2 recommended). Compatible with npm, pnpm, and bun.
+Works on **macOS, Linux, and Windows** (native — no WSL2 required). Compatible with npm, pnpm, and bun.
 
 ---
 

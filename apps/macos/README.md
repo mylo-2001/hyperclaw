@@ -1,4 +1,4 @@
-﻿# HyperClaw macOS Menu Bar App
+# HyperClaw macOS Menu Bar App
 
 Production Electron menu bar app for macOS. Single desktop choice — use this, not `macos-menubar` (Tauri skeleton, deprecated).
 
@@ -23,9 +23,9 @@ cd apps/macos && npm install && npm start
 
 ```bash
 cd apps/macos && npm run build
-# Output: dist/mac/HyperClaw.app, dist/HyperClaw-4.0.1.dmg
+# Output: dist/mac/HyperClaw.app, dist/HyperClaw-4.0.2.dmg
 ```
 
 ## Auto-update
 
-Uses GitHub Releases. Tag a version (`git tag v4.0.1 && git push origin v4.0.1`) to trigger `.github/workflows/macos-release.yml`. The packaged app checks for updates on startup. See [docs/RELEASE.md](docs/RELEASE.md).
+Uses GitHub Releases. Tag a version (`git tag v4.0.2 && git push origin v4.0.2`) to trigger `.github/workflows/macos-release.yml`. The packaged app checks for updates on startup. See [docs/RELEASE.md](docs/RELEASE.md).

@@ -1,6 +1,6 @@
-﻿[package]
+[package]
 name = "hyperclaw-menubar"
-version = "4.0.1"
+version = "4.0.2"
 description = "HyperClaw macOS menu bar app"
 edition = "2021"
 

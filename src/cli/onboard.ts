@@ -1,4 +1,4 @@
-﻿import inquirer from 'inquirer';
+import inquirer from 'inquirer';
 import chalk from 'chalk';
 import ora from 'ora';
 import boxen from 'boxen';
@@ -116,11 +116,29 @@ export class HyperClawWizard {
     const serviceApiKeys = await this.configureServiceApiKeys();
     const hyperclawbotConfig = await this.configureHyperClawBot(gatewayConfig);
     const talkModeConfig = await this.configureTalkMode();
+    const pcAccess = await this.configurePcAccess();
+    const updateChannel = await this.configureUpdateChannel();
+    const groupSandbox = await this.configureGroupSandbox();
+    await this.configureSkillHub();
+    await this.configureMcpServers();
+    await this.configureWorkspaceTemplate();
+    await this.configureCronTasks();
+    await this.configureAutoReply();
+    await this.configureWebhooks();
+    await this.configureNodes();
+    await this.configureOAuth();
+    await this.configureAgentBindings();
+    const rateLimit = await this.configureRateLimiting();
+    await this.configureDeveloperKey();
+    await this.configureVoiceCall();
+    await this.configureCanvas();
+    await this.configureDeploy();
 
     await this.saveAll({
       workspaceName, providerConfig, providers: allProviders, channelConfigs,
       gatewayConfig, identity, hooks, heartbeatEnabled,
-      memoryIntegration, serviceApiKeys, hyperclawbotConfig, talkModeConfig
+      memoryIntegration, serviceApiKeys, hyperclawbotConfig, talkModeConfig,
+      pcAccess, updateChannel, groupSandbox, rateLimit
     }, options);
   }
 
@@ -183,6 +201,23 @@ export class HyperClawWizard {
     const serviceApiKeys = await this.configureServiceApiKeys();
     const hyperclawbotConfig = await this.configureHyperClawBot(gatewayConfig);
     const talkModeConfig = await this.configureTalkMode();
+    const pcAccess = await this.configurePcAccess();
+    const updateChannel = await this.configureUpdateChannel();
+    const groupSandbox = await this.configureGroupSandbox();
+    await this.configureSkillHub();
+    await this.configureMcpServers();
+    await this.configureWorkspaceTemplate();
+    await this.configureCronTasks();
+    await this.configureAutoReply();
+    await this.configureWebhooks();
+    await this.configureNodes();
+    await this.configureOAuth();
+    await this.configureAgentBindings();
+    const rateLimit = await this.configureRateLimiting();
+    await this.configureDeveloperKey();
+    await this.configureVoiceCall();
+    await this.configureCanvas();
+    await this.configureDeploy();
 
     this.stepHeader(9, STEPS, 'Launch');
     const launchChoices: any[] = [
@@ -201,7 +236,8 @@ export class HyperClawWizard {
       workspaceName, providerConfig, providers: allProviders, channelConfigs,
       gatewayConfig: gatewayConfig ? { ...gatewayConfig, hooks: hooks.length > 0 } : null,
       identity, hooks, heartbeatEnabled, installDaemon, hatchMode,
-      memoryIntegration, serviceApiKeys, hyperclawbotConfig, talkModeConfig
+      memoryIntegration, serviceApiKeys, hyperclawbotConfig, talkModeConfig,
+      pcAccess, updateChannel, groupSandbox, rateLimit
     }, options);
   }
 
@@ -276,7 +312,60 @@ export class HyperClawWizard {
         }
       }
 
-      configured.push({ providerId: pid, apiKey, modelId, ...(baseUrl ? { baseUrl } : {}) });
+      // Extra API keys for rotation / failover
+      const apiKeys: string[] = [];
+      if (apiKey) {
+        const { wantRotation } = await inquirer.prompt([{
+          type: 'confirm',
+          name: 'wantRotation',
+          message: `  Add extra API keys for rate-limit rotation? ${chalk.gray('(gateway cycles through on 429)')}`,
+          default: false
+        }]);
+        if (wantRotation) {
+          let addMore = true;
+          while (addMore) {
+            const { extraKey } = await inquirer.prompt([{
+              type: 'password',
+              name: 'extraKey',
+              message: `  Extra key #${apiKeys.length + 1}:`,
+              mask: '●'
+            }]);
+            if (extraKey.trim()) apiKeys.push(extraKey.trim());
+            const { more } = await inquirer.prompt([{
+              type: 'confirm', name: 'more', message: '  Add another?', default: false
+            }]);
+            addMore = more;
+          }
+          if (apiKeys.length > 0) console.log(chalk.green(`  ✔ ${apiKeys.length} extra key(s) added for rotation\n`));
+        }
+      }
+
+      // Thinking / reasoning level (Anthropic extended thinking, OpenAI o-series)
+      let thinking: { enabled: boolean; budgetTokens: number } | undefined;
+      if (['anthropic', 'openai'].includes(pid)) {
+        const { thinkingLevel } = await inquirer.prompt([{
+          type: 'list',
+          name: 'thinkingLevel',
+          message: `  Extended thinking / reasoning:`,
+          choices: [
+            { name: `Off        ${chalk.gray('(standard responses)')}`, value: 'off' },
+            { name: `Standard   ${chalk.gray('(~8 000 token budget)')}`, value: 'standard' },
+            { name: `Extended   ${chalk.gray('(~32 000 token budget — slower, deeper)')}`, value: 'extended' },
+          ],
+          default: 'off'
+        }]);
+        if (thinkingLevel !== 'off') {
+          thinking = { enabled: true, budgetTokens: thinkingLevel === 'extended' ? 32_000 : 8_000 };
+          console.log(chalk.green(`  ✔ Thinking: ${thinkingLevel} (${thinking.budgetTokens.toLocaleString()} tokens)\n`));
+        }
+      }
+
+      configured.push({
+        providerId: pid, apiKey, modelId,
+        ...(baseUrl ? { baseUrl } : {}),
+        ...(apiKeys.length > 0 ? { apiKeys } : {}),
+        ...(thinking ? { thinking } : {})
+      });
       console.log(t.c(`  ✔ ${provider.displayName} → ${modelId}\n`));
     }
 
@@ -384,6 +473,34 @@ export class HyperClawWizard {
     const token = answers.authToken || this.gateway.generateToken();
     if (!answers.authToken) console.log(chalk.green('  ✔ Auth token auto-generated\n'));
 
+    // SSH reverse tunnel (alternative to Tailscale for remote access)
+    const { wantSshTunnel } = await inquirer.prompt([{
+      type: 'confirm',
+      name: 'wantSshTunnel',
+      message: `SSH reverse tunnel for remote access? ${chalk.gray('(alternative to Tailscale)')}`,
+      default: false
+    }]);
+    let sshTunnel: { enabled: boolean; host: string; user: string; remotePort: number } | undefined;
+    if (wantSshTunnel) {
+      const sshAns = await inquirer.prompt([
+        { type: 'input', name: 'host', message: '  Remote SSH host (e.g. myserver.com):', validate: (v: string) => v.trim().length > 3 || 'Required' },
+        { type: 'input', name: 'user', message: '  SSH user:', default: process.env.USER || process.env.USERNAME || 'ubuntu' },
+        {
+          type: 'input', name: 'remotePort', message: '  Remote port (forwarded on server):',
+          default: String(Number(answers.port) || 18789),
+          validate: (v: string) => (Number(v) > 1024 && Number(v) < 65535) ? true : 'Valid port required'
+        }
+      ]);
+      sshTunnel = {
+        enabled: true,
+        host: sshAns.host.trim(),
+        user: sshAns.user.trim(),
+        remotePort: Number(sshAns.remotePort)
+      };
+      console.log(chalk.green(`  ✔ SSH tunnel: ${sshTunnel.user}@${sshTunnel.host}:${sshTunnel.remotePort}\n`));
+      console.log(chalk.gray(`  Run: ssh -R ${sshTunnel.remotePort}:localhost:${Number(answers.port)} ${sshTunnel.user}@${sshTunnel.host}\n`));
+    }
+
     return {
       port: Number(answers.port),
       bind: answers.bind || '127.0.0.1',
@@ -391,7 +508,8 @@ export class HyperClawWizard {
       tailscaleExposure: answers.tailscaleExposure || 'off',
       runtime: answers.runtime || detectedRuntime,
       enabledChannels: [],
-      hooks: true
+      hooks: true,
+      ...(sshTunnel ? { sshTunnel } : {})
     };
   }
 
@@ -779,6 +897,615 @@ export class HyperClawWizard {
     return { hooks: selectedHooks, heartbeat };
   }
 
+  // ── PC Access level ───────────────────────────────────────────────────────────
+  private async configurePcAccess(): Promise<{ level: string; confirmDestructive: boolean }> {
+    console.log(chalk.hex('#06b6d4')('\n  🔐 PC Access Level\n'));
+    console.log(chalk.gray('  Controls what the agent can do on your computer.\n'));
+
+    const { level } = await inquirer.prompt([{
+      type: 'list',
+      name: 'level',
+      message: 'PC access level:',
+      choices: [
+        { name: `Full        ${chalk.gray('(bash, file read/write, screenshots — recommended for power users)')}`, value: 'full' },
+        { name: `Sandboxed   ${chalk.gray('(read files, limited shell, no destructive writes)')}`, value: 'sandboxed' },
+        { name: `Read-only   ${chalk.gray('(read files only — safest)')}`, value: 'read-only' },
+      ],
+      default: 'full'
+    }]);
+
+    const { confirmDestructive } = await inquirer.prompt([{
+      type: 'confirm',
+      name: 'confirmDestructive',
+      message: 'Require confirmation before destructive actions (delete files, overwrite)?',
+      default: level !== 'full'
+    }]);
+
+    console.log(chalk.green(`  ✔ PC access: ${level}${confirmDestructive ? ' + confirm destructive' : ''}\n`));
+    return { level, confirmDestructive };
+  }
+
+  // ── Skill Hub ────────────────────────────────────────────────────────────────
+  private async configureSkillHub(): Promise<void> {
+    console.log(chalk.hex('#06b6d4')('\n  🏪 Skill Hub (ClawHub)\n'));
+    console.log(chalk.gray('  Install skills from the ClawHub marketplace (AI tools, workflows, integrations).\n'));
+
+    const { wantSkills } = await inquirer.prompt([{
+      type: 'confirm', name: 'wantSkills',
+      message: 'Install skills from the Skill Hub?', default: false
+    }]);
+    if (!wantSkills) return;
+
+    try {
+      const { SkillHub } = await import('../plugins/hub');
+      const hub = new SkillHub();
+
+      const FEATURED = [
+        { name: `web-search       ${chalk.gray('(Google/Bing/DuckDuckGo search)')}`, value: 'web-search' },
+        { name: `file-manager     ${chalk.gray('(read, write, list files)')}`, value: 'file-manager' },
+        { name: `code-runner      ${chalk.gray('(run Python/JS snippets safely)')}`, value: 'code-runner' },
+        { name: `github-tools     ${chalk.gray('(repos, issues, PRs via API)')}`, value: 'github-tools' },
+        { name: `calendar-tools   ${chalk.gray('(Google Calendar read/write)')}`, value: 'calendar-tools' },
+        { name: `summarizer       ${chalk.gray('(summarize URLs, PDFs, text)')}`, value: 'summarizer' },
+        { name: `custom           ${chalk.gray('(enter skill ID manually)')}`, value: '__custom__' },
+      ];
+
+      const { selectedSkills } = await inquirer.prompt([{
+        type: 'checkbox', name: 'selectedSkills',
+        message: 'Select skills to install:',
+        choices: FEATURED
+      }]);
+
+      for (const skillId of selectedSkills) {
+        if (skillId === '__custom__') {
+          const { customId } = await inquirer.prompt([{
+            type: 'input', name: 'customId',
+            message: '  Skill ID from ClawHub:',
+            validate: (v: string) => v.trim().length > 0 || 'Required'
+          }]);
+          if (customId.trim()) {
+            const s = ora(`Installing ${customId.trim()}...`).start();
+            try {
+              await hub.install(customId.trim(), false);
+              s.succeed(`Installed: ${customId.trim()}`);
+            } catch (e: any) { s.fail(e.message); }
+          }
+        } else {
+          const s = ora(`Installing ${skillId}...`).start();
+          try {
+            await hub.install(skillId, false);
+            s.succeed(`Installed: ${skillId}`);
+          } catch (e: any) { s.warn(`${skillId}: ${e.message} (install later: hyperclaw skill install ${skillId})`); }
+        }
+      }
+      if (selectedSkills.length > 0) console.log();
+    } catch {
+      console.log(chalk.yellow(`  ⚠ Skill Hub unavailable — install later: hyperclaw hub\n`));
+    }
+  }
+
+  // ── Rate Limiting ─────────────────────────────────────────────────────────────
+  private async configureRateLimiting(): Promise<{ maxPerMinute?: number; maxPerHour?: number } | undefined> {
+    console.log(chalk.hex('#06b6d4')('\n  🚦 Rate Limiting\n'));
+    console.log(chalk.gray('  Limit how many messages the agent processes per channel per minute/hour.\n'));
+
+    const { wantRateLimit } = await inquirer.prompt([{
+      type: 'confirm', name: 'wantRateLimit',
+      message: 'Configure rate limits?', default: false
+    }]);
+    if (!wantRateLimit) return undefined;
+
+    const { maxPerMinute, maxPerHour } = await inquirer.prompt([
+      {
+        type: 'input', name: 'maxPerMinute',
+        message: '  Max messages per minute per user (0 = unlimited):',
+        default: '0',
+        validate: (v: string) => !isNaN(Number(v)) || 'Enter a number'
+      },
+      {
+        type: 'input', name: 'maxPerHour',
+        message: '  Max messages per hour per user (0 = unlimited):',
+        default: '0',
+        validate: (v: string) => !isNaN(Number(v)) || 'Enter a number'
+      }
+    ]);
+
+    const mpm = Number(maxPerMinute);
+    const mph = Number(maxPerHour);
+    if (mpm === 0 && mph === 0) return undefined;
+    console.log(chalk.green(`  ✔ Rate limit: ${mpm > 0 ? `${mpm}/min` : ''}${mpm > 0 && mph > 0 ? ', ' : ''}${mph > 0 ? `${mph}/hr` : ''}\n`));
+    return { ...(mpm > 0 ? { maxPerMinute: mpm } : {}), ...(mph > 0 ? { maxPerHour: mph } : {}) };
+  }
+
+  // ── Developer Key ─────────────────────────────────────────────────────────────
+  private async configureDeveloperKey(): Promise<void> {
+    console.log(chalk.hex('#06b6d4')('\n  🔑 Developer API Key\n'));
+    console.log(chalk.gray('  Create a key for embedding HyperClaw in apps or managed hosting.\n'));
+
+    const { wantDevKey } = await inquirer.prompt([{
+      type: 'confirm', name: 'wantDevKey',
+      message: 'Create a developer API key?', default: false
+    }]);
+    if (!wantDevKey) return;
+
+    try {
+      const developerKeys = await import('../infra/developer-keys');
+      const { name } = await inquirer.prompt([{
+        type: 'input', name: 'name',
+        message: '  Key name:', default: 'default'
+      }]);
+      const { id, key } = await developerKeys.createDeveloperKey(name.trim() || 'default');
+      console.log(chalk.green(`  ✔ Developer key created`));
+      console.log(chalk.gray(`  ID:  ${id}`));
+      console.log(chalk.yellow(`  Key: ${key}`));
+      console.log(chalk.gray(`  Store securely — shown once. Use: Authorization: Bearer <key>\n`));
+    } catch {
+      console.log(chalk.yellow(`  ⚠ Could not create key — run: hyperclaw developer-key create\n`));
+    }
+  }
+
+  // ── Voice Call Config ─────────────────────────────────────────────────────────
+  private async configureVoiceCall(): Promise<void> {
+    console.log(chalk.hex('#06b6d4')('\n  🎙️  Voice Call\n'));
+    console.log(chalk.gray('  Terminal voice call mode — speaks directly to the gateway.\n'));
+
+    const { wantVoiceCall } = await inquirer.prompt([{
+      type: 'confirm', name: 'wantVoiceCall',
+      message: 'Configure voice call settings?', default: false
+    }]);
+    if (!wantVoiceCall) return;
+
+    const { gatewayUrl } = await inquirer.prompt([{
+      type: 'input', name: 'gatewayUrl',
+      message: '  Gateway URL for voice calls:',
+      default: 'http://localhost:18789'
+    }]);
+
+    // Store in config
+    const cfg = await this.config.load();
+    await this.config.patch({
+      channelConfigs: {
+        ...(cfg.channelConfigs || {}),
+        'voice-call': { gatewayUrl: gatewayUrl.trim() }
+      }
+    });
+    console.log(chalk.green(`  ✔ Voice call: ${gatewayUrl.trim()}\n`));
+    console.log(chalk.gray(`  Start: hyperclaw voice-call --gateway-url ${gatewayUrl.trim()}\n`));
+  }
+
+  // ── Canvas Preferences ────────────────────────────────────────────────────────
+  private async configureCanvas(): Promise<void> {
+    console.log(chalk.hex('#06b6d4')('\n  🎨 Canvas (AI-driven UI)\n'));
+    console.log(chalk.gray('  Live canvas for displaying AI-generated cards, charts, and components.\n'));
+
+    const { wantCanvas } = await inquirer.prompt([{
+      type: 'confirm', name: 'wantCanvas',
+      message: 'Enable canvas features?', default: false
+    }]);
+    if (!wantCanvas) return;
+
+    const { canvasMode } = await inquirer.prompt([{
+      type: 'list', name: 'canvasMode',
+      message: '  Default canvas mode:',
+      choices: [
+        { name: `Auto    ${chalk.gray('(show canvas when AI generates structured output)')}`, value: 'auto' },
+        { name: `Always  ${chalk.gray('(always show canvas panel)')}`, value: 'always' },
+        { name: `Manual  ${chalk.gray('(show only via hyperclaw canvas show)')}`, value: 'manual' },
+      ], default: 'auto'
+    }]);
+
+    await this.config.patch({ channelConfigs: { ...((await this.config.load()).channelConfigs || {}), canvas: { mode: canvasMode } } });
+    console.log(chalk.green(`  ✔ Canvas mode: ${canvasMode}\n`));
+  }
+
+  // ── Deploy Config ─────────────────────────────────────────────────────────────
+  private async configureDeploy(): Promise<void> {
+    console.log(chalk.hex('#06b6d4')('\n  ☁️  Cloud Deploy\n'));
+    console.log(chalk.gray('  Deploy the gateway to a cloud platform (Fly.io or Render).\n'));
+
+    const { wantDeploy } = await inquirer.prompt([{
+      type: 'confirm', name: 'wantDeploy',
+      message: 'Set up cloud deployment?', default: false
+    }]);
+    if (!wantDeploy) return;
+
+    const { platform } = await inquirer.prompt([{
+      type: 'list', name: 'platform',
+      message: '  Platform:',
+      choices: [
+        { name: `Fly.io   ${chalk.gray('(recommended — fast global edge)')}`, value: 'fly' },
+        { name: `Render   ${chalk.gray('(free tier available — GitHub integration)')}`, value: 'render' },
+      ]
+    }]);
+
+    if (platform === 'fly') {
+      console.log(chalk.gray('\n  Fly.io deployment steps:'));
+      console.log(chalk.gray('  1. Install: curl -L https://fly.io/install.sh | sh'));
+      console.log(chalk.gray('  2. Login:   fly auth login'));
+      console.log(chalk.gray('  3. Launch:  fly launch'));
+      console.log(chalk.gray('  4. Secrets: fly secrets set ANTHROPIC_API_KEY=... HYPERCLAW_GATEWAY_TOKEN=...'));
+      console.log(chalk.gray('  5. Deploy:  fly deploy'));
+      console.log(chalk.gray('\n  Or: hyperclaw deploy --platform fly\n'));
+    } else {
+      console.log(chalk.gray('\n  Render deployment steps:'));
+      console.log(chalk.gray('  1. Push to GitHub'));
+      console.log(chalk.gray('  2. Connect at https://render.com → New Web Service → select repo'));
+      console.log(chalk.gray('  3. Set env: ANTHROPIC_API_KEY, HYPERCLAW_GATEWAY_TOKEN'));
+      console.log(chalk.gray('\n  Or: hyperclaw deploy --platform render\n'));
+    }
+
+    await this.config.patch({ channelConfigs: { ...((await this.config.load()).channelConfigs || {}), deploy: { platform } } });
+    console.log(chalk.green(`  ✔ Deploy target saved: ${platform}\n`));
+  }
+
+  // ── MCP Servers ───────────────────────────────────────────────────────────────
+  private async configureMcpServers(): Promise<void> {
+    console.log(chalk.hex('#06b6d4')('\n  🔌 MCP Servers (Model Context Protocol)\n'));
+    console.log(chalk.gray('  Register external tool servers the agent can call (filesystem, browser, APIs).\n'));
+
+    const { wantMcp } = await inquirer.prompt([{
+      type: 'confirm', name: 'wantMcp',
+      message: 'Add MCP servers now?', default: false
+    }]);
+    if (!wantMcp) return;
+
+    const { mcpAdd } = await import('../commands/mcp');
+    let addMore = true;
+    while (addMore) {
+      await mcpAdd();
+      const { more } = await inquirer.prompt([{
+        type: 'confirm', name: 'more', message: '  Add another MCP server?', default: false
+      }]);
+      addMore = more;
+    }
+  }
+
+  // ── Workspace Template ─────────────────────────────────────────────────────────
+  private async configureWorkspaceTemplate(): Promise<void> {
+    console.log(chalk.hex('#06b6d4')('\n  📁 Workspace Template\n'));
+    console.log(chalk.gray('  Initialize workspace files (SOUL.md, USER.md, TOOLS.md, HEARTBEAT.md).\n'));
+
+    const { wantTemplate } = await inquirer.prompt([{
+      type: 'confirm', name: 'wantTemplate',
+      message: 'Initialize workspace template files now?', default: false
+    }]);
+    if (!wantTemplate) return;
+
+    const { selectedFiles } = await inquirer.prompt([{
+      type: 'checkbox', name: 'selectedFiles',
+      message: 'Select template files to create:',
+      choices: [
+        { name: `SOUL.md        ${chalk.gray('Agent core values, purpose & boundaries')}`, value: 'SOUL', checked: true },
+        { name: `USER.md        ${chalk.gray('User profile, preferences & context')}`, value: 'USER', checked: true },
+        { name: `TOOLS.md       ${chalk.gray('Tool inventory & usage guidelines')}`, value: 'TOOLS', checked: false },
+        { name: `HEARTBEAT.md   ${chalk.gray('Daily status / morning briefing target')}`, value: 'HEARTBEAT', checked: false },
+        { name: `AGENTS.md      ${chalk.gray('Rules & subagent configuration')}`, value: 'AGENTS', checked: false },
+      ]
+    }]);
+
+    if (selectedFiles.length > 0) {
+      try {
+        const { initWorkspaceFiles } = await import('../agents/memory');
+        const os = (await import('os')).default;
+        const path = (await import('path')).default;
+        const targetDir = path.join(os.homedir(), '.hyperclaw');
+        await initWorkspaceFiles({
+          agentName: 'Hyper', personality: 'helpful and concise',
+          language: 'English', userName: 'User', rules: []
+        }, targetDir);
+        console.log(chalk.green(`  ✔ Workspace files initialized in ${targetDir}\n`));
+      } catch {
+        console.log(chalk.yellow(`  ⚠ Could not initialize workspace — run: hyperclaw workspace init\n`));
+      }
+    }
+  }
+
+  // ── Cron Tasks ────────────────────────────────────────────────────────────────
+  private async configureCronTasks(): Promise<void> {
+    console.log(chalk.hex('#06b6d4')('\n  ⏰ Scheduled Tasks (Cron)\n'));
+    console.log(chalk.gray('  Schedule recurring agent prompts (e.g. daily briefing, weekly report).\n'));
+
+    const PRESETS = [
+      { name: `Morning briefing  ${chalk.gray('(Mon-Fri 9am)')}`, schedule: '0 9 * * 1-5', prompt: 'Give me a morning briefing: check calendar, news, tasks.' },
+      { name: `Daily summary     ${chalk.gray('(daily 6pm)')}`, schedule: '0 18 * * *', prompt: 'Summarize today\'s activity and pending tasks.' },
+      { name: `Weekly report     ${chalk.gray('(Mon 8am)')}`, schedule: '0 8 * * 1', prompt: 'Generate a weekly summary of completed tasks and goals.' },
+      { name: `Custom            ${chalk.gray('(enter manually)')}`, schedule: '__custom__', prompt: '' },
+    ];
+
+    const { wantCron } = await inquirer.prompt([{
+      type: 'confirm', name: 'wantCron',
+      message: 'Add scheduled tasks?', default: false
+    }]);
+    if (!wantCron) return;
+
+    const { selectedPresets } = await inquirer.prompt([{
+      type: 'checkbox', name: 'selectedPresets',
+      message: 'Select tasks to schedule:',
+      choices: PRESETS.map(p => ({ name: p.name, value: p.schedule }))
+    }]);
+
+    const tasksToAdd: Array<{ schedule: string; prompt: string; name?: string }> = [];
+
+    for (const sch of selectedPresets) {
+      if (sch === '__custom__') {
+        const r = await inquirer.prompt([
+          { type: 'input', name: 'schedule', message: '  Cron schedule (e.g. "0 9 * * 1-5"):', validate: (v: string) => v.trim().length > 0 || 'Required' },
+          { type: 'input', name: 'prompt', message: '  Agent prompt:', validate: (v: string) => v.trim().length > 0 || 'Required' },
+          { type: 'input', name: 'name', message: '  Task name:', default: 'Custom task' }
+        ]);
+        tasksToAdd.push({ schedule: r.schedule.trim(), prompt: r.prompt.trim(), name: r.name.trim() });
+      } else {
+        const preset = PRESETS.find(p => p.schedule === sch)!;
+        tasksToAdd.push({ schedule: preset.schedule, prompt: preset.prompt, name: preset.name.replace(/\s+\(.*\)/, '').trim() });
+      }
+    }
+
+    if (tasksToAdd.length > 0) {
+      try {
+        const { loadCronTasks, addCronTask, saveCronTasks } = await import('../services/cron-tasks');
+        await loadCronTasks();
+        for (const t of tasksToAdd) addCronTask(t.schedule, t.prompt, t.name);
+        await saveCronTasks();
+        console.log(chalk.green(`  ✔ ${tasksToAdd.length} task(s) scheduled\n`));
+      } catch {
+        console.log(chalk.yellow(`  ⚠ Could not save tasks — run: hyperclaw cron add\n`));
+      }
+    }
+  }
+
+  // ── Auto-reply Rules ──────────────────────────────────────────────────────────
+  private async configureAutoReply(): Promise<void> {
+    console.log(chalk.hex('#06b6d4')('\n  🔁 Auto-reply Rules\n'));
+    console.log(chalk.gray('  Automatic responses before the AI model is invoked.\n'));
+
+    const { wantAutoReply } = await inquirer.prompt([{
+      type: 'confirm', name: 'wantAutoReply',
+      message: 'Set up auto-reply rules?', default: false
+    }]);
+    if (!wantAutoReply) return;
+
+    const PRESETS = [
+      { name: `Away message   ${chalk.gray('(reply to every message when offline)')}`, value: 'away' },
+      { name: `Keyword reply  ${chalk.gray('(reply to specific keyword)')}`, value: 'keyword' },
+      { name: `Ignore channel ${chalk.gray('(silently ignore a channel)')}`, value: 'ignore' },
+    ];
+
+    const { ruleType } = await inquirer.prompt([{
+      type: 'list', name: 'ruleType',
+      message: 'Rule type:',
+      choices: PRESETS
+    }]);
+
+    try {
+      const { AutoReplyEngine } = await import('../auto-reply/rules');
+      const engine = new AutoReplyEngine();
+      await engine.load();
+
+      const BASE = { enabled: true, priority: 10, stopOnMatch: true, conditionLogic: 'OR' as const };
+      if (ruleType === 'away') {
+        const { reply } = await inquirer.prompt([{
+          type: 'input', name: 'reply',
+          message: '  Away message text:',
+          default: "I'm currently unavailable. I'll get back to you soon.",
+          validate: (v: string) => v.trim().length > 0 || 'Required'
+        }]);
+        await engine.add({ ...BASE, name: 'Away message', conditions: [{ type: 'always' }], action: { type: 'reply', reply: reply.trim() } });
+      } else if (ruleType === 'keyword') {
+        const r = await inquirer.prompt([
+          { type: 'input', name: 'keyword', message: '  Trigger keyword:', validate: (v: string) => v.trim().length > 0 || 'Required' },
+          { type: 'input', name: 'reply', message: '  Reply text:', validate: (v: string) => v.trim().length > 0 || 'Required' }
+        ]);
+        await engine.add({ ...BASE, name: `Keyword: ${r.keyword}`, conditions: [{ type: 'contains', value: r.keyword.trim() }], action: { type: 'reply', reply: r.reply.trim() } });
+      } else if (ruleType === 'ignore') {
+        const { channelId } = await inquirer.prompt([{
+          type: 'input', name: 'channelId', message: '  Channel ID to ignore:',
+          validate: (v: string) => v.trim().length > 0 || 'Required'
+        }]);
+        await engine.add({ ...BASE, name: `Ignore channel: ${channelId}`, conditions: [{ type: 'channel', value: channelId.trim() }], action: { type: 'ignore' } });
+      }
+      console.log(chalk.green(`  ✔ Auto-reply rule added\n`));
+    } catch {
+      console.log(chalk.yellow(`  ⚠ Could not save rule — run: hyperclaw auto-reply list\n`));
+    }
+  }
+
+  // ── Webhooks ──────────────────────────────────────────────────────────────────
+  private async configureWebhooks(): Promise<void> {
+    console.log(chalk.hex('#06b6d4')('\n  🔗 Inbound Webhooks\n'));
+    console.log(chalk.gray('  Register POST endpoints that trigger the agent (GitHub, Stripe, Linear, etc).\n'));
+
+    const { wantWebhook } = await inquirer.prompt([{
+      type: 'confirm', name: 'wantWebhook',
+      message: 'Register inbound webhook endpoints?', default: false
+    }]);
+    if (!wantWebhook) return;
+
+    try {
+      const { WebhookManager } = await import('../webhooks/manager');
+      const manager = new WebhookManager();
+      await manager.load();
+
+      let addMore = true;
+      while (addMore) {
+        const r = await inquirer.prompt([
+          { type: 'input', name: 'name', message: '  Webhook name (e.g. GitHub push):', validate: (v: string) => v.trim().length > 0 || 'Required' },
+          {
+            type: 'list', name: 'format', message: '  Payload format:',
+            choices: [
+              { name: 'GitHub', value: 'github' }, { name: 'Stripe', value: 'stripe' },
+              { name: 'Linear', value: 'linear' }, { name: 'Notion', value: 'notion' },
+              { name: 'JSON (generic)', value: 'json' }, { name: 'Raw', value: 'raw' },
+            ]
+          },
+          { type: 'input', name: 'template', message: '  Message template (use {{body.field}}):', default: 'Webhook received: {{body}}' },
+        ]);
+        await manager.add({
+          name: r.name.trim(),
+          format: r.format,
+          template: r.template.trim(),
+          routeTo: { type: 'channel', target: 'default' }
+        });
+        const { more } = await inquirer.prompt([{
+          type: 'confirm', name: 'more', message: '  Add another webhook?', default: false
+        }]);
+        addMore = more;
+      }
+      console.log(chalk.green(`  ✔ Webhook(s) registered — route: POST /webhook/<id>\n`));
+    } catch {
+      console.log(chalk.yellow(`  ⚠ Could not save webhooks — run: hyperclaw webhooks list\n`));
+    }
+  }
+
+  // ── Nodes ──────────────────────────────────────────────────────────────────────
+  private async configureNodes(): Promise<void> {
+    console.log(chalk.hex('#06b6d4')('\n  🖥️  Nodes (Remote Compute / Mobile)\n'));
+    console.log(chalk.gray('  Add VPS, Raspberry Pi, Android, or VM nodes for distributed inference.\n'));
+
+    const { wantNode } = await inquirer.prompt([{
+      type: 'confirm', name: 'wantNode',
+      message: 'Add compute nodes?', default: false
+    }]);
+    if (!wantNode) return;
+
+    const { nodeAdd } = await import('../commands/node');
+    let addMore = true;
+    while (addMore) {
+      await nodeAdd();
+      const { more } = await inquirer.prompt([{
+        type: 'confirm', name: 'more', message: '  Add another node?', default: false
+      }]);
+      addMore = more;
+    }
+  }
+
+  // ── OAuth / Auth ───────────────────────────────────────────────────────────────
+  private async configureOAuth(): Promise<void> {
+    console.log(chalk.hex('#06b6d4')('\n  🔐 OAuth / External Auth\n'));
+    console.log(chalk.gray('  Connect Google, GitHub or other accounts for the agent to act on your behalf.\n'));
+
+    const { wantOAuth } = await inquirer.prompt([{
+      type: 'confirm', name: 'wantOAuth',
+      message: 'Set up OAuth / external auth now?', default: false
+    }]);
+    if (!wantOAuth) return;
+
+    const { selectedProviders } = await inquirer.prompt([{
+      type: 'checkbox', name: 'selectedProviders',
+      message: 'Select providers to connect:',
+      choices: [
+        { name: `Google Calendar   ${chalk.gray('(read/create events)')}`, value: 'google-calendar' },
+        { name: `Google Drive      ${chalk.gray('(read/write files)')}`, value: 'google-drive' },
+        { name: `GitHub            ${chalk.gray('(repos, issues, PRs)')}`, value: 'github' },
+        { name: `Notion            ${chalk.gray('(pages & databases)')}`, value: 'notion' },
+        { name: `Linear            ${chalk.gray('(issues & projects)')}`, value: 'linear' },
+      ]
+    }]);
+
+    for (const provider of selectedProviders) {
+      console.log(chalk.gray(`\n  Starting OAuth flow for ${provider}...`));
+      try {
+        const { runOAuthFlow } = await import('../services/oauth-flow');
+        const { writeOAuthToken } = await import('../services/oauth-provider');
+        const tokens = await runOAuthFlow(provider, {});
+        const now = Math.floor(Date.now() / 1000);
+        await writeOAuthToken(provider, {
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token,
+          expires_at: tokens.expires_in ? now + tokens.expires_in : undefined,
+          token_url: `https://oauth2.googleapis.com/token`
+        });
+        console.log(chalk.green(`  ✔ ${provider} connected\n`));
+      } catch {
+        console.log(chalk.yellow(`  ⚠ ${provider} OAuth failed — run later: hyperclaw auth oauth ${provider}\n`));
+      }
+    }
+  }
+
+  // ── Multi-agent Bindings ───────────────────────────────────────────────────────
+  private async configureAgentBindings(): Promise<void> {
+    console.log(chalk.hex('#06b6d4')('\n  🤝 Multi-agent Bindings\n'));
+    console.log(chalk.gray('  Route specific channels to different agent personas or models.\n'));
+
+    const { wantBindings } = await inquirer.prompt([{
+      type: 'confirm', name: 'wantBindings',
+      message: 'Configure channel → agent bindings?', default: false
+    }]);
+    if (!wantBindings) return;
+
+    try {
+      const { AgentRouter } = await import('../routing/agents-routing');
+      await new AgentRouter().bind();
+      return;
+    } catch {
+      // Fallback: simple manual binding
+      const r = await inquirer.prompt([
+        { type: 'input', name: 'channel', message: '  Channel ID (e.g. telegram):', validate: (v: string) => v.trim().length > 0 || 'Required' },
+        { type: 'input', name: 'agentName', message: '  Agent name / persona for this channel:', default: 'Hyper' },
+        { type: 'input', name: 'modelId', message: '  Override model ID (leave blank = use primary):', default: '' },
+      ]);
+      if (r.channel) {
+        const fs = (await import('fs-extra')).default;
+        const path = (await import('path')).default;
+        const os = (await import('os')).default;
+        const bindFile = path.join(os.homedir(), '.hyperclaw', 'agent-bindings.json');
+        let bindings: any[] = [];
+        try { bindings = await fs.readJson(bindFile); } catch {}
+        bindings.push({
+          channelId: r.channel.trim(),
+          agentName: r.agentName.trim(),
+          modelId: r.modelId.trim() || undefined,
+          createdAt: new Date().toISOString()
+        });
+        await fs.ensureDir(path.dirname(bindFile));
+        await fs.writeJson(bindFile, bindings, { spaces: 2 });
+        console.log(chalk.green(`  ✔ Binding: ${r.channel} → ${r.agentName}\n`));
+      }
+    }
+  }
+
+  // ── Group Sandbox (Docker) ────────────────────────────────────────────────────
+  private async configureGroupSandbox(): Promise<{ enabled: boolean; image?: string; memoryLimit?: string } | undefined> {
+    console.log(chalk.hex('#06b6d4')('\n  🐳 Group Sandbox (Docker)\n'));
+    console.log(chalk.gray('  Isolates group chat sessions in Docker containers for security.\n'));
+
+    const { wantSandbox } = await inquirer.prompt([{
+      type: 'confirm',
+      name: 'wantSandbox',
+      message: 'Enable Docker sandboxing for group chat sessions?',
+      default: false
+    }]);
+
+    if (!wantSandbox) return undefined;
+
+    const { image, memoryLimit } = await inquirer.prompt([
+      { type: 'input', name: 'image', message: '  Docker image:', default: 'node:22-alpine' },
+      { type: 'input', name: 'memoryLimit', message: '  Memory limit per container:', default: '256m' }
+    ]);
+
+    console.log(chalk.green(`  ✔ Group sandbox: ${image} (${memoryLimit})\n`));
+    return { enabled: true, image: image.trim(), memoryLimit: memoryLimit.trim() };
+  }
+
+  // ── Update channel ────────────────────────────────────────────────────────────
+  private async configureUpdateChannel(): Promise<string> {
+    console.log(chalk.hex('#06b6d4')('\n  🔄 Update Channel\n'));
+
+    const { channel } = await inquirer.prompt([{
+      type: 'list',
+      name: 'channel',
+      message: 'Update channel:',
+      choices: [
+        { name: `Stable  ${chalk.gray('(recommended — tested releases)')}`, value: 'stable' },
+        { name: `Beta    ${chalk.gray('(early access — new features, may have bugs)')}`, value: 'beta' },
+        { name: `Dev     ${chalk.gray('(bleeding edge — for contributors)')}`, value: 'dev' },
+      ],
+      default: 'stable'
+    }]);
+
+    console.log(chalk.green(`  ✔ Update channel: ${channel}\n`));
+    return channel;
+  }
+
   private async saveAll(data: any, options: WizardOptions): Promise<void> {
     console.log();
     const spinner = ora('Saving configuration...').start();
@@ -794,7 +1521,7 @@ export class HyperClawWizard {
 
     await this.config.save({
       ...current,
-      version: '4.0.1',
+      version: '4.0.2',
       workspaceName: data.workspaceName,
       provider: data.providerConfig,
       providers: data.providers || (data.providerConfig ? [data.providerConfig] : []),
@@ -817,12 +1544,15 @@ export class HyperClawWizard {
       talkMode: data.talkModeConfig,
       pcAccess: {
         enabled: true,
-        level: 'full',
+        level: data.pcAccess?.level || 'full',
         allowedPaths: [],
         allowedCommands: [],
-        confirmDestructive: false,
+        confirmDestructive: data.pcAccess?.confirmDestructive ?? false,
         maxOutputBytes: 50_000
       },
+      updateChannel: data.updateChannel || 'stable',
+      groupSandbox: data.groupSandbox,
+      ...(data.rateLimit ? { rateLimit: data.rateLimit } : {}),
       hatchMode: data.hatchMode || 'tui',
       installedAt: new Date().toISOString()
     });
@@ -858,6 +1588,13 @@ export class HyperClawWizard {
       await this.daemon.start();
       s.succeed(`Gateway running at ws://localhost:${data.gatewayConfig.port}`);
     }
+
+    // Auto-run doctor to surface any misconfigs right after setup
+    console.log(chalk.gray('\n  Running health check...\n'));
+    try {
+      const { runDoctor } = await import('../commands/doctor');
+      await runDoctor(true); // auto-fix fixable issues
+    } catch { /* non-fatal */ }
 
     this.showSuccessScreen(data);
   }
@@ -903,7 +1640,7 @@ export class HyperClawWizard {
     ].join('\n');
 
     console.log('\n' + boxen(
-      chalk.hex('#06b6d4')('🎉 HyperClaw v4.0.1 ready!\n\n') + lines,
+      chalk.hex('#06b6d4')('🎉 HyperClaw v4.0.2 ready!\n\n') + lines,
       { padding: 1, borderStyle: 'round', borderColor: 'cyan', margin: 1, backgroundColor: '#0a0a0a' }
     ));
   }

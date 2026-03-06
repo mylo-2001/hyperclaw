@@ -1,5 +1,5 @@
 # Publish macOS app to GitHub Releases for auto-update.
-# Trigger: git tag v* (e.g. v4.0.1)
+# Trigger: git tag v* (e.g. v4.0.2)
 # Requires: GITHUB_TOKEN (automatic) or GH_TOKEN with repo scope
 name: macOS Release
 

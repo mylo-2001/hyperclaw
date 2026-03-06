@@ -28,6 +28,7 @@ export class DaemonManager {
     const mainScript = path.resolve(__dirname, '../../dist/cli/run-main.js');
     const child = spawn(process.execPath, [mainScript, 'gateway', 'start-inner'], {
       detached: true,
+      windowsHide: true, // native Windows: no console window flash
       stdio: ['ignore', (logFd as any).fd, (logFd as any).fd],
       env: { ...process.env, HC_PORT: String(port) }
     });

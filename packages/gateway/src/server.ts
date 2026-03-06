@@ -1,4 +1,4 @@
-﻿/**
+/**
  * packages/gateway/src/server.ts
  * HyperClaw Gateway — local-first WebSocket control plane.
  * Handles: sessions, presence, config, channel routing, canvas, webhooks.
@@ -132,7 +132,7 @@ export class GatewayServer {
 
     if (url === '/api/v1/check') {
       res.writeHead(200);
-      res.end(JSON.stringify({ ok: true, service: 'hyperclaw', version: '4.0.1' }));
+      res.end(JSON.stringify({ ok: true, service: 'hyperclaw', version: '4.0.2' }));
       return;
     }
     if (url === '/api/v1/pi' && req.method === 'POST') {
@@ -509,7 +509,7 @@ export class GatewayServer {
     if (authToken && !session.authenticated) {
       this.send(session, { type: 'connect.challenge', sessionId: id });
     } else {
-      this.send(session, { type: 'connect.ok', sessionId: id, version: '4.0.1', heartbeatInterval: 30000 });
+      this.send(session, { type: 'connect.ok', sessionId: id, version: '4.0.2', heartbeatInterval: 30000 });
       if (this.config.hooks && this.config.deps.createHookLoader) {
         this.config.deps.createHookLoader().execute('session:start', { sessionId: id }).catch(() => {});
       }

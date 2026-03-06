@@ -1,4 +1,4 @@
-﻿# xcodegen project spec
+# xcodegen project spec
 name: HyperClaw
 options:
   bundleIdPrefix: ai.hyperclaw
@@ -26,7 +26,7 @@ targets:
       path: HyperClaw/Resources/Info.plist
       properties:
         CFBundleDisplayName: HyperClaw
-        CFBundleShortVersionString: "4.0.1"
+        CFBundleShortVersionString: "4.0.2"
         NSMicrophoneUsageDescription: "Voice calls with your AI agent"
         NSSpeechRecognitionUsageDescription: "Transcribe speech into messages for your HyperClaw agent"
         NSLocalNetworkUsageDescription: "Connect to your local HyperClaw gateway"
