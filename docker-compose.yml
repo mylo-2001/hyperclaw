@@ -1,8 +1,14 @@
 # HyperClaw — multi-image stack
-# Usage:
-#   docker-compose up -d gateway     # production gateway
-#   docker-compose up -d sandbox     # sandboxed agent (no PC tools)
-#   docker-compose up -d             # full stack (gateway + sandbox)
+#
+# Quick start:
+#   cp env.example .env        # copy the template
+#   nano .env                  # fill in your API keys
+#   docker-compose up -d gateway
+#
+# Profiles:
+#   docker-compose up -d gateway          # production gateway (default)
+#   docker-compose --profile sandbox up -d sandbox   # sandboxed agent (no PC tools)
+#   docker-compose --profile browser up -d gateway-browser  # gateway + Puppeteer
 
 services:
   gateway:
@@ -14,6 +20,8 @@ services:
       - "18789:18789"
     volumes:
       - hyperclaw-data:/root/.hyperclaw
+    env_file:
+      - .env                   # copy env.example → .env and fill in your keys
     environment:
       - NODE_ENV=production
       - HYPERCLAW_PORT=18789
@@ -35,6 +43,8 @@ services:
       - sandbox
     volumes:
       - hyperclaw-data:/root/.hyperclaw
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
       - HYPERCLAW_SANDBOX=1
@@ -54,6 +64,8 @@ services:
       - "18790:18789"
     volumes:
       - hyperclaw-data:/root/.hyperclaw
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
       - HYPERCLAW_PORT=18789
