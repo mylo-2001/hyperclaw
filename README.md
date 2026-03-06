@@ -68,6 +68,19 @@ hyperclaw onboard
 hyperclaw onboard --install-daemon
 ```
 
+## Uninstall
+
+```bash
+# Stop and remove daemon (if running)
+hyperclaw daemon uninstall
+
+# Remove the package
+npm uninstall -g hyperclaw
+
+# Remove config and data (optional)
+rm -rf ~/.hyperclaw
+```
+
 > **Windows users**: HyperClaw runs natively via Node.js. No WSL2, no admin rights needed.
 > The daemon uses **Task Scheduler** and runs as your user account with full desktop access.
 
