@@ -1611,6 +1611,40 @@ pcCmd.command('run <command>')
     process.exit(0);
   });
 
+// ─── UPDATE CHECK (non-blocking, fires and forgets) ──────────────────────────
+
+function checkForUpdate(): void {
+  const { execFile } = require('child_process');
+  const { readFileSync } = require('fs');
+  const path = require('path');
+  try {
+    const pkgPath = path.resolve(__dirname, '../../package.json');
+    const current: string = JSON.parse(readFileSync(pkgPath, 'utf8')).version;
+    execFile('npm', ['view', 'hyperclaw', 'version', '--json'], { timeout: 5000 },
+      (_err: unknown, stdout: string) => {
+        if (_err || !stdout) return;
+        try {
+          const latest: string = JSON.parse(stdout.trim());
+          if (latest && latest !== current) {
+            const semver = (v: string) => v.split('.').map(Number);
+            const [lMaj, lMin, lPat] = semver(latest);
+            const [cMaj, cMin, cPat] = semver(current);
+            const isNewer = lMaj > cMaj || (lMaj === cMaj && lMin > cMin) || (lMaj === cMaj && lMin === cMin && lPat > cPat);
+            if (isNewer) {
+              process.stdout.write(
+                chalk.yellow(`\n  ⬆  Update available: ${chalk.dim(current)} → ${chalk.green(latest)}\n`) +
+                chalk.gray(`     npm install -g hyperclaw@latest\n\n`)
+              );
+            }
+          }
+        } catch { /* ignore parse errors */ }
+      }
+    );
+  } catch { /* ignore fs errors */ }
+}
+
+checkForUpdate();
+
 // ─── PARSE (single entry point at the very end) ──────────────────────────────
 
 if (process.argv.length === 2) {
