@@ -1,4 +1,4 @@
-﻿import chalk from 'chalk';
+import chalk from 'chalk';
 import gradient from 'gradient-string';
 import figlet from 'figlet';
 import boxen from 'boxen';
@@ -9,7 +9,7 @@ export class Banner {
     console.clear();
     const t = getTheme(daemonMode);
 
-    const icon = daemonMode ? '🩸' : '🦅';
+    const icon = daemonMode ? '??' : '??';
     try {
       const title = figlet.textSync('HYPERCLAW', { font: 'ANSI Shadow' });
       const g = (gradient as any)(t.gradient);
@@ -22,8 +22,8 @@ export class Banner {
     }
 
     const subtitle = daemonMode
-      ? chalk.hex(t.daemonPrimary)('    🩸 DAEMON MODE — ALWAYS WATCHING ⚡\n')
-      : t.muted('    🦅 HyperClaw Bot — AI Gateway v5.0.0 ⚡\n');
+      ? chalk.hex(t.daemonPrimary)('    ?? DAEMON MODE � ALWAYS WATCHING ?\n')
+      : t.muted('    ?? HyperClaw Bot � AI Gateway v5.0.1 ?\n');
 
     console.log(subtitle);
 
@@ -36,14 +36,14 @@ export class Banner {
     if (t.boxBg) boxOpts.backgroundColor = t.boxBg;
 
     const box = boxen(
-      `${t.a('●')} GATEWAY READY    ` +
-      `${t.a('◆')} PROVIDERS: 8    ` +
-      `${t.a('⚡')} CHANNELS: 27    ` +
-      (daemonMode ? `${t.d('🩸')} DAEMON` : `${t.a('🦅')} HYPERCLAW`),
+      `${t.a('?')} GATEWAY READY    ` +
+      `${t.a('?')} PROVIDERS: 8    ` +
+      `${t.a('?')} CHANNELS: 27    ` +
+      (daemonMode ? `${t.d('??')} DAEMON` : `${t.a('??')} HYPERCLAW`),
       boxOpts
     );
     console.log(box);
-    console.log(t.muted('  One assistant. All your channels. 🦅\n'));
+    console.log(t.muted('  One assistant. All your channels. ??\n'));
     const { maybeShowUpdateNotice } = await import('../infra/update-check');
     maybeShowUpdateNotice(daemonMode);
   }
@@ -60,12 +60,12 @@ export class Banner {
       const title = figlet.textSync('HYPERCLAW', { font: 'ANSI Shadow' });
       const lines = title.split('\n');
       const first = lines[0] ?? '';
-      console.log('\n  🦅 ' + g(first));
+      console.log('\n  ?? ' + g(first));
       for (let i = 1; i < lines.length; i++) console.log(g('     ' + (lines[i] ?? '')));
     } catch {
-      console.log(t.bold('\n  🦅 HYPERCLAW\n'));
+      console.log(t.bold('\n  ?? HYPERCLAW\n'));
     }
-    console.log(t.muted('    🦅 HyperClaw Bot — AI Gateway • SETUP WIZARD v5.0.0 ⚡\n'));
+    console.log(t.muted('    ?? HyperClaw Bot � AI Gateway � SETUP WIZARD v5.0.1 ?\n'));
 
     const boxOpts: any = {
       padding: 1,
@@ -76,7 +76,7 @@ export class Banner {
     if (t.boxBg) boxOpts.backgroundColor = t.boxBg;
 
     const box = boxen(
-      t.a('◆') + ' Provider • Channels • Gateway • Identity',
+      t.a('?') + ' Provider � Channels � Gateway � Identity',
       boxOpts
     );
     console.log(box);
@@ -90,8 +90,8 @@ export class Banner {
     const gm = new GatewayManager();
     const port = cfg?.gateway?.port ?? 18789;
     const running = await gm.isRunning(port);
-    console.log(t.bold('\n  🦅 HYPERCLAW STATUS\n'));
-    console.log(`  Gateway: ${running ? t.success('● running') : t.error('○ stopped')}  port ${port}`);
+    console.log(t.bold('\n  ?? HYPERCLAW STATUS\n'));
+    console.log(`  Gateway: ${running ? t.success('? running') : t.error('0 stopped')}  port ${port}`);
     console.log(`  Provider: ${t.c(cfg?.provider?.providerId ?? 'none')}`);
     console.log(`  Channels: ${t.c(String((cfg?.channels ?? []).length))}`);
     console.log();

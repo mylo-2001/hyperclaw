@@ -1,6 +1,6 @@
-﻿/**
+/**
  * src/skills/clawhub.ts
- * ClawHub skill registry integration — search and install skills from the public registry.
+ * ClawHub skill registry integration � search and install skills from the public registry.
  * Compatible with HyperClaw Skill Hub (clawhub.com).
  */
 
@@ -116,7 +116,7 @@ function fetchBuffer(url: string): Promise<Buffer> {
       port: parsed.port || (parsed.protocol === 'https:' ? 443 : 80),
       path: parsed.pathname + parsed.search,
       method: 'GET',
-      headers: { 'User-Agent': 'HyperClaw/5.0.0' }
+      headers: { 'User-Agent': 'HyperClaw/5.0.1' }
     }, (res) => {
       const chunks: Buffer[] = [];
       res.on('data', (c: Buffer) => chunks.push(c));
@@ -136,7 +136,7 @@ function fetchJson(url: string): Promise<any> {
       port: 443,
       path: parsed.pathname + parsed.search,
       method: 'GET',
-      headers: { 'User-Agent': 'HyperClaw/5.0.0' }
+      headers: { 'User-Agent': 'HyperClaw/5.0.1' }
     }, (res) => {
       let data = '';
       res.on('data', (c) => (data += c));

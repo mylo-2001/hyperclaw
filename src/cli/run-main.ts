@@ -1,4 +1,4 @@
-﻿/**
+/**
  * src/cli/run-main.ts
  * HyperClaw CLI — full command surface.
  *
@@ -21,6 +21,9 @@
  *   hyperclaw config show/set-key/schema
  *   hyperclaw voice
  *   hyperclaw dashboard
+ *   hyperclaw mcp list/add/remove/probe
+ *   hyperclaw osint [workflow] [--show] [--reset]
+ *   hyperclaw osint setup
  */
 
 import { Command } from 'commander';
@@ -57,7 +60,7 @@ const program = new Command();
 program
   .name('hyperclaw')
   .description('⚡ HyperClaw — AI Gateway Platform. The Lobster Evolution 🦅')
-  .version('5.0.0')
+  .version('5.0.1')
   .option(
     '--profile <name>',
     'Use an isolated gateway profile. Auto-scopes HYPERCLAW_STATE_DIR and HYPERCLAW_CONFIG_PATH. ' +
@@ -710,7 +713,7 @@ cfgCmd.command('schema')
   .action(() => {
     console.log(chalk.bold.hex('#06b6d4')('\n  Config schema: ~/.hyperclaw/config.json\n'));
     const schema = {
-      version: 'string (e.g. "5.0.0")',
+      version: 'string (e.g. "5.0.1")',
       workspaceName: 'string',
       provider: { providerId: 'string', apiKey: 'string (secret)', modelId: 'string' },
       gateway: { port: 'number', bind: '"127.0.0.1"|"0.0.0.0"|"tailscale"|"custom"', authToken: 'string (secret)', tailscaleExposure: '"off"|"serve"|"funnel"', runtime: '"node"|"bun"|"deno"' },
@@ -1063,6 +1066,33 @@ securityCmd.command('audit')
   .action(async (opts) => {
     const { runSecurityAudit } = await import('../security/audit');
     await runSecurityAudit({ deep: opts.deep, fix: opts.fix, json: opts.json });
+    process.exit(0);
+  });
+
+// ─── OSINT / ETHICAL HACKING ─────────────────────────────────────────────────
+
+program.command('osint')
+  .description('OSINT / Ethical Hacking mode — configure HyperClaw for security research')
+  .argument('[workflow]', 'Workflow preset: recon | bugbounty | pentest | footprint | custom')
+  .option('--show', 'Show current OSINT profile')
+  .option('--reset', 'Clear OSINT profile and disable OSINT mode')
+  .action(async (workflow, opts) => {
+    const { osintSetup, osintQuickStart } = await import('../commands/osint');
+    if (opts.show || opts.reset) {
+      await osintSetup({ show: opts.show, reset: opts.reset });
+    } else if (workflow === 'setup' || workflow) {
+      await osintSetup({ mode: workflow as any });
+    } else {
+      await osintQuickStart();
+    }
+    process.exit(0);
+  });
+
+program.command('osint setup')
+  .description('Interactive OSINT session setup wizard')
+  .action(async () => {
+    const { osintSetup } = await import('../commands/osint');
+    await osintSetup({});
     process.exit(0);
   });
 

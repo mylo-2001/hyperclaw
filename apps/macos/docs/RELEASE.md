@@ -1,11 +1,11 @@
-ï»¿# macOS App Release & Auto-Update
+# macOS App Release & Auto-Update
 
 ## Release Checklist (OpenClaw-level hardening)
 
 ### Pre-release
 
-- [ ] Run `npm run macos:test` â€” unit tests pass
-- [ ] Run `npm run macos:build` â€” build succeeds locally
+- [ ] Run `npm run macos:test` — unit tests pass
+- [ ] Run `npm run macos:build` — build succeeds locally
 - [ ] Verify Connect tab: gateway URL, auth token, pairing
 - [ ] Verify Chat tab: send message, receive response, session restore
 - [ ] Verify Devices tab: shows paired nodes (if any)
@@ -14,8 +14,8 @@
 ### Versioning
 
 1. **Bump version** in `apps/macos/package.json`
-2. **Commit and tag**: `git tag v5.0.0`
-3. **Push tag**: `git push origin v5.0.0`
+2. **Commit and tag**: `git tag v5.0.1`
+3. **Push tag**: `git push origin v5.0.1`
 4. **GitHub Action** `.github/workflows/macos-release.yml` runs:
    - Builds the app
    - Creates a GitHub Release
@@ -35,7 +35,7 @@ The app uses `electron-updater` with GitHub provider. When packaged:
 
 For distribution outside the Mac App Store:
 
-1. **Apple Developer Account** â€“ required
+1. **Apple Developer Account** – required
 2. **Certificates**: `Developer ID Application`
 3. **Export before build**:
    ```bash

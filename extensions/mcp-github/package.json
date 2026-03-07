@@ -1,0 +1,14 @@
+{
+  "name": "@hyperclaw/mcp-github",
+  "version": "1.0.0",
+  "description": "HyperClaw MCP server — GitHub tools (repos, issues, PRs, code search)",
+  "type": "module",
+  "bin": {
+    "hyperclaw-mcp-github": "./server.mjs"
+  },
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "keywords": ["mcp", "github", "hyperclaw"],
+  "license": "MIT"
+}

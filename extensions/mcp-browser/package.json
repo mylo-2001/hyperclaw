@@ -1,0 +1,14 @@
+{
+  "name": "@hyperclaw/mcp-browser",
+  "version": "1.0.0",
+  "description": "HyperClaw MCP server — browser/web tools (fetch, search, extract text, screenshot via puppeteer)",
+  "type": "module",
+  "bin": {
+    "hyperclaw-mcp-browser": "./server.mjs"
+  },
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "keywords": ["mcp", "browser", "web", "hyperclaw"],
+  "license": "MIT"
+}

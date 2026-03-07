@@ -1,0 +1,14 @@
+{
+  "name": "@hyperclaw/mcp-terminal",
+  "version": "1.0.0",
+  "description": "HyperClaw MCP server — terminal/shell tools (run commands, scripts, environment info)",
+  "type": "module",
+  "bin": {
+    "hyperclaw-mcp-terminal": "./server.mjs"
+  },
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "keywords": ["mcp", "terminal", "shell", "hyperclaw"],
+  "license": "MIT"
+}

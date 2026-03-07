@@ -1,6 +1,6 @@
-﻿/**
+/**
  * src/services/mcp-loader.ts
- * MCP (Model Context Protocol) client — load tools from external MCP servers.
+ * MCP (Model Context Protocol) client � load tools from external MCP servers.
  * Config: mcp.servers: [{ name, command, args? }] or [{ name, url }]
  *
  * Requires: npm install @modelcontextprotocol/sdk
@@ -52,7 +52,7 @@ export async function loadMCPTools(): Promise<Tool[]> {
 
   for (const srv of servers) {
     try {
-      const client = new Client({ name: 'hyperclaw', version: '5.0.0' });
+      const client = new Client({ name: 'hyperclaw', version: '5.0.1' });
 
       if (srv.url) {
         const transport = new StreamableHTTPClientTransport(new URL(srv.url));

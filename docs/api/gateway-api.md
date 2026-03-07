@@ -1,4 +1,4 @@
-﻿# Gateway API — HyperClaw
+# Gateway API � HyperClaw
 
 REST and WebSocket API for the HyperClaw Gateway. Default port: `18789`.
 
@@ -33,7 +33,7 @@ Authorization: Bearer <token>
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | `/api/v1/check` | No | Health check. Returns `{ ok: true, service: "hyperclaw", version: "5.0.0" }` |
+| GET | `/api/v1/check` | No | Health check. Returns `{ ok: true, service: "hyperclaw", version: "5.0.1" }` |
 | GET | `/api/status` | No | Gateway status: `{ running, port, channels, model, agentName, sessions, uptime }` |
 
 ### Config
@@ -50,8 +50,8 @@ Headers: `X-Hyperclaw-Device` (optional device id for rate limiting).
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | POST | `/api/v1/pi` | Yes | PI JSON-RPC handler. Agent invocation via RPC. |
-| POST | `/api/chat` | Yes | Send message, get response. Body: `{ message, agentId?, sessionKey? }` → `{ response }` |
-| POST | `/api/webhook/inbound` | Yes | Generic inbound webhook. Body: `{ message }` or `{ text }` or `{ prompt }` → agent run |
+| POST | `/api/chat` | Yes | Send message, get response. Body: `{ message, agentId?, sessionKey? }` > `{ response }` |
+| POST | `/api/webhook/inbound` | Yes | Generic inbound webhook. Body: `{ message }` or `{ text }` or `{ prompt }` > agent run |
 
 ### Nodes
 
@@ -70,7 +70,7 @@ Headers: `X-Hyperclaw-Device` (optional device id for rate limiting).
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | `/api/v1/tts` | Yes | Text-to-speech. Body: `{ text }` → `{ format: "mp3", data: "<base64>" }` |
+| POST | `/api/v1/tts` | Yes | Text-to-speech. Body: `{ text }` > `{ format: "mp3", data: "<base64>" }` |
 
 ### Canvas
 

@@ -31,7 +31,7 @@ The Gateway WebSocket is the control plane for HyperClaw. All clients (CLI, web 
    ```
    Or if no auth was required:
    ```json
-   { "type": "connect.ok", "sessionId": "abc123", "version": "5.0.0", "heartbeatInterval": 30000 }
+   { "type": "connect.ok", "sessionId": "abc123", "version": "5.0.1", "heartbeatInterval": 30000 }
    ```
 
 If token is invalid, the Gateway closes the socket with code `4001` (Unauthorized).

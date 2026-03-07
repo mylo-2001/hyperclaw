@@ -1,4 +1,4 @@
-﻿/**
+/**
  * src/gateway/mcp.ts
  * MCP (Model Context Protocol) server registry and proxy.
  * `hyperclaw mcp list / add / remove / test`
@@ -117,7 +117,7 @@ export class MCPRegistry {
   }
 
   list(): void {
-    console.log(chalk.bold.cyan('\n  🔌 MCP SERVERS\n'));
+    console.log(chalk.bold.cyan('\n  ?? MCP SERVERS\n'));
 
     if (this.servers.length === 0) {
       console.log(chalk.gray('  No MCP servers configured.\n'));
@@ -126,7 +126,7 @@ export class MCPRegistry {
     }
 
     for (const s of this.servers) {
-      const dot = s.enabled ? chalk.green('●') : chalk.gray('○');
+      const dot = s.enabled ? chalk.green('?') : chalk.gray('0');
       const transport = chalk.gray(`[${s.transport}]`);
       console.log(`  ${dot} ${chalk.white(s.name.padEnd(20))} ${transport}  ${chalk.gray(s.id)}`);
       if (s.transport === 'http' && s.url) {
@@ -145,7 +145,7 @@ export class MCPRegistry {
   }
 
   async add(): Promise<void> {
-    console.log(chalk.bold.cyan('\n  🔌 Add MCP Server\n'));
+    console.log(chalk.bold.cyan('\n  ?? Add MCP Server\n'));
 
     const { mode } = await inquirer.prompt([{
       type: 'list',
@@ -211,7 +211,7 @@ export class MCPRegistry {
     this.servers.push(newServer);
     this.save();
 
-    console.log(chalk.green(`\n  ✔  MCP server added: ${newServer.name} (${newServer.id})`));
+    console.log(chalk.green(`\n  ?  MCP server added: ${newServer.name} (${newServer.id})`));
     console.log(chalk.gray('  Test with: hyperclaw mcp test ' + newServer.id + '\n'));
   }
 
@@ -220,32 +220,32 @@ export class MCPRegistry {
     this.servers = this.servers.filter(s => s.id !== id);
     if (this.servers.length < before) {
       this.save();
-      console.log(chalk.green(`\n  ✔  MCP server removed: ${id}\n`));
+      console.log(chalk.green(`\n  ?  MCP server removed: ${id}\n`));
     } else {
-      console.log(chalk.red(`\n  ✖  MCP server not found: ${id}\n`));
+      console.log(chalk.red(`\n  ?  MCP server not found: ${id}\n`));
     }
   }
 
   enable(id: string): void {
     const s = this.servers.find(s => s.id === id);
-    if (!s) { console.log(chalk.red(`  ✖  Not found: ${id}`)); return; }
+    if (!s) { console.log(chalk.red(`  ?  Not found: ${id}`)); return; }
     s.enabled = true;
     this.save();
-    console.log(chalk.green(`  ✔  Enabled: ${s.name}`));
+    console.log(chalk.green(`  ?  Enabled: ${s.name}`));
   }
 
   disable(id: string): void {
     const s = this.servers.find(s => s.id === id);
-    if (!s) { console.log(chalk.red(`  ✖  Not found: ${id}`)); return; }
+    if (!s) { console.log(chalk.red(`  ?  Not found: ${id}`)); return; }
     s.enabled = false;
     this.save();
-    console.log(chalk.green(`  ✔  Disabled: ${s.name}`));
+    console.log(chalk.green(`  ?  Disabled: ${s.name}`));
   }
 
   async test(id: string): Promise<void> {
     const s = this.servers.find(s => s.id === id || s.name.toLowerCase() === id.toLowerCase());
     if (!s) {
-      console.log(chalk.red(`\n  ✖  MCP server not found: ${id}\n`));
+      console.log(chalk.red(`\n  ?  MCP server not found: ${id}\n`));
       return;
     }
 
@@ -273,7 +273,7 @@ export class MCPRegistry {
       // Send MCP initialize request
       const initReq = JSON.stringify({
         jsonrpc: '2.0', id: 1, method: 'initialize',
-        params: { protocolVersion: '2024-11-05', clientInfo: { name: 'hyperclaw', version: '5.0.0' }, capabilities: {} }
+        params: { protocolVersion: '2024-11-05', clientInfo: { name: 'hyperclaw', version: '5.0.1' }, capabilities: {} }
       }) + '\n';
 
       let responded = false;
@@ -294,7 +294,7 @@ export class MCPRegistry {
 
       setTimeout(() => {
         if (!responded) {
-          spinner.fail(`${s.name} timed out — no response within 3s`);
+          spinner.fail(`${s.name} timed out � no response within 3s`);
           proc.kill();
         }
       }, 3000);
@@ -322,7 +322,7 @@ export class MCPRegistry {
           lines.push(`- \`${tool}\``);
         }
       } else {
-        lines.push('- (tools not yet discovered — run: hyperclaw mcp test ' + s.id + ')');
+        lines.push('- (tools not yet discovered � run: hyperclaw mcp test ' + s.id + ')');
       }
       lines.push('');
     }

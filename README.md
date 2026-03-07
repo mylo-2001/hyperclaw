@@ -49,7 +49,7 @@
 | Docker sandbox for agent tools | ✅ | — | ⚠️ |
 | MCP (Model Context Protocol) | ✅ | ⚠️ | ⚠️ |
 | One-command wizard (`hyperclaw onboard`) | ✅ | — | ❌ |
-| Ethical hacking / OSINT mode | ✅ | ❌ | ❌ |
+| OSINT / Ethical hacking mode (`hyperclaw osint`) | ✅ | ❌ | ❌ |
 
 ---
 
@@ -78,6 +78,8 @@ npm install -g hyperclaw@latest
 
 # Run the interactive setup wizard
 hyperclaw onboard
+# Run the interactive setup wizard with deamon
+hyperclaw onboard --install-daemon
 ```
 
 The wizard walks you through: AI provider → model → channels → skills. Done.
@@ -498,6 +500,8 @@ hyperclaw/
 | Multi-agent routing | [docs/multi-agent.md](docs/multi-agent.md) |
 | Session management | [docs/session-management.md](docs/session-management.md) |
 | Sandboxing (Docker isolation) | [docs/sandboxing.md](docs/sandboxing.md) |
+| MCP (Model Context Protocol) | [docs/mcp.md](docs/mcp.md) |
+| OSINT / Ethical Hacking mode | [docs/osint.md](docs/osint.md) |
 | Voice / Talk Mode | [docs/voice.md](docs/voice.md) |
 | Canvas (A2UI) | [docs/canvas-a2ui.md](docs/canvas-a2ui.md) |
 | Browser control | [docs/browser.md](docs/browser.md) |

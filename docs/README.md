@@ -12,6 +12,8 @@ For a curated index of every page, see [Docs Hubs](docs-hubs.md).
 | [FAQ](faq.md) | Frequently asked questions |
 | [Troubleshooting](troubleshooting.md) | Common issues and fixes |
 | [Security](security.md) | DM policy, keys, sandbox |
+| [OSINT / Ethical Hacking](osint.md) | OSINT mode, bug bounty, pentest presets |
+| [MCP Servers](mcp.md) | Model Context Protocol — connect external tools |
 | [API Keys](API-KEYS-README.md) | Wizard, storage, skills — full guide |
 | [Channels](channels/README.md) | Setup guides per channel |
 | [Telegram](telegram.md) | Bot setup, pairing, groups, DM policy |

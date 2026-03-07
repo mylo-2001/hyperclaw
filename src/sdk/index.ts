@@ -1,12 +1,12 @@
-﻿/**
+/**
  * src/sdk/index.ts
- * HyperClaw Plugin SDK — public API for building extensions and skills.
+ * HyperClaw Plugin SDK � public API for building extensions and skills.
  * Export this as @hyperclaw/sdk for plugin developers.
  *
  * Matches OpenClaw's plugin SDK pattern with full TypeScript DTS exports.
  */
 
-// ─── Core Types ──────────────────────────────────────────────────────────────
+// --- Core Types --------------------------------------------------------------
 
 export interface HyperClawPlugin {
   id: string;
@@ -42,7 +42,7 @@ export interface PluginContext {
   log: PluginLogger;
 }
 
-// ─── API Interfaces ──────────────────────────────────────────────────────────
+// --- API Interfaces ----------------------------------------------------------
 
 export interface PluginConfigAPI {
   get<T = unknown>(key: string): T | undefined;
@@ -138,7 +138,7 @@ export interface PluginLogger {
   debug(msg: string): void;
 }
 
-// ─── Channel Extension Interface ─────────────────────────────────────────────
+// --- Channel Extension Interface ---------------------------------------------
 
 export interface ChannelExtension {
   channelId: string;
@@ -161,7 +161,7 @@ export interface ChannelConfig {
   [key: string]: unknown;
 }
 
-// ─── SDK Utilities ───────────────────────────────────────────────────────────
+// --- SDK Utilities -----------------------------------------------------------
 
 export function definePlugin(plugin: HyperClawPlugin): HyperClawPlugin {
   return plugin;
@@ -178,7 +178,7 @@ export function defineTool(tool: Omit<Tool, 'id'> & { id?: string }): Tool {
   } as Tool;
 }
 
-// ─── Version ─────────────────────────────────────────────────────────────────
+// --- Version -----------------------------------------------------------------
 
-export const SDK_VERSION = '5.0.0';
-export const SDK_COMPAT = '>=5.0.0';
+export const SDK_VERSION = '5.0.1';
+export const SDK_COMPAT = '>=5.0.1';
