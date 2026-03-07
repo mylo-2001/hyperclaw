@@ -1,4 +1,4 @@
-/**
+﻿/**
  * extensions/discord/src/connector.ts
  * REAL Discord connector — Discord Gateway WebSocket API v10.
  * No SDK. Uses native wss:// with heartbeat, identify, reconnect.
@@ -34,7 +34,8 @@ export interface DiscordMessage {
   content: string;
   timestamp: string;
   referenced_message?: DiscordMessage;
-  attachments: Array<{ id: string; url: string; filename: string; }>;
+  mentions?: Array<{ id: string; username: string }>;
+  attachments?: Array<{ id: string; url: string; filename: string }>;
 }
 
 export interface DiscordChannel {
@@ -71,7 +72,7 @@ function discordRest(token: string, method: string, endpoint: string, body?: obj
       method,
       headers: {
         'Authorization': `Bot ${token}`,
-        'User-Agent': 'HyperClaw/4.0.2 (https://hyperclaw.ai)',
+        'User-Agent': 'HyperClaw/5.0.0 (https://hyperclaw.ai)',
         ...(payload ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } : {})
       }
     }, (res) => {
@@ -95,14 +96,23 @@ function discordRest(token: string, method: string, endpoint: string, body?: obj
   });
 }
 
+export interface DiscordPairingBridge {
+  isApproved(senderId: string): Promise<boolean>;
+  createRequest(senderId: string): Promise<string | null>;
+  verify(code: string, senderId: string): Promise<boolean>;
+}
+
 export interface DiscordConfig {
   token: string;
   dmPolicy: 'open' | 'allowlist' | 'pairing' | 'none';
   allowFrom: string[];          // Discord user IDs
-  approvedPairings: string[];
-  pendingPairings: Record<string, string>; // code → userId
-  listenGuildIds: string[];     // empty = listen all
+  approvedPairings: string[];   // fallback when no pairingBridge
+  pendingPairings: Record<string, string>; // legacy fallback
+  listenGuildIds: string[];     // empty = listen all; when set, only these guilds
+  requireMentionInGuild?: boolean; // when true, must @mention in guild channels
   commandPrefix: string;        // default: '!'
+  pairingBridge?: DiscordPairingBridge; // use PairingStore when set
+  slashCommands?: boolean;     // register /help, /status. default: true
 }
 
 // ─── Connector ────────────────────────────────────────────────────────────────
@@ -153,7 +163,7 @@ export class DiscordConnector extends EventEmitter {
 
   private async openWebSocket(url: string): Promise<void> {
     this.ws = new WebSocket(url, {
-      headers: { 'User-Agent': 'HyperClaw/4.0.2' }
+      headers: { 'User-Agent': 'HyperClaw/5.0.0' }
     });
 
     this.ws.on('message', async (data) => {
@@ -267,11 +277,16 @@ export class DiscordConnector extends EventEmitter {
         this.resumeGatewayUrl = data.resume_gateway_url;
         this.botUser = data.user;
         await this.saveState();
+        if (this.config.slashCommands !== false) this.registerSlashCommands().catch(e => console.log(chalk.yellow(`  Discord slash commands: ${e.message}`)));
         this.emit('ready', data.user);
         break;
 
       case 'RESUMED':
         console.log(chalk.gray('  Discord session resumed'));
+        break;
+
+      case 'INTERACTION_CREATE':
+        await this.handleInteraction(data);
         break;
 
       case 'MESSAGE_CREATE':
@@ -281,7 +296,6 @@ export class DiscordConnector extends EventEmitter {
   }
 
   private async handleMessage(msg: DiscordMessage): Promise<void> {
-    // Ignore own messages
     if (msg.author.id === this.botUser?.id) return;
     if (msg.author.bot) return;
 
@@ -291,6 +305,9 @@ export class DiscordConnector extends EventEmitter {
     if (isDM) {
       const allowed = await this.checkDMPolicy(userId, msg.channel_id, msg.content);
       if (!allowed) return;
+    } else {
+      const guildAllowed = await this.checkGuildPolicy(msg);
+      if (!guildAllowed) return;
     }
 
     this.emit('message', {
@@ -319,6 +336,28 @@ export class DiscordConnector extends EventEmitter {
     return false;
   }
 
+  // ─── Guild policy ──────────────────────────────────────────────────────────
+
+  private async checkGuildPolicy(msg: DiscordMessage): Promise<boolean> {
+    const channelId = msg.channel_id;
+    let guildId: string | undefined;
+    try {
+      const ch = await discordRest(this.token, 'GET', `/channels/${channelId}`);
+      guildId = ch.guild_id;
+    } catch { return false; }
+    if (!guildId) return false;
+
+    if (this.config.listenGuildIds.length > 0 && !this.config.listenGuildIds.includes(guildId)) return false;
+
+    if (this.config.requireMentionInGuild !== false) {
+      const content = msg.content || '';
+      const mentioned = msg.mentions?.some((m: any) => m.id === this.botUser?.id) ?? false;
+      const botMention = this.botUser ? `<@${this.botUser.id}>` : '';
+      if (!mentioned && !content.includes(botMention) && !msg.referenced_message?.author?.bot) return false;
+    }
+    return true;
+  }
+
   // ─── DM Policy ─────────────────────────────────────────────────────────────
 
   private async checkDMPolicy(userId: string, channelId: string, text: string): Promise<boolean> {
@@ -332,6 +371,28 @@ export class DiscordConnector extends EventEmitter {
     }
 
     if (this.config.dmPolicy === 'pairing') {
+      const bridge = this.config.pairingBridge;
+      if (bridge) {
+        if (await bridge.isApproved(userId)) return true;
+        const upper = text.trim().toUpperCase().replace(/\s/g, '');
+        if (upper.length >= 6 && upper.length <= 10) {
+          const verified = await bridge.verify(upper, userId);
+          if (verified) {
+            await this.sendMessage(channelId, '🦅 **Paired!** You can now send messages.');
+            this.emit('pairing:approved', { userId, channelId: 'discord' });
+            return true;
+          }
+        }
+        const code = await bridge.createRequest(userId);
+        if (code) {
+          await this.sendMessage(channelId,
+            `🦅 **HyperClaw Pairing**\n\nSend the owner this code:\n\`${code}\`\n\nApprove with:\n\`hyperclaw pairing approve discord ${code}\``
+          );
+        } else {
+          await this.sendMessage(channelId, '🦅 **HyperClaw Pairing**\n\nYou already have a pending request. Check with the owner to approve.');
+        }
+        return false;
+      }
       if (this.config.approvedPairings.includes(userId)) return true;
       const upper = text.trim().toUpperCase();
       if (this.config.pendingPairings[upper]) {
@@ -352,6 +413,36 @@ export class DiscordConnector extends EventEmitter {
     }
 
     return false;
+  }
+
+  // ─── Slash commands ────────────────────────────────────────────────────────
+
+  private async registerSlashCommands(): Promise<void> {
+    const app = await discordRest(this.token, 'GET', '/oauth2/applications/@me');
+    const appId = app.id;
+    if (!appId) return;
+    const commands = [
+      { name: 'help', description: 'Show HyperClaw help and commands' },
+      { name: 'status', description: 'Show gateway status' }
+    ];
+    await discordRest(this.token, 'PUT', `/applications/${appId}/commands`, commands);
+  }
+
+  private async handleInteraction(interaction: any): Promise<void> {
+    const { id, token, type, data } = interaction;
+    if (type !== 2 || !data?.name) return; // APPLICATION_COMMAND
+    const name = data.name as string;
+    let content = '';
+    if (name === 'help') {
+      content = '🦅 **HyperClaw** — AI agent on Discord.\n\n'
+        + '**Commands:** `/help`, `/status`\n'
+        + '**Chat:** Just send a message (DM or @mention in servers).\n'
+        + '**Pairing:** DM the bot to get a pairing code, then run `hyperclaw pairing approve discord <CODE>` on the host.';
+    } else if (name === 'status') {
+      content = '🦅 **HyperClaw** — gateway connected. Send a message to chat with the agent.';
+    } else return;
+    const payload = { type: 4, data: { content, flags: 64 } }; // 64 = ephemeral
+    await discordRest(this.token, 'POST', `/interactions/${id}/${token}/callback`, payload);
   }
 
   // ─── Send ──────────────────────────────────────────────────────────────────

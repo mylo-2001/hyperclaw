@@ -1,4 +1,4 @@
-/**
+﻿/**
  * packages/gateway/src/server.ts
  * HyperClaw Gateway — local-first WebSocket control plane.
  * Handles: sessions, presence, config, channel routing, canvas, webhooks.
@@ -16,6 +16,47 @@ import type { GatewayDeps, SessionStoreLike } from './deps';
 
 let activeServer: GatewayServer | null = null;
 
+// ─── Gateway Lock ─────────────────────────────────────────────────────────────
+
+/**
+ * Thrown when the gateway cannot bind its WebSocket port.
+ *
+ * Most common cause: another gateway instance is already running on the same
+ * port (EADDRINUSE). The OS releases the port automatically on any exit,
+ * including crashes and SIGKILL — no separate lock file or cleanup is needed.
+ *
+ * To run a second gateway on the same host, use an isolated profile and a
+ * unique port (leave at least 20 ports between base ports):
+ *   hyperclaw --profile rescue gateway --port 19001
+ */
+export class GatewayLockError extends Error {
+  readonly code: string;
+  constructor(message: string, code = 'GATEWAY_LOCK') {
+    super(message);
+    this.name = 'GatewayLockError';
+    this.code = code;
+  }
+}
+
+/** Config hot-reload mode — mirrors OpenClaw's gateway.reload.mode. */
+export type ReloadMode = 'hybrid' | 'hot' | 'restart' | 'off';
+
+/** Per-channel DM scope isolation — mirrors OpenClaw's session.dmScope. */
+export type DmScope = 'global' | 'per-channel' | 'per-channel-peer' | 'per-account-channel-peer';
+
+/** mDNS/Zeroconf discovery mode. */
+export type MdnsMode = 'minimal' | 'full' | 'off';
+
+/** Browser SSRF policy. */
+export interface BrowserSsrfPolicy {
+  /** Allow private/internal network destinations from browser tool. Default: true (operator model). */
+  dangerouslyAllowPrivateNetwork?: boolean;
+  /** Hostname allowlist patterns (glob). Used in strict mode. */
+  hostnameAllowlist?: string[];
+  /** Exact hostname exceptions even when otherwise blocked. */
+  allowedHostnames?: string[];
+}
+
 export interface GatewayConfig {
   port: number;
   bind: string;
@@ -25,6 +66,18 @@ export interface GatewayConfig {
   hooks: boolean;
   /** When true (daemon start), PC access is forced full (daemon mode). */
   daemonMode?: boolean;
+  /** Config hot-reload mode. Default: 'hybrid'. */
+  reloadMode?: ReloadMode;
+  /** Debounce ms for config file watcher. Default: 300. */
+  reloadDebounceMs?: number;
+  /** Per-channel DM session isolation. Default: 'global'. */
+  dmScope?: DmScope;
+  /** Trusted reverse-proxy IPs/CIDRs for X-Forwarded-For. */
+  trustedProxies?: string[];
+  /** mDNS/Zeroconf discovery mode. Default: 'minimal'. */
+  mdnsMode?: MdnsMode;
+  /** Browser SSRF policy. */
+  browserSsrfPolicy?: BrowserSsrfPolicy;
   /** Injected dependencies (required for full operation) */
   deps: GatewayDeps;
 }
@@ -58,9 +111,77 @@ export class GatewayServer {
   private startedAt = '';
   private stopCron: (() => void) | null = null;
   private channelRunner: { stop: () => Promise<void>; handleWebhook?: (channelId: string, body: string, opts?: { signature?: string; timestamp?: string }) => Promise<string | void>; verifyWebhook?: (channelId: string, mode: string, token: string, challenge: string) => string | null } | null = null;
+  private configWatcher: { close: () => void } | null = null;
+  private configReloadDebounce: ReturnType<typeof setTimeout> | null = null;
 
   constructor(config: GatewayConfig) {
     this.config = config;
+  }
+
+  /** Start watching the config file for changes and hot-apply safe settings. */
+  private startConfigWatcher(): void {
+    const mode: ReloadMode = this.config.reloadMode ?? 'hybrid';
+    if (mode === 'off') return;
+
+    const configPath = this.config.deps.getConfigPath?.() ?? '';
+    if (!configPath) return;
+
+    const fsNode = require('fs') as typeof import('fs');
+    const debounceMs = this.config.reloadDebounceMs ?? 300;
+    try {
+      const watcher = fsNode.watch(configPath, { persistent: false }, (_event: string) => {
+        if (this.configReloadDebounce) clearTimeout(this.configReloadDebounce);
+        this.configReloadDebounce = setTimeout(() => void this.hotReloadConfig(), debounceMs);
+      });
+      this.configWatcher = watcher;
+      console.log(chalk.gray(`  ⚙  Config watcher active (mode: ${mode}) — ${configPath}`));
+    } catch {
+      // Config file may not exist yet — watcher will be inert
+    }
+  }
+
+  /** Hot-apply safe config changes without restarting. */
+  private async hotReloadConfig(): Promise<void> {
+    try {
+      const fs = require('fs-extra') as typeof import('fs-extra');
+      const configPath = this.config.deps.getConfigPath?.() ?? '';
+      if (!configPath) return;
+      const raw = await fs.readJson(configPath).catch(() => null);
+      if (!raw) return;
+
+      // Restart-required fields (port, bind, authToken, runtime)
+      const restartRequired =
+        raw.gateway?.port !== this.config.port ||
+        raw.gateway?.bind !== this.config.bind;
+
+      if (restartRequired) {
+        console.log(chalk.yellow('\n  ⚙  Config change requires gateway restart — restarting...\n'));
+        // Broadcast to all sessions
+        for (const s of this.sessions.values()) {
+          if (s.socket.readyState === 1) {
+            s.socket.send(JSON.stringify({ type: 'gateway:reloading', reason: 'config-change' }));
+          }
+        }
+        // Trigger restart via daemon if available
+        try {
+          const { DaemonManager } = await import('../../../src/infra/daemon');
+          await new DaemonManager().restart?.();
+        } catch { /* daemon not running — skip */ }
+        return;
+      }
+
+      // Hot-apply safe fields: hooks, channels, agent settings, identity
+      if (raw.gateway?.hooks !== undefined) this.config.hooks = raw.gateway.hooks;
+
+      // Notify sessions of reload
+      const reloadMsg = JSON.stringify({ type: 'gateway:config-reloaded', ts: new Date().toISOString() });
+      for (const s of this.sessions.values()) {
+        if (s.socket.readyState === 1) s.socket.send(reloadMsg);
+      }
+      console.log(chalk.green('  ⚙  Config hot-reloaded (no restart needed)'));
+    } catch (e: any) {
+      console.log(chalk.yellow(`  ⚙  Config reload failed: ${e.message}`));
+    }
   }
 
   async start(): Promise<void> {
@@ -69,7 +190,19 @@ export class GatewayServer {
     this.wss.on('connection', this.handleConnection.bind(this));
     await new Promise<void>((resolve, reject) => {
       this.httpServer!.listen(this.config.port, this.config.bind, () => resolve());
-      this.httpServer!.on('error', reject);
+      this.httpServer!.on('error', (err: NodeJS.ErrnoException) => {
+        if (err.code === 'EADDRINUSE') {
+          reject(new GatewayLockError(
+            `another gateway instance is already listening on ws://${this.config.bind}:${this.config.port}`,
+            'EADDRINUSE'
+          ));
+        } else {
+          reject(new GatewayLockError(
+            `failed to bind gateway socket on ws://${this.config.bind}:${this.config.port}: ${err.message}`,
+            err.code || 'BIND_ERROR'
+          ));
+        }
+      });
     });
     this.startedAt = new Date().toISOString();
     activeServer = this;
@@ -91,9 +224,12 @@ export class GatewayServer {
       loader.execute('gateway:start', {}).catch(() => {});
       this.stopCron = loader.startCronScheduler();
     }
+    this.startConfigWatcher();
   }
 
   async stop(): Promise<void> {
+    if (this.configWatcher) { this.configWatcher.close(); this.configWatcher = null; }
+    if (this.configReloadDebounce) { clearTimeout(this.configReloadDebounce); }
     if (this.channelRunner) { await this.channelRunner.stop(); this.channelRunner = null; }
     if (this.stopCron) { this.stopCron(); this.stopCron = null; }
     for (const s of this.sessions.values()) s.socket.close(1001, 'Gateway shutting down');
@@ -124,6 +260,49 @@ export class GatewayServer {
     return false;
   }
 
+  /** Resolve real client IP, honouring X-Forwarded-For only when the socket peer is a trusted proxy. */
+  private resolveClientIp(req: http.IncomingMessage): string {
+    const socketIp = req.socket.remoteAddress ?? '127.0.0.1';
+    const trusted = this.config.trustedProxies ?? [];
+    if (trusted.length === 0) return socketIp;
+    const isTrusted = trusted.some(proxy => {
+      if (proxy === socketIp) return true;
+      // CIDR check for /prefix notation
+      if (proxy.includes('/')) {
+        try {
+          const [base, bits] = proxy.split('/');
+          const mask = ~((1 << (32 - parseInt(bits, 10))) - 1);
+          const ipToNum = (ip: string) => ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0);
+          return (ipToNum(socketIp) & mask) === (ipToNum(base) & mask);
+        } catch { return false; }
+      }
+      return false;
+    });
+    if (!isTrusted) return socketIp;
+    const xff = req.headers['x-forwarded-for'] as string | undefined;
+    return xff ? xff.split(',')[0].trim() : socketIp;
+  }
+
+  // Rate-limit store for Config RPC: key = `${deviceId}:${clientIp}`, value = { count, windowStart }
+  private configRpcRateLimit = new Map<string, { count: number; windowStart: number }>();
+  private readonly CONFIG_RPC_MAX = 3;
+  private readonly CONFIG_RPC_WINDOW_MS = 60_000;
+
+  private checkConfigRpcRateLimit(key: string): { ok: boolean; retryAfterMs?: number } {
+    const now = Date.now();
+    let entry = this.configRpcRateLimit.get(key);
+    if (!entry || now - entry.windowStart > this.CONFIG_RPC_WINDOW_MS) {
+      entry = { count: 0, windowStart: now };
+    }
+    entry.count++;
+    this.configRpcRateLimit.set(key, entry);
+    if (entry.count > this.CONFIG_RPC_MAX) {
+      const retryAfterMs = this.CONFIG_RPC_WINDOW_MS - (now - entry.windowStart);
+      return { ok: false, retryAfterMs };
+    }
+    return { ok: true };
+  }
+
   private async handleHttp(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
     const url = (req.url || '/').split('?')[0];
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -132,9 +311,48 @@ export class GatewayServer {
 
     if (url === '/api/v1/check') {
       res.writeHead(200);
-      res.end(JSON.stringify({ ok: true, service: 'hyperclaw', version: '4.0.2' }));
+      res.end(JSON.stringify({ ok: true, service: 'hyperclaw', version: '5.0.0' }));
       return;
     }
+
+    // Config RPC — rate-limited to 3 req/60 s per deviceId+clientIp
+    if ((url === '/api/v1/config/apply' || url === '/api/v1/config/patch') && req.method === 'POST') {
+      if (!(await this.requireAuth(req, res))) return;
+      const clientIp = this.resolveClientIp(req);
+      const deviceId = (req.headers['x-hyperclaw-device'] as string) || 'anon';
+      const rlKey = `${deviceId}:${clientIp}`;
+      const rl = this.checkConfigRpcRateLimit(rlKey);
+      if (!rl.ok) {
+        res.writeHead(429, { 'Retry-After': String(Math.ceil((rl.retryAfterMs ?? 60000) / 1000)) });
+        res.end(JSON.stringify({ error: 'UNAVAILABLE', retryAfterMs: rl.retryAfterMs, hint: 'Config RPC is rate-limited to 3 requests per 60 seconds.' }));
+        return;
+      }
+      let body = '';
+      req.on('data', c => body += c);
+      req.on('end', async () => {
+        try {
+          const payload = JSON.parse(body || '{}');
+          const configPath = this.config.deps.getConfigPath();
+          const current = await fs.readJson(configPath).catch(() => ({}));
+          let next: object;
+          if (url.endsWith('/apply')) {
+            // Full replace
+            next = payload;
+          } else {
+            // Shallow merge (patch)
+            next = { ...current, ...payload };
+          }
+          await fs.writeJson(configPath, next, { spaces: 2 });
+          res.writeHead(200);
+          res.end(JSON.stringify({ ok: true, action: url.endsWith('/apply') ? 'apply' : 'patch' }));
+        } catch (e: any) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ error: e.message }));
+        }
+      });
+      return;
+    }
+
     if (url === '/api/v1/pi' && req.method === 'POST') {
       if (!(await this.requireAuth(req, res))) return;
       let body = '';
@@ -314,9 +532,12 @@ export class GatewayServer {
       req.on('data', c => body += c);
       req.on('end', async () => {
         try {
-          const { message } = JSON.parse(body);
+          const parsed = JSON.parse(body);
+          const { message } = parsed;
+          const agentId: string | undefined = parsed.agentId;
+          const sessionKey: string | undefined = parsed.sessionKey;
           const source = (req.headers['x-hyperclaw-source'] as string) || 'unknown';
-          const response = await this.callAgent(message, { source });
+          const response = await this.callAgent(message, { source, agentId, sessionKey });
           res.writeHead(200);
           res.end(JSON.stringify({ response }));
         } catch (e: any) {
@@ -509,7 +730,7 @@ export class GatewayServer {
     if (authToken && !session.authenticated) {
       this.send(session, { type: 'connect.challenge', sessionId: id });
     } else {
-      this.send(session, { type: 'connect.ok', sessionId: id, version: '4.0.2', heartbeatInterval: 30000 });
+      this.send(session, { type: 'connect.ok', sessionId: id, version: '5.0.0', heartbeatInterval: 30000 });
       if (this.config.hooks && this.config.deps.createHookLoader) {
         this.config.deps.createHookLoader().execute('session:start', { sessionId: id }).catch(() => {});
       }
@@ -696,6 +917,10 @@ export class GatewayServer {
       source?: string;
       onToken?: (token: string) => void;
       onDone?: (response: string) => void;
+      /** Agent ID to route to (from binding resolution or broadcast dispatch). */
+      agentId?: string;
+      /** Pre-computed session key (from session-keys.ts). */
+      sessionKey?: string;
     }
   ): Promise<string> {
     const sid = opts?.currentSessionId;
@@ -732,7 +957,10 @@ export class GatewayServer {
       onDone: opts?.onDone,
       daemonMode: this.config.daemonMode,
       appendTranscript: (s, role, content) => this.appendTranscript(s, role, content),
-      activeServer: activeServer ?? this
+      activeServer: activeServer ?? this,
+      // Multi-agent routing: agentId and sessionKey resolved by channel runner
+      ...(opts?.agentId ? { agentId: opts.agentId } : {}),
+      ...(opts?.sessionKey ? { sessionKey: opts.sessionKey } : {})
     };
     if ((cfg?.observability as any)?.traces && this.config.deps.createRunTracer && this.config.deps.writeTraceToFile) {
       const tracer = this.config.deps.createRunTracer(sid, source);
@@ -858,7 +1086,7 @@ export function getActiveServer() { return activeServer; }
 
 // Extend GatewayServer prototype with ISessionServer methods (used by agent sessions tools)
 GatewayServer.prototype.getSessionsList = function () {
-  const out: object[] = [];
+  const out: { id: string; source: string; connectedAt: string }[] = [];
   for (const [id, s] of (this as any).sessions as Map<string, Session>) {
     out.push({
       id,
@@ -867,7 +1095,7 @@ GatewayServer.prototype.getSessionsList = function () {
       lastActiveAt: s.lastActiveAt,
       talkMode: s.talkMode ?? false,
       nodeId: s.nodeId ?? null,
-    });
+    } as any);
   }
   return out;
 };
@@ -883,8 +1111,8 @@ GatewayServer.prototype.sendToSession = function (id: string, msg: unknown): boo
   }
 };
 
-GatewayServer.prototype.getSessionHistory = function (id: string, limit: number): unknown[] | undefined {
+GatewayServer.prototype.getSessionHistory = function (id: string, limit: number): { role: string; content: string }[] {
   const history = ((this as any).transcripts as Map<string, Array<{ role: string; content: string }>>).get(id);
-  if (!history) return undefined;
+  if (!history) return [];
   return history.slice(-limit);
 };

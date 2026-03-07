@@ -1,6 +1,26 @@
 /**
  * src/infra/env-resolve.ts
  * Resolve config values from env fallbacks. All .env.example vars are wired here.
+ *
+ * Path environment variables (processed by packages/shared/src/paths.ts):
+ *   HYPERCLAW_HOME        Override base home dir (default: ~/). Used to compute ~/.hyperclaw.
+ *   HYPERCLAW_STATE_DIR   Override entire state dir (default: ~/.hyperclaw).
+ *   HYPERCLAW_CONFIG_PATH Override config file path (default: ~/.hyperclaw/hyperclaw.json).
+ *
+ * Gateway environment variables:
+ *   HYPERCLAW_GATEWAY_TOKEN   Gateway WebSocket auth token.
+ *   HYPERCLAW_PORT            Default gateway port (fallback, config takes precedence).
+ *
+ * Provider keys (resolved by resolveProviderApiKey):
+ *   ANTHROPIC_API_KEY    OPENAI_API_KEY    OPENROUTER_API_KEY    XAI_API_KEY    GOOGLE_AI_API_KEY
+ *
+ * Channel tokens (resolved by resolveChannelToken):
+ *   TELEGRAM_BOT_TOKEN    DISCORD_BOT_TOKEN    SLACK_BOT_TOKEN
+ *   (others: <CHANNEL_ID_UPPER>_BOT_TOKEN)
+ *
+ * Service / skill keys:
+ *   HACKERONE_API_USERNAME  HACKERONE_API_TOKEN  BUGCROWD_API_TOKEN  SYNACK_API_TOKEN
+ *   (others: <SERVICE_ID_UPPER>_API_KEY)
  */
 
 const CHANNEL_ENV: Record<string, string> = {
@@ -65,4 +85,24 @@ export function resolveChannelToken(channelId: string, tokenFromConfig?: string)
   if (tokenFromConfig) return tokenFromConfig;
   const envKey = CHANNEL_ENV[channelId] || `${channelId.toUpperCase().replace(/-/g, '_')}_BOT_TOKEN`;
   return process.env[envKey] || process.env[`${channelId.toUpperCase()}_BOT_TOKEN`] || '';
+}
+
+// ── Path env helpers ─────────────────────────────────────────────────────────
+
+/**
+ * Returns a summary of active path environment overrides.
+ * Useful for `hyperclaw health -v` and `hyperclaw status --all`.
+ */
+export function resolvePathEnvOverrides(): {
+  hyperclawHome?: string;
+  stateDir?: string;
+  configPath?: string;
+  gatewayToken?: string;
+} {
+  return {
+    ...(process.env.HYPERCLAW_HOME ? { hyperclawHome: process.env.HYPERCLAW_HOME } : {}),
+    ...(process.env.HYPERCLAW_STATE_DIR ? { stateDir: process.env.HYPERCLAW_STATE_DIR } : {}),
+    ...(process.env.HYPERCLAW_CONFIG_PATH ? { configPath: process.env.HYPERCLAW_CONFIG_PATH } : {}),
+    ...(process.env.HYPERCLAW_GATEWAY_TOKEN ? { gatewayToken: '(set)' } : {})
+  };
 }

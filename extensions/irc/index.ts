@@ -1,1 +1,9 @@
-export { IrcConnector, IrcConfig } from './src/connector';
+export {
+  IrcConnector,
+  IrcConfig,
+  IrcMessage,
+  IrcChannelGroupConfig,
+  NickServConfig,
+  ToolPolicy,
+  ToolsBySender
+} from './src/connector';

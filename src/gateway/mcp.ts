@@ -1,4 +1,4 @@
-/**
+﻿/**
  * src/gateway/mcp.ts
  * MCP (Model Context Protocol) server registry and proxy.
  * `hyperclaw mcp list / add / remove / test`
@@ -273,7 +273,7 @@ export class MCPRegistry {
       // Send MCP initialize request
       const initReq = JSON.stringify({
         jsonrpc: '2.0', id: 1, method: 'initialize',
-        params: { protocolVersion: '2024-11-05', clientInfo: { name: 'hyperclaw', version: '4.0.2' }, capabilities: {} }
+        params: { protocolVersion: '2024-11-05', clientInfo: { name: 'hyperclaw', version: '5.0.0' }, capabilities: {} }
       }) + '\n';
 
       let responded = false;

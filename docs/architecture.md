@@ -70,10 +70,12 @@ A brief overview of the HyperClaw architecture.
 
 ## Protocol (WebSocket)
 
-- `connect.ok` — session established
-- `chat:message` → `chat:response`
+- `connect.challenge` → `auth` → `connect.ok` / `auth.ok`
+- `chat:message` → `chat:chunk` / `chat:response`
 - `ping` → `pong`
-- `gateway:status`, `config:get`
+- `gateway:status`, `config:get`, `presence:list`
+
+See [Gateway Protocol](protocols/gateway-protocol.md) and [API](api/gateway-api.md).
 
 ---
 

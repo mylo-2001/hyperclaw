@@ -1,29 +1,31 @@
-/**
+﻿/**
  * src/cli/run-main.ts
  * HyperClaw CLI — full command surface.
  *
  * Commands:
- *   hyperclaw init / onboard / quickstart
+ *   hyperclaw init / onboard / quickstart / setup
  *   hyperclaw gateway status/start/stop/restart
  *   hyperclaw daemon start/stop/restart/status/logs
- *   hyperclaw channels list/add/remove
+ *   hyperclaw channels list/add/remove/login/status [--probe]
  *   hyperclaw hooks list/enable/disable/info/install
  *   hyperclaw agents bindings/bind/unbind
  *   hyperclaw hub / hub --install / hub --scan
  *   hyperclaw pairing list/approve
+ *   hyperclaw devices list/pair/approve/reject/unpair
  *   hyperclaw message send
  *   hyperclaw update --channel stable|beta|dev
  *   hyperclaw doctor [--fix]
+ *   hyperclaw health [-v] [--json]
+ *   hyperclaw status [--all] [--deep]
  *   hyperclaw memory show/add-rule/add-fact
  *   hyperclaw config show/set-key/schema
  *   hyperclaw voice
- *   hyperclaw status
  *   hyperclaw dashboard
  */
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { HyperClawWizard } from './onboard';
+import { HyperClawWizard, type WizardOptions } from './onboard';
 import { Banner } from '../terminal/banner';
 import { DaemonManager } from '../infra/daemon';
 import { Dashboard } from './dashboard';
@@ -34,10 +36,12 @@ import { GatewayManager } from 'hyperclaw/gateway';
 import { MemoryManager } from '../agents/memory';
 import { HookLoader } from '../hooks/loader';
 import { AgentRouter } from '../routing/agents-routing';
-import { PairingStore } from '../channels/pairing';
+import { GlobalPairingManager } from '../channels/pairing';
+import { DevicePairingStore } from '../infra/device-pairing';
 import { runDoctor } from '../commands/doctor';
+import { runHealth } from '../commands/health';
 import { sendMessage } from '../commands/message-send';
-import { channelsAdd, channelsList, channelsRemove } from '../commands/channels/add';
+import { channelsAdd, channelsList, channelsRemove, channelsStatus, channelsLogin } from '../commands/channels/add';
 import {
   resolveEffectiveUpdateChannel,
   detectInstallKind,
@@ -53,7 +57,33 @@ const program = new Command();
 program
   .name('hyperclaw')
   .description('⚡ HyperClaw — AI Gateway Platform. The Lobster Evolution 🦅')
-  .version('4.0.2');
+  .version('5.0.0')
+  .option(
+    '--profile <name>',
+    'Use an isolated gateway profile. Auto-scopes HYPERCLAW_STATE_DIR and HYPERCLAW_CONFIG_PATH. ' +
+    'Required for multi-gateway setups (rescue bot, staging, etc.). ' +
+    'Example: hyperclaw --profile rescue gateway --port 19001'
+  )
+  .hook('preAction', (thisCommand) => {
+    // Apply --profile early so path resolution in all subcommands sees the correct dirs
+    const profile = thisCommand.opts().profile as string | undefined;
+    if (profile) {
+      const os = require('os');
+      const path = require('path');
+      const home = os.homedir();
+
+      // Only set if not already set by the caller (let explicit env override)
+      if (!process.env.HYPERCLAW_STATE_DIR) {
+        process.env.HYPERCLAW_STATE_DIR = path.join(home, `.hyperclaw-${profile}`);
+      }
+      if (!process.env.HYPERCLAW_CONFIG_PATH) {
+        process.env.HYPERCLAW_CONFIG_PATH = path.join(
+          process.env.HYPERCLAW_STATE_DIR,
+          'hyperclaw.json'
+        );
+      }
+    }
+  });
 
 // ─── INIT / ONBOARD ─────────────────────────────────────────────────────────
 
@@ -288,6 +318,15 @@ channelsCmd.command('remove <channel>')
   .description('Remove a channel')
   .action(async (channel) => { await channelsRemove(channel); process.exit(0); });
 
+channelsCmd.command('login [channel]')
+  .description('First-time login / QR pairing for a channel')
+  .action(async (channel) => { await channelsLogin(channel); process.exit(0); });
+
+channelsCmd.command('status')
+  .description('Show channel status (use --probe to test connectivity)')
+  .option('--probe', 'Probe each channel for real connectivity')
+  .action(async (opts) => { await channelsStatus({ probe: !!opts.probe }); process.exit(0); });
+
 // ─── HOOKS ───────────────────────────────────────────────────────────────────
 
 const hooksCmd = program.command('hooks').description('Hook management');
@@ -333,14 +372,96 @@ agentsCmd.command('unbind')
 
 const pairingCmd = program.command('pairing').description('DM pairing codes');
 
-pairingCmd.command('list')
-  .description('List pending and approved pairing codes')
-  .action(() => { (new PairingStore()).showList(); process.exit(0); });
+pairingCmd.command('list [channel]')
+  .description('List pending DM pairing requests (optionally filter by channel)')
+  .action(async (channel) => {
+    await (new GlobalPairingManager()).showList(channel);
+    process.exit(0);
+  });
 
 pairingCmd.command('approve <channel> <code>')
-  .description('Approve a pairing code and add user to allowlist')
-  .action((channel, code) => {
-    (new PairingStore()).cliApprove(channel, code);
+  .description('Approve a pairing code and add sender to channel allowlist')
+  .option('--account <id>', 'Account ID for multi-account channels', 'default')
+  .action(async (channel, code, opts) => {
+    await (new GlobalPairingManager()).cliApprove(channel, code, opts.account);
+    process.exit(0);
+  });
+
+// ─── DEVICES ─────────────────────────────────────────────────────────────────
+
+const devicesCmd = program.command('devices').description('Node/device pairing (iOS, Android, macOS, headless)');
+
+devicesCmd.command('list')
+  .description('List pending and paired devices')
+  .action(async () => {
+    await (new DevicePairingStore()).showCLI();
+    process.exit(0);
+  });
+
+devicesCmd.command('pair')
+  .description('Create a new device pairing request and print setup code')
+  .option('-u, --gateway-url <url>', 'Gateway WebSocket URL', 'ws://localhost:18789')
+  .option('-n, --name <name>', 'Device name (optional)')
+  .option('-p, --platform <platform>', 'Platform hint: ios|android|macos|headless (optional)')
+  .action(async (opts) => {
+    const store = new DevicePairingStore();
+    const result = await store.createRequest(opts.gatewayUrl, {
+      deviceName: opts.name,
+      platform: opts.platform
+    });
+    console.log(chalk.bold.cyan('\n  📱 DEVICE PAIR REQUEST\n'));
+    console.log(`  Request ID:  ${chalk.bold(result.requestId)}`);
+    console.log(`  Expires:     ${chalk.gray(new Date(result.expiresAt).toLocaleTimeString())}`);
+    console.log();
+    console.log(chalk.yellow('  Setup code (send to device or paste in app):'));
+    console.log(chalk.bold(`\n  ${result.setupCode}\n`));
+    console.log(chalk.gray('  Approve:  hyperclaw devices approve ' + result.requestId));
+    console.log(chalk.gray('  Reject:   hyperclaw devices reject ' + result.requestId));
+    console.log(chalk.gray('\n  Telegram: message your bot with /pair for guided flow.\n'));
+    process.exit(0);
+  });
+
+devicesCmd.command('approve <requestId>')
+  .description('Approve a pending device pairing request')
+  .action(async (requestId) => {
+    const store = new DevicePairingStore();
+    const device = await store.approve(requestId);
+    if (device) {
+      console.log(chalk.green(`\n  ✔  Device approved: ${chalk.bold(device.deviceId)}`));
+      if (device.deviceName) console.log(chalk.gray(`     Name: ${device.deviceName}`));
+      console.log(chalk.gray(`     Paired at: ${device.pairedAt}\n`));
+    } else {
+      console.log(chalk.red(`\n  ✖  Request not found or expired: ${requestId}\n`));
+      process.exit(1);
+    }
+    process.exit(0);
+  });
+
+devicesCmd.command('reject <requestId>')
+  .description('Reject a pending device pairing request')
+  .action(async (requestId) => {
+    const store = new DevicePairingStore();
+    const ok = await store.reject(requestId);
+    if (ok) {
+      console.log(chalk.green(`\n  ✔  Request rejected: ${requestId}\n`));
+    } else {
+      console.log(chalk.red(`\n  ✖  Request not found: ${requestId}\n`));
+      process.exit(1);
+    }
+    process.exit(0);
+  });
+
+devicesCmd.command('unpair <deviceId>')
+  .description('Remove a paired device')
+  .action(async (deviceId) => {
+    const store = new DevicePairingStore();
+    const ok = await store.unpair(deviceId);
+    if (ok) {
+      console.log(chalk.green(`\n  ✔  Device unpaired: ${deviceId}\n`));
+    } else {
+      console.log(chalk.red(`\n  ✖  Device not found: ${deviceId}\n`));
+      process.exit(1);
+    }
     process.exit(0);
   });
 
@@ -487,10 +608,22 @@ program.command('update')
 // ─── DOCTOR ──────────────────────────────────────────────────────────────────
 
 program.command('doctor')
-  .description('Health check — surfaces misconfigs and risky DM policies')
+  .description('Health check — surfaces misconfigs, risky DM policies, and repairs')
   .option('--fix', 'Auto-repair fixable issues')
+  .option('--repair', 'Apply recommended repairs (same as --fix)')
+  .option('--force', 'Apply aggressive repairs (use with --repair)')
+  .option('-y, --yes', 'Accept defaults without prompting')
+  .option('--non-interactive', 'Skip prompts; only run safe migrations')
+  .option('--deep', 'Scan system services for extra gateway installs')
   .action(async (opts) => {
-    await runDoctor(opts.fix);
+    await runDoctor(opts.fix || opts.repair, {
+      fix: opts.fix,
+      repair: opts.repair,
+      force: opts.force,
+      yes: opts.yes,
+      nonInteractive: opts.nonInteractive,
+      deep: opts.deep
+    });
     process.exit(0);
   });
 
@@ -577,7 +710,7 @@ cfgCmd.command('schema')
   .action(() => {
     console.log(chalk.bold.hex('#06b6d4')('\n  Config schema: ~/.hyperclaw/config.json\n'));
     const schema = {
-      version: 'string (e.g. "4.0.2")',
+      version: 'string (e.g. "5.0.0")',
       workspaceName: 'string',
       provider: { providerId: 'string', apiKey: 'string (secret)', modelId: 'string' },
       gateway: { port: 'number', bind: '"127.0.0.1"|"0.0.0.0"|"tailscale"|"custom"', authToken: 'string (secret)', tailscaleExposure: '"off"|"serve"|"funnel"', runtime: '"node"|"bun"|"deno"' },
@@ -726,9 +859,86 @@ program.command('dashboard')
 
 program.command('status')
   .description('System overview')
-  .action(async () => {
+  .option('--all', 'Full local diagnosis (read-only)')
+  .option('--deep', 'Also probe the running gateway')
+  .action(async (opts) => {
     await (new Banner()).showStatus();
+    if (opts.all || opts.deep) {
+      const fs = await import('fs-extra');
+      const { getConfigPath } = await import('../infra/paths');
+      const t = (await import('../infra/theme')).getTheme(false);
+      const configPath = getConfigPath();
+      console.log(t.bold('\n  ─── Deep status ───\n'));
+      try {
+        const cfg = await fs.readJson(configPath);
+        console.log(t.muted('  Config: ') + (cfg ? t.success('loaded') : t.error('missing')));
+        console.log(t.muted('  Channels: ') + JSON.stringify(cfg?.gateway?.enabledChannels || cfg?.channels || []));
+      } catch { console.log(t.muted('  Config: ') + t.error('unreadable')); }
+      if (opts.deep) {
+        const http = await import('http');
+        const { resolveGatewayUrl } = await import('../commands/health');
+        const cfg = await (new ConfigManager()).load();
+        const { gatewayUrl } = resolveGatewayUrl(cfg);
+        const u = new URL(gatewayUrl);
+        const optsReq: any = {
+          hostname: u.hostname,
+          port: u.port || (u.protocol === 'https:' ? 443 : 80),
+          path: '/api/status',
+          method: 'GET',
+          timeout: 3000
+        };
+        if (u.protocol === 'https:') {
+          const https = await import('https');
+          await new Promise<void>((resolve) => {
+            const req = https.request(`${gatewayUrl}/api/status`, { timeout: 3000 }, (res: any) => {
+              let d = '';
+              res.on('data', (c: Buffer) => d += c);
+              res.on('end', () => {
+                try {
+                  const j = JSON.parse(d);
+                  console.log(t.muted('  Gateway: ') + t.success('reachable') + ` (sessions: ${j.sessions ?? '-'}, uptime: ${j.uptime ?? '-'})`);
+                } catch { console.log(t.muted('  Gateway: ') + t.error('unreachable or invalid response')); }
+                resolve();
+              });
+            });
+            req.on('error', () => { console.log(t.muted('  Gateway: ') + t.error('unreachable')); resolve(); });
+            req.on('timeout', () => { req.destroy(); console.log(t.muted('  Gateway: ') + t.error('timeout')); resolve(); });
+            req.end();
+          });
+        } else {
+          await new Promise<void>((resolve) => {
+            const req = http.request(optsReq, (res) => {
+              let d = '';
+              res.on('data', (c: Buffer) => d += c);
+              res.on('end', () => {
+                try {
+                  const j = JSON.parse(d);
+                  console.log(t.muted('  Gateway: ') + t.success('reachable') + ` (sessions: ${j.sessions ?? '-'}, uptime: ${j.uptime ?? '-'})`);
+                } catch { console.log(t.muted('  Gateway: ') + t.error('unreachable or invalid response')); }
+                resolve();
+              });
+            });
+            req.on('error', () => { console.log(t.muted('  Gateway: ') + t.error('unreachable')); resolve(); });
+            req.on('timeout', () => { req.destroy(); console.log(t.muted('  Gateway: ') + t.error('timeout')); resolve(); });
+            req.end();
+          });
+        }
+      }
+      console.log();
+    }
     process.exit(0);
+  });
+
+// ─── HEALTH ─────────────────────────────────────────────────────────────────
+
+program.command('health')
+  .description('Quick gateway health probe (Runtime, RPC probe, channel count)')
+  .option('--json', 'Output raw JSON')
+  .option('-v, --verbose', 'Show state dir, config path, and env overrides')
+  .action(async (opts) => {
+    const result = await runHealth({ json: opts.json, verbose: opts.verbose });
+    if (!result.allOk) process.exitCode = 1;
+    process.exit(process.exitCode ?? 0);
   });
 
 // ─── THEME ───────────────────────────────────────────────────────────────────
@@ -848,9 +1058,11 @@ const securityCmd = program.command('security').description('Security tools');
 securityCmd.command('audit')
   .description('Security audit — file permissions, DM policies, embedded secrets')
   .option('--deep', 'Full deep scan including token entropy and installed skill risks')
+  .option('--fix', 'Auto-fix safe findings (file permissions etc.)')
+  .option('--json', 'Machine-readable JSON output')
   .action(async (opts) => {
     const { runSecurityAudit } = await import('../security/audit');
-    await runSecurityAudit(opts.deep);
+    await runSecurityAudit({ deep: opts.deep, fix: opts.fix, json: opts.json });
     process.exit(0);
   });
 
@@ -1704,6 +1916,35 @@ function checkForUpdate(): void {
     );
   } catch { /* ignore fs errors */ }
 }
+
+// ─── SETUP (alias for onboard) ───────────────────────────────────────────────
+
+program.command('setup')
+  .description('Setup wizard — alias for `hyperclaw onboard`')
+  .option('--install-daemon', 'Auto-install system daemon')
+  .option('--reset', 'Reset config before running wizard')
+  .option('--non-interactive', 'Non-interactive mode')
+  .option('--json', 'Output result as JSON (use with --non-interactive)')
+  .option('--anthropic-api-key <key>', 'Anthropic API key (non-interactive)')
+  .option('--openai-api-key <key>', 'OpenAI API key (non-interactive)')
+  .option('--gateway-port <port>', 'Gateway port (non-interactive)', '18789')
+  .option('--gateway-bind <bind>', 'Gateway bind: loopback | all', 'loopback')
+  .action(async (opts) => {
+    await (new Banner()).showNeonBanner(false);
+    const wizardOpts: WizardOptions = {
+      wizard: true,
+      installDaemon: opts.installDaemon ?? false,
+      reset: opts.reset ?? false,
+      nonInteractive: opts.nonInteractive ?? false,
+      jsonOutput: opts.json ?? false,
+      gatewayPort: opts.gatewayPort ? parseInt(opts.gatewayPort) : undefined,
+      gatewayBind: opts.gatewayBind ?? 'loopback',
+      anthropicApiKey: opts.anthropicApiKey,
+      openaiApiKey: opts.openaiApiKey,
+    };
+    await (new HyperClawWizard()).run(wizardOpts);
+    process.exit(0);
+  });
 
 checkForUpdate();
 

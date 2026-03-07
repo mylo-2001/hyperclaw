@@ -1,4 +1,4 @@
-# macOS App Release & Auto-Update
+﻿# macOS App Release & Auto-Update
 
 ## Release Checklist (OpenClaw-level hardening)
 
@@ -14,8 +14,8 @@
 ### Versioning
 
 1. **Bump version** in `apps/macos/package.json`
-2. **Commit and tag**: `git tag v4.0.2`
-3. **Push tag**: `git push origin v4.0.2`
+2. **Commit and tag**: `git tag v5.0.0`
+3. **Push tag**: `git push origin v5.0.0`
 4. **GitHub Action** `.github/workflows/macos-release.yml` runs:
    - Builds the app
    - Creates a GitHub Release

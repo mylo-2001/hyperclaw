@@ -7,16 +7,16 @@ The Connect tab protocol allows mobile apps (iOS/Android) to connect to the Hype
 | Component | Description |
 |-----------|-------------|
 | **Gateway** | WebSocket server (`ws://localhost:18789` or Tailscale) |
-| **Node** | Mobile app session that sends `node:register` |
+| **Node** | Mobile app session that sends `node_register` |
 | **API** | `GET /api/nodes` — list connected nodes |
 
 ## WebSocket messages
 
 ### Node → Gateway
 
-- **`node:register`** — Register as a mobile node:
+- **`node_register`** — Register as a mobile node:
   ```json
-  { "type": "node:register", "nodeId": "iPhone-1", "platform": "ios", "deviceName": "My iPhone", "capabilities": { "camera": true, "location": true } }
+  { "type": "node_register", "nodeId": "iPhone-1", "platform": "ios", "deviceName": "My iPhone", "capabilities": { "camera": true, "location": true }, "token": "<gateway_token>" }
   ```
 
 ### Gateway → Node
@@ -32,9 +32,9 @@ The Connect tab protocol allows mobile apps (iOS/Android) to connect to the Hype
 
 ### Node → Gateway (response)
 
-- **`node:command:result`** — Command result:
+- **`node:command_response`** — Command result:
   ```json
-  { "type": "node:command:result", "id": "cmd-123", "ok": true, "data": { "photoBase64": "..." } }
+  { "type": "node:command_response", "id": "cmd-123", "ok": true, "data": { "photoBase64": "..." } }
   ```
 
 ## CLI
@@ -60,5 +60,6 @@ GET /api/nodes
 
 ## See also
 
+- [Gateway Protocol](protocols/gateway-protocol.md)
+- [mobile-nodes.md](mobile-nodes.md)
 - [mobile-desktop-apps.md](mobile-desktop-apps.md)
-- [NodeRegistry](../src/services/nodes-registry.ts)

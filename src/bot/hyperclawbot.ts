@@ -104,8 +104,8 @@ async function getLogSummary(n = 20): Promise<string> {
 async function approveCode(channelId: string, code: string): Promise<string> {
   try {
     const { PairingStore } = await import('../channels/pairing');
-    const store = new PairingStore();
-    await store.approve(channelId, code);
+    const store = new PairingStore(channelId);
+    await store.cliApprove(code);
     return `✅ Approved pairing code *${code}* on *${channelId}*`;
   } catch (e: any) {
     return `❌ Failed: ${e.message}`;

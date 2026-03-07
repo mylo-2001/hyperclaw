@@ -1,3 +1,6 @@
+# Secret scanning baseline (commit this file — it tracks reviewed secrets)
+# .secrets.baseline is intentionally NOT gitignored
+
 # Dependencies
 node_modules/
 .pnp/

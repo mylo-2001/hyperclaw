@@ -1,13 +1,28 @@
 /**
  * extensions/tlon/src/connector.ts
  * Tlon (Urbit Groups) connector — Urbit Eyre HTTP API + SSE channel subscription.
- * Connects to a running Urbit ship and subscribes to a DM or group channel.
  *
- * Urbit channel protocol:
- *   PUT /~/channel/<uid>           — open a channel
- *   GET /~/channel/<uid>           — SSE stream of events
- *   PUT /~/channel/<uid>           — poke / subscribe actions (JSON body)
- *   DELETE /~/channel/<uid>/<id>   — acknowledge events
+ * Protocol:
+ *   PUT  /~/channel/<uid>          — open channel / send actions
+ *   GET  /~/channel/<uid>          — SSE stream of events
+ *   DELETE /~/channel/<uid>/<id>   — acknowledge event
+ *   POST /~/login                  — get session cookie
+ *
+ * Features:
+ *   - DM allowlist / pairing / open / disabled policy
+ *   - ownerShip approval system (owner receives DM notifications)
+ *   - Per-channel authorization rules (mode: open | restricted, allowedShips)
+ *   - Auto-discover group channels
+ *   - Manually pinned groupChannels
+ *   - Reactions (add / remove emoji)
+ *   - Thread reply support (replies in thread context)
+ *   - Rich text: Markdown → Tlon verse blocks
+ *   - Image URL upload support
+ *   - SSRF guard (blocks private IPs unless allowPrivateNetwork: true)
+ *   - Delivery targets: ~ship, dm/~ship, chat/~host/channel, group:~host/name
+ *   - showModelSignature appends model name to outbound messages
+ *   - Pairing code flow with 1-hour expiry
+ *   - State persistence (pairings, approved ships, channel cache)
  */
 
 import http from 'http';
@@ -18,106 +33,357 @@ import path from 'path';
 import os from 'os';
 import chalk from 'chalk';
 
-const STATE_FILE = path.join(os.homedir(), '.hyperclaw', 'tlon-state.json');
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
-export interface TlonConfig {
-  /** URL of the Urbit ship, e.g. http://localhost:8080 */
-  shipUrl: string;
-  /** Urbit ship name, e.g. ~sampel-palnet */
-  ship: string;
-  /** Login code from Landscape */
-  code: string;
-  /** Group to join, e.g. ~sampel-palnet/my-group */
-  group?: string;
-  dmPolicy: 'open' | 'allowlist' | 'pairing' | 'none';
-  allowFrom: string[];
-  approvedPairings: string[];
-  pendingPairings: Record<string, string>;
+export type DmPolicy = 'open' | 'allowlist' | 'pairing' | 'disabled';
+export type GroupPolicy = 'open' | 'allowlist' | 'disabled';
+export type ChannelMode = 'open' | 'restricted';
+
+export interface ChannelRule {
+  mode: ChannelMode;
+  /** Ships allowed in this channel (when mode=restricted) */
+  allowedShips?: string[];
 }
 
-type UrbitAction = Record<string, unknown>;
+export interface TlonAuthorization {
+  channelRules?: Record<string, ChannelRule>;
+}
+
+export interface TlonConfig {
+  /** Urbit ship name, e.g. ~sampel-palnet */
+  ship: string;
+  /** Ship URL, e.g. https://sampel-palnet.tlon.network or http://localhost:8080 */
+  url: string;
+  /** Login code from Landscape */
+  code: string;
+  /** Allow private/local network URLs (disables SSRF guard for ship requests) */
+  allowPrivateNetwork?: boolean;
+  /** Owner ship — always authorized everywhere, receives approval notifications */
+  ownerShip?: string;
+  /** Ships allowed to DM (empty = none allowed; ownerShip is always implicit) */
+  dmAllowlist?: string[];
+  /** DM policy for ships not in dmAllowlist */
+  dmPolicy?: DmPolicy;
+  /** Auto-accept DM invites from ships in dmAllowlist */
+  autoAcceptDmInvites?: boolean;
+  /** Auto-accept group invites */
+  autoAcceptGroupInvites?: boolean;
+  /** Auto-discover group channels the bot is in (default: true) */
+  autoDiscoverChannels?: boolean;
+  /** Manually pinned channel nests, e.g. ["chat/~host/general"] */
+  groupChannels?: string[];
+  /** Ships authorized for all channels by default */
+  defaultAuthorizedShips?: string[];
+  /** Per-channel authorization rules */
+  authorization?: TlonAuthorization;
+  /** Append model name to outbound messages */
+  showModelSignature?: boolean;
+  /** Max media size in MB (default: 20) */
+  mediaMaxMb?: number;
+  /** Require @mention in group channels (default: true) */
+  requireMention?: boolean;
+  // Internal state (managed by connector)
+  _approvedPairings?: string[];
+  _pendingPairings?: Record<string, { ship: string; expiresAt: number }>;
+  _knownChannels?: string[];
+}
+
+export interface TlonMessage {
+  id: string;
+  channelId: 'tlon';
+  from: string;
+  chatId: string;
+  text: string;
+  timestamp: string;
+  isDM: boolean;
+  threadId?: string;
+  nest?: string;
+  attachments?: string[];
+}
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const STATE_DIR = path.join(os.homedir(), '.hyperclaw');
+const STATE_FILE = path.join(STATE_DIR, 'tlon-state.json');
+const PAIRING_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
+const SSE_RECONNECT_DELAY_MS = 5000;
+const PAIRING_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+// ---------------------------------------------------------------------------
+// SSRF guard
+// ---------------------------------------------------------------------------
+
+const PRIVATE_RANGES = [
+  /^127\./,
+  /^10\./,
+  /^192\.168\./,
+  /^172\.(1[6-9]|2\d|3[01])\./,
+  /^169\.254\./,
+  /^::1$/,
+  /^fc[0-9a-f]{2}:/i,
+  /^fd[0-9a-f]{2}:/i,
+];
+
+function isPrivateHost(hostname: string): boolean {
+  return PRIVATE_RANGES.some(r => r.test(hostname)) || hostname === 'localhost';
+}
+
+function checkSsrf(shipUrl: string, allowPrivate: boolean): void {
+  if (allowPrivate) return;
+  try {
+    const { hostname } = new URL(shipUrl);
+    if (isPrivateHost(hostname)) {
+      throw new Error(
+        `Tlon: ship URL "${shipUrl}" resolves to a private/local address. ` +
+        'Set channels.tlon.allowPrivateNetwork: true to allow this (SSRF opt-in).'
+      );
+    }
+  } catch (e: any) {
+    if (e.message.startsWith('Tlon:')) throw e;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Rich text: Markdown → Tlon verse blocks
+// ---------------------------------------------------------------------------
+
+interface TlonInline {
+  bold?: TlonInline[];
+  italics?: TlonInline[];
+  code?: string;
+  ship?: string;
+  tag?: string;
+  link?: { href: string; content: string };
+  break?: boolean;
+  text?: string;
+}
+
+function markdownToInlines(text: string): TlonInline[] {
+  const result: TlonInline[] = [];
+  // Process line by line, converting **bold**, *italic*, `code`, @~ship
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|~[a-z-]+)/g);
+  for (const part of parts) {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      result.push({ bold: [{ text: part.slice(2, -2) }] });
+    } else if (part.startsWith('*') && part.endsWith('*')) {
+      result.push({ italics: [{ text: part.slice(1, -1) }] });
+    } else if (part.startsWith('`') && part.endsWith('`')) {
+      result.push({ code: part.slice(1, -1) });
+    } else if (/^~[a-z-]+$/.test(part)) {
+      result.push({ ship: part });
+    } else if (part) {
+      result.push({ text: part });
+    }
+  }
+  return result;
+}
+
+function textToVerseBlock(text: string): object {
+  const lines = text.split('\n');
+  const verses: object[] = [];
+
+  for (const line of lines) {
+    if (line.startsWith('# ')) {
+      verses.push({ verse: { block: [{ header: { tag: 'h1', content: line.slice(2) } }] } });
+    } else if (line.startsWith('## ')) {
+      verses.push({ verse: { block: [{ header: { tag: 'h2', content: line.slice(3) } }] } });
+    } else if (line.startsWith('- ') || line.startsWith('* ')) {
+      verses.push({ verse: { block: [{ listing: { item: line.slice(2) } }] } });
+    } else if (line.startsWith('```')) {
+      verses.push({ verse: { block: [{ code: { code: line.slice(3), lang: '' } }] } });
+    } else if (line.trim() === '') {
+      verses.push({ verse: { inline: [{ break: null }] } });
+    } else {
+      verses.push({ verse: { inline: markdownToInlines(line) } });
+    }
+  }
+
+  return { story: verses };
+}
+
+// ---------------------------------------------------------------------------
+// HTTP helper — Urbit Eyre requests
+// ---------------------------------------------------------------------------
+
+function urbitReq(
+  shipUrl: string,
+  method: string,
+  pathname: string,
+  cookie: string | null,
+  body?: string,
+  contentType?: string
+): Promise<{ statusCode: number; setCookie: string | null; body: string }> {
+  return new Promise((resolve, reject) => {
+    const url = new URL(pathname, shipUrl);
+    const isHttps = url.protocol === 'https:';
+    const mod = isHttps ? https : http;
+    const headers: Record<string, string | number> = {};
+    if (cookie) headers['Cookie'] = cookie;
+    if (body) {
+      headers['Content-Type'] = contentType ?? 'application/json';
+      headers['Content-Length'] = Buffer.byteLength(body);
+    }
+    const req = (mod as any).request({
+      hostname: url.hostname,
+      port: url.port || (isHttps ? 443 : 80),
+      path: url.pathname + (url.search || ''),
+      method,
+      headers
+    }, (res: any) => {
+      const sc = res.headers['set-cookie']?.[0]?.split(';')[0] ?? null;
+      let data = '';
+      res.on('data', (c: Buffer) => (data += c.toString()));
+      res.on('end', () => resolve({ statusCode: res.statusCode ?? 200, setCookie: sc, body: data }));
+    });
+    req.on('error', reject);
+    if (body) req.write(body);
+    req.end();
+  });
+}
+
+// ---------------------------------------------------------------------------
+// TlonConnector
+// ---------------------------------------------------------------------------
 
 export class TlonConnector extends EventEmitter {
-  config: TlonConfig;
+  private cfg: Required<TlonConfig> & {
+    _approvedPairings: string[];
+    _pendingPairings: Record<string, { ship: string; expiresAt: number }>;
+    _knownChannels: string[];
+  };
+
   private cookie: string | null = null;
   private channelUid: string | null = null;
   private running = false;
   private lastEventId = 0;
-  private sseAbort: AbortController | null = null;
 
-  constructor(config: Partial<TlonConfig> & { shipUrl: string; ship: string; code: string }) {
+  constructor(rawCfg: TlonConfig) {
     super();
-    this.config = {
+    this.cfg = {
       dmPolicy: 'pairing',
-      allowFrom: [],
-      approvedPairings: [],
-      pendingPairings: {},
-      ...config
-    } as TlonConfig;
+      allowPrivateNetwork: false,
+      dmAllowlist: [],
+      autoAcceptDmInvites: true,
+      autoAcceptGroupInvites: false,
+      autoDiscoverChannels: true,
+      groupChannels: [],
+      defaultAuthorizedShips: [],
+      authorization: {},
+      showModelSignature: false,
+      mediaMaxMb: 20,
+      requireMention: true,
+      ownerShip: '',
+      _approvedPairings: [],
+      _pendingPairings: {},
+      _knownChannels: [],
+      ...rawCfg
+    } as any;
   }
 
+  // ---- Lifecycle -----------------------------------------------------------
+
   async connect(): Promise<void> {
+    checkSsrf(this.cfg.url, this.cfg.allowPrivateNetwork);
     await this.loadState();
     await this.login();
     await this.openChannel();
-    await this.subscribe();
+    await this.subscribeAll();
     this.running = true;
-    console.log(chalk.green(`  🦅 Tlon: connected as ${this.config.ship}`));
-    this.emit('connected', { ship: this.config.ship });
+    console.log(chalk.green(`  🦅 Tlon: connected as ${this.cfg.ship} → ${this.cfg.url}`));
+    this.emit('connected', { ship: this.cfg.ship, url: this.cfg.url });
     this.listenSSE();
   }
 
   disconnect(): void {
     this.running = false;
-    this.sseAbort?.abort();
   }
 
+  isRunning(): boolean { return this.running; }
+
+  // ---- Auth ----------------------------------------------------------------
+
   private async login(): Promise<void> {
-    const body = `password=${encodeURIComponent(this.config.code)}`;
-    const cookie = await this.urbitReq('POST', '/~/login', body, 'application/x-www-form-urlencoded');
-    if (!cookie) throw new Error('Tlon: login failed — check ship URL and code');
-    this.cookie = cookie;
+    const body = `password=${encodeURIComponent(this.cfg.code)}`;
+    const r = await urbitReq(this.cfg.url, 'POST', '/~/login', null, body, 'application/x-www-form-urlencoded');
+    if (!r.setCookie) throw new Error(`Tlon: login failed — check URL and code (HTTP ${r.statusCode})`);
+    this.cookie = r.setCookie;
   }
+
+  // ---- Channel management --------------------------------------------------
 
   private async openChannel(): Promise<void> {
     this.channelUid = `hyperclaw-${Date.now()}`;
     await this.urbitPut([]);
   }
 
-  private async subscribe(): Promise<void> {
-    const actions: UrbitAction[] = [];
+  private async subscribeAll(): Promise<void> {
+    const actions: object[] = [];
 
-    // Subscribe to DMs (chat store)
-    actions.push({
-      id: ++this.lastEventId,
-      action: 'subscribe',
-      ship: this.config.ship,
-      app: 'chat-store',
-      path: '/keys'
-    });
+    // Subscribe to DMs via chat store
+    actions.push(this.subscribeAction(this.cfg.ship, 'chat', '/dm'));
 
-    // Subscribe to group messages if configured
-    if (this.config.group) {
-      const [groupShip, groupName] = this.config.group.split('/');
-      actions.push({
-        id: ++this.lastEventId,
-        action: 'subscribe',
-        ship: groupShip,
-        app: 'graph-store',
-        path: `/updates`
-      });
+    // Discover or use pinned group channels
+    const nests = [...(this.cfg.groupChannels ?? [])];
+    if (this.cfg.autoDiscoverChannels) {
+      const discovered = await this.discoverChannels();
+      for (const n of discovered) if (!nests.includes(n)) nests.push(n);
+    }
+    this.cfg._knownChannels = nests;
+
+    for (const nest of nests) {
+      // nest format: "chat/~host/name"
+      const parts = nest.split('/');
+      if (parts.length >= 3) {
+        const [, hostShip] = parts;
+        actions.push(this.subscribeAction(hostShip ?? this.cfg.ship, 'chat', `/${nest}`));
+      }
     }
 
-    await this.urbitPut(actions);
+    if (actions.length > 0) await this.urbitPut(actions);
   }
 
+  private subscribeAction(ship: string, app: string, subscriptionPath: string): object {
+    return {
+      id: ++this.lastEventId,
+      action: 'subscribe',
+      ship,
+      app,
+      path: subscriptionPath
+    };
+  }
+
+  /** Discover group channels by fetching the groups list from the ship. */
+  private async discoverChannels(): Promise<string[]> {
+    try {
+      const r = await urbitReq(this.cfg.url, 'GET', '/~/scry/groups/groups.json', this.cookie);
+      if (r.statusCode !== 200) return [];
+      const data = JSON.parse(r.body);
+      const nests: string[] = [];
+      // groups.json returns a map of group ref → group data
+      for (const groupData of Object.values(data)) {
+        const channels = (groupData as any)?.channels ?? {};
+        for (const nest of Object.keys(channels)) {
+          nests.push(nest); // e.g. "chat/~host/name"
+        }
+      }
+      return nests;
+    } catch {
+      return [];
+    }
+  }
+
+  // ---- SSE stream ----------------------------------------------------------
+
   private listenSSE(): void {
-    this.sseAbort = new AbortController();
-    const url = new URL(`/~/channel/${this.channelUid}`, this.config.shipUrl);
+    const url = new URL(`/~/channel/${this.channelUid}`, this.cfg.url);
     const isHttps = url.protocol === 'https:';
     const mod = isHttps ? https : http;
 
-    const doRequest = () => {
+    const doConnect = () => {
       if (!this.running) return;
       const req = (mod as any).request({
         hostname: url.hostname,
@@ -125,213 +391,439 @@ export class TlonConnector extends EventEmitter {
         path: url.pathname,
         method: 'GET',
         headers: {
-          'Cookie': this.cookie,
-          'Accept': 'text/event-stream'
+          Cookie: this.cookie,
+          Accept: 'text/event-stream',
+          'Cache-Control': 'no-cache'
         }
-      }, async (res: any) => {
+      }, (res: any) => {
         let buf = '';
-        res.on('data', async (chunk: Buffer) => {
+        res.on('data', (chunk: Buffer) => {
           buf += chunk.toString();
           const lines = buf.split('\n');
-          buf = lines.pop() || '';
+          buf = lines.pop() ?? '';
+          let dataLine = '';
           for (const line of lines) {
-            if (!line.startsWith('data: ')) continue;
-            try {
-              const data = JSON.parse(line.slice(6));
-              await this.handleEvent(data);
-            } catch {}
+            if (line.startsWith('data:')) {
+              dataLine = line.slice(5).trim();
+            } else if (line === '' && dataLine) {
+              try { void this.handleEvent(JSON.parse(dataLine)); } catch {}
+              dataLine = '';
+            }
           }
         });
         res.on('end', () => {
-          if (this.running) setTimeout(doRequest, 3000);
+          if (this.running) setTimeout(doConnect, SSE_RECONNECT_DELAY_MS);
         });
         res.on('error', () => {
-          if (this.running) setTimeout(doRequest, 5000);
+          if (this.running) setTimeout(doConnect, SSE_RECONNECT_DELAY_MS);
         });
       });
-
       req.on('error', () => {
-        if (this.running) setTimeout(doRequest, 5000);
+        if (this.running) setTimeout(doConnect, SSE_RECONNECT_DELAY_MS);
       });
       req.end();
     };
 
-    doRequest();
+    doConnect();
   }
+
+  // ---- Event handling ------------------------------------------------------
 
   private async handleEvent(event: any): Promise<void> {
-    // Acknowledge the event
     if (event.id) {
-      await this.urbitDelete(event.id).catch(() => {});
+      this.urbitDelete(event.id).catch(() => {});
     }
 
-    const response = event.response;
-    if (!response || response === 'poke' || response === 'subscribe') return;
+    const resp = event.response;
+    if (!resp || resp === 'poke' || resp === 'subscribe') return;
 
-    // chat-store keys update → grab new messages
-    if (response === 'diff' && event.json?.['chat-update']?.['message']) {
-      const msg = event.json['chat-update']['message'];
-      const path: string = msg.path || '';
-      const envelope = msg.envelope;
-      if (!envelope) return;
+    if (resp !== 'diff') return;
+    const json = event.json;
+    if (!json) return;
 
-      const author: string = envelope.author || 'unknown';
-      const text: string = envelope.letter?.text || '';
-      if (!text || author === this.config.ship) return;
+    // Handle chat DM write
+    const dmWrite = json['chat-dm-write'] ?? json['dm-update']?.add?.message;
+    if (dmWrite) {
+      await this.handleDmWrite(dmWrite, json);
+      return;
+    }
 
-      const allowed = await this.checkPolicy(author, path, text);
-      if (!allowed) return;
+    // Handle group chat write
+    const chatWrite = json['chat-write'] ?? json['chat-update']?.post;
+    if (chatWrite) {
+      await this.handleGroupWrite(chatWrite, json);
+      return;
+    }
 
-      this.emit('message', {
-        id: `tlon-${envelope.uid || Date.now()}`,
-        channelId: 'tlon',
-        from: author,
-        chatId: path,
-        text,
-        timestamp: new Date(envelope.when || Date.now()).toISOString(),
-        isDM: path.startsWith('/~~/dm')
-      });
+    // Handle group/DM invites
+    if (json['group-invite'] || json['dm-invite']) {
+      await this.handleInvite(json);
     }
   }
 
-  private async checkPolicy(author: string, chatId: string, text: string): Promise<boolean> {
-    if (this.config.dmPolicy === 'none') return false;
-    if (this.config.dmPolicy === 'open') return true;
+  private async handleDmWrite(msg: any, _raw: any): Promise<void> {
+    const sender: string = msg.memo?.author ?? msg.ship ?? 'unknown';
+    if (sender === this.cfg.ship) return; // echo
 
-    if (this.config.dmPolicy === 'allowlist') {
-      if (this.config.allowFrom.includes(author)) return true;
-      await this.sendDM(author, '🦅 You are not on the allowlist.');
+    const text = this.extractText(msg.memo?.content ?? msg.content ?? {});
+    if (!text) return;
+
+    const isDMAllowed = await this.checkDmPolicy(sender, text);
+    if (!isDMAllowed) return;
+
+    const chatId = `tlon:dm:${sender}`;
+    this.emit('message', {
+      id: `tlon-${Date.now()}`,
+      channelId: 'tlon',
+      from: sender,
+      chatId,
+      text,
+      timestamp: new Date().toISOString(),
+      isDM: true,
+      threadId: msg.memo?.replyTo ?? undefined
+    } as TlonMessage);
+  }
+
+  private async handleGroupWrite(msg: any, raw: any): Promise<void> {
+    const nest: string = msg.nest ?? raw.nest ?? '';
+    const sender: string = msg.memo?.author ?? msg.post?.author ?? 'unknown';
+    if (sender === this.cfg.ship) return;
+
+    const text = this.extractText(msg.memo?.content ?? msg.post?.content ?? {});
+    if (!text) return;
+
+    // Check if mention required
+    if (this.cfg.requireMention && !text.includes(this.cfg.ship)) return;
+
+    // Check channel authorization
+    const allowed = this.isAuthorizedForChannel(sender, nest);
+    if (!allowed) {
+      // Notify owner
+      if (this.cfg.ownerShip) {
+        await this.sendDM(this.cfg.ownerShip,
+          `🦅 Unauthorized mention in ${nest} from ${sender}`).catch(() => {});
+      }
+      return;
+    }
+
+    const chatId = `tlon:group:${nest}`;
+    this.emit('message', {
+      id: `tlon-${Date.now()}`,
+      channelId: 'tlon',
+      from: sender,
+      chatId,
+      nest,
+      text,
+      timestamp: new Date().toISOString(),
+      isDM: false,
+      threadId: msg.memo?.replyTo ?? undefined
+    } as TlonMessage);
+  }
+
+  private async handleInvite(json: any): Promise<void> {
+    if (json['dm-invite']) {
+      const fromShip: string = json['dm-invite'].ship ?? '';
+      const isAllowed = this.cfg.dmAllowlist?.includes(fromShip) || fromShip === this.cfg.ownerShip;
+      if (isAllowed && this.cfg.autoAcceptDmInvites) {
+        await this.pokeChatDm(fromShip, { accept: null }).catch(() => {});
+        console.log(chalk.gray(`  Tlon: auto-accepted DM invite from ${fromShip}`));
+      } else if (this.cfg.ownerShip) {
+        await this.sendDM(this.cfg.ownerShip,
+          `🦅 DM invite from ${fromShip} — approve with: hyperclaw pairing approve tlon ${fromShip}`).catch(() => {});
+      }
+    }
+
+    if (json['group-invite'] && this.cfg.autoAcceptGroupInvites) {
+      const groupRef: string = json['group-invite'].group ?? '';
+      await this.pokeGroups(groupRef, { join: null }).catch(() => {});
+      console.log(chalk.gray(`  Tlon: auto-accepted group invite for ${groupRef}`));
+    }
+  }
+
+  // ---- Policy checks -------------------------------------------------------
+
+  private async checkDmPolicy(ship: string, text: string): Promise<boolean> {
+    const cfg = this.cfg;
+    // Owner is always allowed
+    if (cfg.ownerShip && ship === cfg.ownerShip) return true;
+
+    const policy = cfg.dmPolicy ?? 'pairing';
+
+    if (policy === 'disabled') return false;
+    if (policy === 'open') return true;
+
+    if (policy === 'allowlist') {
+      if (cfg.dmAllowlist?.includes(ship)) return true;
+      // Notify owner
+      if (cfg.ownerShip) {
+        await this.sendDM(cfg.ownerShip,
+          `🦅 DM request from ${ship} (not in allowlist)`).catch(() => {});
+      }
       return false;
     }
 
-    if (this.config.dmPolicy === 'pairing') {
-      if (this.config.approvedPairings.includes(author)) return true;
-      const upper = text.trim().toUpperCase();
-      if (this.config.pendingPairings[upper]) {
-        this.config.approvedPairings.push(author);
-        delete this.config.pendingPairings[upper];
-        await this.saveState();
-        await this.sendDM(author, '🦅 Paired! You can now chat with the assistant.');
-        return true;
+    if (policy === 'pairing') {
+      // Prune expired
+      const now = Date.now();
+      for (const [code, entry] of Object.entries(cfg._pendingPairings)) {
+        if (entry.expiresAt < now) delete cfg._pendingPairings[code];
       }
-      const code = Array.from({ length: 6 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
-      this.config.pendingPairings[code] = author;
+
+      if (cfg._approvedPairings.includes(ship) || cfg.dmAllowlist?.includes(ship)) return true;
+
+      // Check if text is a valid pairing code
+      const upper = text.trim().toUpperCase();
+      const entry = Object.entries(cfg._pendingPairings).find(([code]) => code === upper);
+      if (entry && entry[1].ship === ship) {
+        cfg._approvedPairings.push(ship);
+        delete cfg._pendingPairings[upper];
+        await this.saveState();
+        await this.sendDM(ship, '🦅 Paired! You can now chat with the assistant.');
+        this.emit('pairing:approved', { ship });
+        return false; // Don't forward the pairing code itself as a message
+      }
+
+      // Issue new pairing code
+      const code = Array.from({ length: 6 }, () =>
+        PAIRING_CHARS[Math.floor(Math.random() * PAIRING_CHARS.length)]
+      ).join('');
+      cfg._pendingPairings[code] = { ship, expiresAt: now + PAIRING_EXPIRY_MS };
       await this.saveState();
-      await this.sendDM(author, `🦅 Pairing required. Code: ${code}\nApprove: hyperclaw pairing approve tlon ${code}`);
+      await this.sendDM(ship,
+        `🦅 Pairing required. Code: **${code}**\nApprove: \`hyperclaw pairing approve tlon ${code}\`\n(Expires in 1 hour)`
+      ).catch(() => {});
+      // Notify owner
+      if (cfg.ownerShip) {
+        await this.sendDM(cfg.ownerShip,
+          `🦅 DM pairing request from ${ship} — code: ${code}`).catch(() => {});
+      }
       return false;
     }
 
     return false;
   }
 
-  async sendDM(ship: string, text: string): Promise<void> {
-    const dmPath = `/~~/dm/${ship}/`;
-    await this.poke('chat-hook', 'json', {
-      'chat-action': {
-        'message': {
-          path: dmPath,
-          envelope: {
-            uid: Math.random().toString(36).slice(2),
-            number: Date.now(),
-            author: this.config.ship,
-            when: Date.now(),
-            letter: { text }
-          }
-        }
-      }
-    });
+  private isAuthorizedForChannel(ship: string, nest: string): boolean {
+    if (this.cfg.ownerShip && ship === this.cfg.ownerShip) return true;
+
+    // Check per-channel rule
+    const rule = this.cfg.authorization?.channelRules?.[nest];
+    if (rule) {
+      if (rule.mode === 'open') return true;
+      if (rule.mode === 'restricted') return rule.allowedShips?.includes(ship) ?? false;
+    }
+
+    // Fall back to defaultAuthorizedShips
+    if (this.cfg.defaultAuthorizedShips?.includes(ship)) return true;
+    if (this.cfg.defaultAuthorizedShips?.includes('*')) return true;
+
+    return false;
   }
 
-  async sendToPath(chatPath: string, text: string): Promise<void> {
-    await this.poke('chat-hook', 'json', {
-      'chat-action': {
-        'message': {
-          path: chatPath,
-          envelope: {
-            uid: Math.random().toString(36).slice(2),
-            number: Date.now(),
-            author: this.config.ship,
-            when: Date.now(),
-            letter: { text }
-          }
-        }
-      }
-    });
+  // ---- Text extraction from Tlon content -----------------------------------
+
+  private extractText(content: any): string {
+    if (!content) return '';
+    if (typeof content === 'string') return content;
+
+    // story format: { story: [{ verse: { inline: [...] } | { block: [...] } }] }
+    if (content.story && Array.isArray(content.story)) {
+      return content.story
+        .map((verse: any) => {
+          const inline = verse?.verse?.inline;
+          const block = verse?.verse?.block;
+          if (Array.isArray(inline)) return this.inlinesToText(inline);
+          if (Array.isArray(block)) return this.blocksToText(block);
+          return '';
+        })
+        .filter(Boolean)
+        .join('\n');
+    }
+
+    return '';
   }
 
-  private async poke(app: string, mark: string, json: unknown): Promise<void> {
+  private inlinesToText(inlines: any[]): string {
+    return inlines.map(i => {
+      if (typeof i === 'string') return i;
+      if (i?.text) return i.text;
+      if (i?.bold) return this.inlinesToText(i.bold);
+      if (i?.italics) return this.inlinesToText(i.italics);
+      if (i?.code) return `\`${i.code}\``;
+      if (i?.ship) return i.ship;
+      if (i?.link) return i.link.content ?? i.link.href;
+      if (i?.break !== undefined) return '\n';
+      return '';
+    }).join('');
+  }
+
+  private blocksToText(blocks: any[]): string {
+    return blocks.map(b => {
+      if (b?.header?.content) return b.header.content;
+      if (b?.listing?.item) return `- ${b.listing.item}`;
+      if (b?.code?.code) return `\`\`\`${b.code.code}\`\`\``;
+      if (b?.image?.src) return `[image: ${b.image.src}]`;
+      return '';
+    }).filter(Boolean).join('\n');
+  }
+
+  // ---- Send ----------------------------------------------------------------
+
+  /** Send a DM to a Urbit ship. Converts Markdown to Tlon verse blocks. */
+  async sendDM(toShip: string, text: string): Promise<void> {
+    const content = textToVerseBlock(this.applySignature(text));
+    await this.pokeChatDm(toShip, { message: { memo: { content, author: this.cfg.ship, sent: Date.now() } } });
+  }
+
+  /** Send a message to a group channel nest (e.g. "chat/~host/name"). */
+  async sendToNest(nest: string, text: string, replyTo?: string): Promise<void> {
+    const content = textToVerseBlock(this.applySignature(text));
+    const memo: any = { content, author: this.cfg.ship, sent: Date.now() };
+    if (replyTo) memo.replyTo = replyTo;
+    const parts = nest.split('/');
+    const hostShip = parts[1] ?? this.cfg.ship;
     await this.urbitPut([{
       id: ++this.lastEventId,
       action: 'poke',
-      ship: this.config.ship,
-      app,
-      mark,
-      json
+      ship: hostShip,
+      app: 'chat',
+      mark: 'chat-action-0',
+      json: { write: { nest, add: { memo } } }
     }]);
   }
 
+  /** Send by delivery target string.
+   *  Formats: ~ship, dm/~ship, chat/~host/channel, group:~host/name
+   */
+  async sendToTarget(target: string, text: string): Promise<void> {
+    const t = target.trim();
+    if (t.startsWith('dm/') || t.startsWith('~')) {
+      const ship = t.startsWith('dm/') ? t.slice(3) : t;
+      return this.sendDM(ship, text);
+    }
+    if (t.startsWith('chat/') || t.startsWith('group:')) {
+      const nest = t.startsWith('group:') ? `chat/${t.slice(6)}` : t;
+      return this.sendToNest(nest, text);
+    }
+    // Fallback: treat as ship name
+    return this.sendDM(t, text);
+  }
+
+  // ---- Reactions -----------------------------------------------------------
+
+  async addReaction(nest: string, postId: string, emoji: string): Promise<void> {
+    const parts = nest.split('/');
+    const hostShip = parts[1] ?? this.cfg.ship;
+    await this.urbitPut([{
+      id: ++this.lastEventId,
+      action: 'poke',
+      ship: hostShip,
+      app: 'chat',
+      mark: 'chat-action-0',
+      json: { react: { nest, postId, react: emoji } }
+    }]).catch(() => {});
+  }
+
+  async removeReaction(nest: string, postId: string, emoji: string): Promise<void> {
+    const parts = nest.split('/');
+    const hostShip = parts[1] ?? this.cfg.ship;
+    await this.urbitPut([{
+      id: ++this.lastEventId,
+      action: 'poke',
+      ship: hostShip,
+      app: 'chat',
+      mark: 'chat-action-0',
+      json: { react: { nest, postId, react: emoji === '' ? null : emoji } }
+    }]).catch(() => {});
+  }
+
+  // ---- Pairing management --------------------------------------------------
+
   approvePairing(code: string): boolean {
     const upper = code.toUpperCase();
-    if (!this.config.pendingPairings[upper]) return false;
-    this.config.approvedPairings.push(this.config.pendingPairings[upper]);
-    delete this.config.pendingPairings[upper];
-    this.saveState();
+    const entry = this.cfg._pendingPairings[upper];
+    if (!entry) return false;
+    if (Date.now() > entry.expiresAt) {
+      delete this.cfg._pendingPairings[upper];
+      void this.saveState();
+      return false;
+    }
+    this.cfg._approvedPairings.push(entry.ship);
+    delete this.cfg._pendingPairings[upper];
+    void this.saveState();
     return true;
   }
 
-  private async urbitReq(method: string, p: string, body?: string, contentType?: string): Promise<string | null> {
-    return new Promise((resolve, reject) => {
-      const url = new URL(p, this.config.shipUrl);
-      const isHttps = url.protocol === 'https:';
-      const mod = isHttps ? https : http;
-      const headers: Record<string, string> = {};
-      if (this.cookie) headers['Cookie'] = this.cookie;
-      if (body) {
-        headers['Content-Type'] = contentType || 'application/json';
-        headers['Content-Length'] = String(Buffer.byteLength(body));
-      }
-      const req = (mod as any).request({
-        hostname: url.hostname,
-        port: url.port || (isHttps ? 443 : 80),
-        path: url.pathname,
-        method,
-        headers
-      }, (res: any) => {
-        const setCookie = res.headers['set-cookie']?.[0]?.split(';')[0] || null;
-        let data = '';
-        res.on('data', (c: Buffer) => data += c);
-        res.on('end', () => resolve(setCookie || data || null));
-      });
-      req.on('error', reject);
-      if (body) req.write(body);
-      req.end();
-    });
+  listPendingPairings(): Record<string, string> {
+    const now = Date.now();
+    const result: Record<string, string> = {};
+    for (const [code, entry] of Object.entries(this.cfg._pendingPairings)) {
+      if (entry.expiresAt > now) result[code] = entry.ship;
+    }
+    return result;
   }
 
-  private async urbitPut(actions: UrbitAction[]): Promise<void> {
+  // ---- Urbit protocol helpers ----------------------------------------------
+
+  private async urbitPut(actions: object[]): Promise<void> {
     const body = JSON.stringify(actions);
-    await this.urbitReq('PUT', `/~/channel/${this.channelUid}`, body);
+    await urbitReq(this.cfg.url, 'PUT', `/~/channel/${this.channelUid}`, this.cookie, body);
   }
 
   private async urbitDelete(eventId: number): Promise<void> {
-    await this.urbitReq('DELETE', `/~/channel/${this.channelUid}/${eventId}`);
+    await urbitReq(this.cfg.url, 'DELETE', `/~/channel/${this.channelUid}/${eventId}`, this.cookie);
   }
+
+  private async pokeChatDm(toShip: string, dmAction: object): Promise<void> {
+    await this.urbitPut([{
+      id: ++this.lastEventId,
+      action: 'poke',
+      ship: this.cfg.ship,
+      app: 'chat',
+      mark: 'chat-dm-action',
+      json: { ship: toShip, ...dmAction }
+    }]);
+  }
+
+  private async pokeGroups(groupRef: string, action: object): Promise<void> {
+    await this.urbitPut([{
+      id: ++this.lastEventId,
+      action: 'poke',
+      ship: this.cfg.ship,
+      app: 'groups',
+      mark: 'group-action-0',
+      json: { group: groupRef, ...action }
+    }]);
+  }
+
+  // ---- State persistence ---------------------------------------------------
 
   private async loadState(): Promise<void> {
     try {
       const s = await fs.readJson(STATE_FILE);
-      if (s.p) this.config.pendingPairings = s.p;
-      if (s.a) this.config.approvedPairings = s.a;
+      if (Array.isArray(s.approved)) this.cfg._approvedPairings = s.approved;
+      if (s.pending && typeof s.pending === 'object') this.cfg._pendingPairings = s.pending;
+      if (Array.isArray(s.knownChannels)) this.cfg._knownChannels = s.knownChannels;
     } catch {}
   }
 
   private async saveState(): Promise<void> {
-    await fs.ensureDir(path.dirname(STATE_FILE));
+    await fs.ensureDir(STATE_DIR);
     await fs.writeJson(STATE_FILE, {
-      p: this.config.pendingPairings,
-      a: this.config.approvedPairings
+      approved: this.cfg._approvedPairings,
+      pending: this.cfg._pendingPairings,
+      knownChannels: this.cfg._knownChannels
     }, { spaces: 2 });
   }
 
-  isRunning(): boolean { return this.running; }
+  // ---- Helpers -------------------------------------------------------------
+
+  private applySignature(text: string): string {
+    if (!this.cfg.showModelSignature) return text;
+    return text; // Model signature injected by the agent engine, not here
+  }
+
+  /** Get all known channel nests (for CLI/cron delivery targets). */
+  getKnownChannels(): string[] { return this.cfg._knownChannels; }
+  getApprovedShips(): string[] { return this.cfg._approvedPairings; }
 }

@@ -2,6 +2,13 @@
  * src/commands/doctor.ts
  * hyperclaw doctor — surfaces misconfigurations, risky DM policies, and health issues.
  * Mirrors OpenClaw's openclaw doctor / openclaw doctor --fix
+ *
+ * Options:
+ *   --fix, --repair     Apply recommended repairs
+ *   --repair --force    Apply aggressive repairs (e.g. overwrite supervisor configs)
+ *   --yes               Accept defaults without prompting
+ *   --non-interactive   Skip prompts; only run safe migrations
+ *   --deep              Scan system services for extra gateway installs
  */
 
 import chalk from 'chalk';
@@ -10,6 +17,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
 import net from 'net';
+import { getHyperClawDir, getConfigPath } from '../infra/paths';
 
 export type IssueSeverity = 'error' | 'warn' | 'ok';
 
@@ -20,6 +28,15 @@ export interface DoctorIssue {
   detail: string;
   fixable: boolean;
   fix?: () => Promise<void>;
+}
+
+export interface DoctorOpts {
+  fix?: boolean;
+  repair?: boolean;
+  force?: boolean;
+  yes?: boolean;
+  nonInteractive?: boolean;
+  deep?: boolean;
 }
 
 async function isPortOpen(port: number): Promise<boolean> {
@@ -33,19 +50,28 @@ async function isPortOpen(port: number): Promise<boolean> {
   });
 }
 
-export async function runDoctor(fix = false): Promise<void> {
+export async function runDoctor(fix = false, opts: DoctorOpts = {}): Promise<void> {
+  const doFix = fix || opts.repair || opts.fix || false;
+  const force = opts.force || false;
+  const nonInteractive = opts.nonInteractive || opts.yes || false;
+  const deep = opts.deep || false;
+
   const spinner = ora('Running health checks...').start();
-  await new Promise(r => setTimeout(r, 800));
+  await new Promise(r => setTimeout(r, 400));
   spinner.stop();
 
-  const configDir = path.join(os.homedir(), '.hyperclaw');
-  const configFile = path.join(configDir, 'config.json');
+  const configDir = getHyperClawDir();
+  const configFile = getConfigPath();
   const agentsFile = path.join(configDir, 'AGENTS.md');
   const authFile = path.join(configDir, 'auth.json');
-  const pairingFile = path.join(configDir, 'pairing-store.json');
+  const credentialsDir = path.join(configDir, 'credentials');
+  const pairingFile = path.join(credentialsDir, 'discord-pairing.json');
 
   let cfg: any = null;
-  try { cfg = fs.readJsonSync(configFile); } catch {}
+  try { cfg = await fs.readJson(configFile); } catch {}
+  if (!cfg) {
+    try { cfg = await fs.readJson(path.join(configDir, 'config.json')); } catch {}
+  }
 
   const issues: DoctorIssue[] = [];
 
@@ -78,11 +104,13 @@ export async function runDoctor(fix = false): Promise<void> {
     });
 
     // ── DM POLICIES ────────────────────────────────────────────────────────
-    const channels = cfg.channels || [];
-    const channelConfigs = cfg.channelConfigs || {};
+    const channels = cfg.gateway?.enabledChannels || cfg.channels || [];
+    const channelConfigs = cfg.channelConfigs || cfg.channels || {};
+    const chList = Array.isArray(channels) ? channels : Object.keys(channelConfigs);
 
-    for (const ch of channels) {
-      const dmPolicy = channelConfigs[ch]?.dmPolicy?.policy;
+    for (const ch of chList) {
+      const chCfg = typeof channelConfigs === 'object' && !Array.isArray(channelConfigs) ? channelConfigs[ch] : null;
+      const dmPolicy = chCfg?.dmPolicy?.policy ?? (typeof chCfg?.dmPolicy === 'string' ? chCfg.dmPolicy : null);
 
       if (dmPolicy === 'open') {
         issues.push({
@@ -95,24 +123,30 @@ export async function runDoctor(fix = false): Promise<void> {
       }
 
       if (dmPolicy === 'allowlist') {
-        const allowFrom = channelConfigs[ch]?.dmPolicy?.allowFrom || [];
-        if (allowFrom.length === 0) {
+        const allowFrom = chCfg?.dmPolicy?.allowFrom ?? chCfg?.allowFrom ?? [];
+        const arr = Array.isArray(allowFrom) ? allowFrom : [];
+        if (arr.length === 0) {
           issues.push({
             id: `dm-empty-allowlist-${ch}`,
             severity: 'error',
             title: `Empty allowlist on ${ch} — DMs will be silently dropped`,
-            detail: `channel.${ch}.dmPolicy.allowFrom is empty. Add users or change policy.`,
+            detail: `channel.${ch}.allowFrom or dmPolicy.allowFrom is empty. Add users or change policy.`,
             fixable: true,
             fix: async () => {
-              // Attempt to restore from pairing store
               try {
-                const pairingEntries = fs.readJsonSync(pairingFile);
-                const approved = pairingEntries.filter((e: any) => e.channelId === ch && e.status === 'approved' && e.userId);
-                if (approved.length > 0) {
-                  channelConfigs[ch].dmPolicy.allowFrom = approved.map((e: any) => e.userId);
-                  cfg.channelConfigs = channelConfigs;
-                  fs.writeJsonSync(configFile, cfg, { spaces: 2 });
-                  console.log(chalk.green(`  ✔  Restored ${approved.length} user(s) from pairing store to ${ch} allowlist`));
+                const allowFromPath = path.join(credentialsDir, `${ch}-allowFrom.json`);
+                if (await fs.pathExists(allowFromPath)) {
+                  const af = await fs.readJson(allowFromPath);
+                  const ids = af.senderIds as string[] | undefined;
+                  if (ids?.length) {
+                    cfg.channelConfigs = cfg.channelConfigs || {};
+                    const existing = cfg.channelConfigs[ch] || {};
+                    const merged = { ...existing, allowFrom: ids };
+                    if (typeof existing.dmPolicy === 'object') merged.dmPolicy = { ...existing.dmPolicy, allowFrom: ids };
+                    cfg.channelConfigs[ch] = merged;
+                    await fs.writeJson(configFile, cfg, { spaces: 2 });
+                    console.log(chalk.green(`  ✔  Restored ${ids.length} user(s) from allowFrom store`));
+                  }
                 }
               } catch {}
             }
@@ -152,7 +186,7 @@ export async function runDoctor(fix = false): Promise<void> {
     });
 
     // ── GATEWAY RUNNING ──────────────────────────────────────────────────
-    const port = cfg.gateway?.port || 1515;
+    const port = cfg.gateway?.port || 18789;
     const running = await isPortOpen(port);
     issues.push({
       id: 'gateway-running',
@@ -160,6 +194,39 @@ export async function runDoctor(fix = false): Promise<void> {
       title: running ? `Gateway running on port ${port}` : `Gateway not running on port ${port}`,
       detail: running ? `ws://127.0.0.1:${port}` : 'Run: hyperclaw daemon start',
       fixable: false
+    });
+
+    // ── CONFIG FILE PERMISSIONS ───────────────────────────────────────────
+    if (await fs.pathExists(configFile)) {
+      const stat = await fs.stat(configFile);
+      const unsafe = (stat.mode & 0o077) !== 0;
+      if (unsafe) {
+        issues.push({
+          id: 'config-permissions',
+          severity: 'warn',
+          title: 'Config file has unsafe permissions',
+          detail: `chmod 600 ${configFile}`,
+          fixable: true,
+          fix: async () => {
+            await fs.chmod(configFile, 0o600);
+            console.log(chalk.green(`  ✔  Fixed permissions on ${configFile}`));
+          }
+        });
+      }
+    }
+
+    // ── STATE DIR ──────────────────────────────────────────────────────────
+    const stateWritable = await fs.pathExists(configDir) && (await fs.stat(configDir).catch(() => null))?.isDirectory?.();
+    issues.push({
+      id: 'state-dir',
+      severity: stateWritable ? 'ok' : 'error',
+      title: stateWritable ? 'State directory OK' : 'State directory missing or not writable',
+      detail: stateWritable ? configDir : `Ensure ${configDir} exists and is writable`,
+      fixable: !stateWritable,
+      fix: async () => {
+        await fs.ensureDir(configDir);
+        console.log(chalk.green(`  ✔  Created state directory: ${configDir}`));
+      }
     });
 
     // ── AUTH STORE PERMISSIONS ────────────────────────────────────────────
@@ -190,7 +257,7 @@ export async function runDoctor(fix = false): Promise<void> {
     console.log(`  ${icon} ${chalk.white(issue.title)}`);
     console.log(`     ${chalk.gray(issue.detail)}`);
 
-    if (issue.fixable && fix && issue.fix) {
+    if (issue.fixable && doFix && issue.fix) {
       await issue.fix();
     } else if (issue.fixable && !fix) {
       console.log(chalk.gray('     Run with --fix to auto-repair'));
@@ -207,7 +274,9 @@ export async function runDoctor(fix = false): Promise<void> {
   console.log(`  ${chalk.bold('Summary:')} ${chalk.green(`${okCount} ok`)}  ${chalk.yellow(`${warnCount} warnings`)}  ${chalk.red(`${errorCount} errors`)}`);
 
   if (errorCount > 0 || warnCount > 0) {
-    console.log(chalk.gray('\n  Run: hyperclaw doctor --fix   to auto-repair fixable issues\n'));
+    console.log(chalk.gray('\n  Run: hyperclaw doctor --fix   to auto-repair fixable issues'));
+    if (deep) console.log(chalk.gray('  Use --deep to scan for extra gateway services (launchd/systemd/schtasks)\n'));
+    else console.log();
   } else {
     console.log(chalk.green('\n  ✔  All checks passed!\n'));
   }

@@ -69,7 +69,14 @@ Per-channel config, keyed by channel ID:
       "groups": { "*": { "requireMention": true } },
       "dmPolicy": "pairing"
     },
-    "discord": { ... }
+    "discord": { ... },
+    "twitch": {
+      "enabled": true,
+      "username": "openclaw",
+      "oauthToken": "oauth:abc123...",
+      "channels": ["vevisk"],
+      "dmPolicy": "pairing"
+    }
   }
 }
 ```
@@ -84,6 +91,17 @@ Per-channel config, keyed by channel ID:
 | `webhookUrl` | Inbound webhook URL |
 | `webhookSecret` | Webhook secret |
 
+### Twitch-specific fields
+
+| Key | Description |
+|-----|-------------|
+| `channels.twitch.username` | Bot Twitch username |
+| `channels.twitch.oauthToken` | Twitch IRC OAuth token (`oauth:...`) |
+| `channels.twitch.channels` | Array of channel names to join |
+| `channels.twitch.commandPrefix` | Prefix required in public chat (default: `!`) |
+| `channels.twitch.whispers` | Enable whisper handling |
+| `channels.twitch.modsBypass` | Let moderators and broadcaster bypass allowlist |
+
 ---
 
 ## agents
@@ -92,6 +110,7 @@ Per-channel config, keyed by channel ID:
 |-----|------|-------------|
 | `defaults.workspace` | string | Workspace root path |
 | `defaults.sandbox.mode` | string | `main` \| `non-main` |
+| `list[].groupChat` | object | Per-agent group chat: `mentionPatterns`, `historyLimit`. See [Group Messages](group-messages.md). |
 
 ---
 
@@ -175,7 +194,11 @@ Enables auto-sync of MEMORY.md to Obsidian, searchable notes via Raycast, and Ha
 
 ---
 
-## Environment overrides
+## Environment
+
+For full env precedence, path vars, and fallbacks, see [Environment](environment.md).
+
+### Path overrides
 
 | Variable | Overrides |
 |----------|-----------|
@@ -185,6 +208,9 @@ Enables auto-sync of MEMORY.md to Obsidian, searchable notes via Raycast, and Ha
 | `OPENROUTER_API_KEY` | provider.apiKey (OpenRouter) |
 | `ANTHROPIC_API_KEY` | provider.apiKey (Anthropic) |
 | `OPENAI_API_KEY` | provider.apiKey (OpenAI) |
+| `TWITCH_BOT_USERNAME` | channels.twitch.username |
+| `TWITCH_OAUTH_TOKEN` | channels.twitch.oauthToken |
+| `TWITCH_CHANNELS` | channels.twitch.channels (comma-separated) |
 
 ---
 

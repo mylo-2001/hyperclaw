@@ -9,6 +9,9 @@ import path from 'path';
 import http from 'http';
 import { getHyperClawDir, getConfigPath } from '../infra/paths';
 import { chunkForChannel, withRetry } from './delivery';
+import { resolveBroadcast, dispatchBroadcast, extractBroadcastConfig } from '../routing/broadcast';
+import { resolveBinding, extractBindings, extractAgentsList, buildInboundContext } from '../routing/binding-resolver';
+import { buildSessionKey, resolveIdentityLink, extractSessionConfig } from '../routing/session-keys';
 
 const HC_DIR = getHyperClawDir();
 
@@ -57,6 +60,12 @@ export async function startChannelRunners(opts: ChannelRunnerOpts): Promise<Chan
   const ids = Array.isArray(enabledIds) ? enabledIds : [];
   if (ids.length === 0) return { stop: async () => {} };
 
+  // Routing config — loaded once at startup
+  const broadcastCfg = extractBroadcastConfig(cfg);
+  const bindings = extractBindings(cfg);
+  const agentsList = extractAgentsList(cfg);
+  const sessionCfg = extractSessionConfig(cfg);
+
   const wrap = (c: { sendMessage: (id: string, t: string) => Promise<any>; sendTyping?: (id: string) => Promise<any> }) => {
     const ty = c.sendTyping;
     return {
@@ -64,13 +73,84 @@ export async function startChannelRunners(opts: ChannelRunnerOpts): Promise<Chan
       sendTyping: ty ? (id: string | number) => ty(String(id)) : undefined
     };
   };
-  const handleMsg = async (msg: { chatId: string | number; text: string; audioPath?: string }, conn: { sendMessage: (id: string | number, t: string) => Promise<any>; sendTyping?: (id: string | number) => Promise<any> }, channelId: string) => {
+
+  /**
+   * Handles one inbound message from any channel connector.
+   * Supports broadcast groups (multi-agent) and binding resolution.
+   */
+  const handleMsg = async (
+    msg: {
+      chatId: string | number;
+      text: string;
+      audioPath?: string;
+      isDM?: boolean;
+      isGroup?: boolean;
+      from?: string;
+      accountId?: string;
+      threadId?: string;
+      guildId?: string;
+      teamId?: string;
+      senderRoles?: string[];
+    },
+    conn: { sendMessage: (id: string | number, t: string) => Promise<any>; sendTyping?: (id: string | number) => Promise<any> },
+    channelId: string
+  ) => {
     try {
       conn.sendTyping?.(msg.chatId).catch(() => {});
-      const { enrichVoiceNote, withRetry } = await import('./delivery');
-      const text = await enrichVoiceNote(msg);
+      const { enrichVoiceNote } = await import('./delivery');
+      const text = await enrichVoiceNote(msg as any);
+      const peerId = String(msg.chatId);
+
+      // ── Broadcast group check ──────────────────────────────────────────────
+      const broadcastTarget = resolveBroadcast(peerId, broadcastCfg);
+
+      if (broadcastTarget) {
+        // Multi-agent dispatch: run all listed agents for this peer
+        await dispatchBroadcast(
+          text,
+          peerId,
+          channelId,
+          broadcastTarget,
+          async (message, dispatchOpts) => {
+            return await withRetry(
+              () => postChat(baseUrl, message, channelId, authToken, dispatchOpts.agentId, dispatchOpts.sessionKey),
+              { onRetry: (n, err) => console.error(`[broadcast] ${dispatchOpts.agentId} retry ${n}: ${err.message}`) }
+            );
+          },
+          async (_peerId, _agentId, response) => {
+            const chunks = chunkForChannel(response, channelId);
+            for (const chunk of chunks) {
+              await withRetry(() => conn.sendMessage(msg.chatId, chunk), {
+                onRetry: (n, err) => console.error(`[broadcast] send retry ${n}: ${err.message}`)
+              });
+            }
+          }
+        );
+        return;
+      }
+
+      // ── Single-agent: resolve binding + session key ─────────────────────────
+      const inboundCtx = buildInboundContext(msg as any, channelId);
+      const agentId = resolveBinding(inboundCtx, bindings, agentsList);
+
+      // Build session key according to dmScope
+      const canonicalPeerId = resolveIdentityLink(
+        channelId, peerId, sessionCfg.identityLinks
+      );
+      const sessionKey = buildSessionKey({
+        agentId,
+        channel: channelId,
+        chatType: inboundCtx.chatType,
+        peerId,
+        accountId: msg.accountId,
+        threadId: msg.threadId,
+        dmScope: sessionCfg.dmScope,
+        mainKey: sessionCfg.mainKey,
+        canonicalPeerId
+      });
+
       const response = await withRetry(
-        () => postChat(baseUrl, text, channelId, authToken),
+        () => postChat(baseUrl, text, channelId, authToken, agentId, sessionKey),
         { onRetry: (n, err) => console.error(`[channels] ${channelId} agent retry ${n}: ${err.message}`) }
       );
       const chunks = chunkForChannel(response, channelId);
@@ -95,9 +175,18 @@ export async function startChannelRunners(opts: ChannelRunnerOpts): Promise<Chan
     if (id === 'telegram') {
       const token = chCfg?.token || chCfg?.botToken || process.env.TELEGRAM_BOT_TOKEN;
       if (!token) continue;
+      const groupAllowFrom = Array.isArray(chCfg?.groupAllowFrom) ? chCfg.groupAllowFrom.map(String) : [];
+      const groupActivation = chCfg?.groupActivation === 'always' ? 'always' : 'mention';
       try {
         const { TelegramConnector } = await import('../../extensions/telegram/src/connector');
-        const conn = new TelegramConnector(token, { dmPolicy: dmPolicy as any, allowFrom: allowFromArr, pendingPairings: {}, approvedPairings: [] });
+        const conn = new TelegramConnector(token, {
+          dmPolicy: dmPolicy as any,
+          allowFrom: allowFromArr,
+          groupAllowFrom,
+          groupActivation,
+          pendingPairings: {},
+          approvedPairings: []
+        });
         conn.on('message', (msg: { chatId: number; text: string }) => handleMsg(msg, wrap(conn as any), 'telegram'));
         await conn.connect();
         connectors.push({ stop: async () => { await conn.disconnect(); } });
@@ -109,8 +198,25 @@ export async function startChannelRunners(opts: ChannelRunnerOpts): Promise<Chan
       if (!token) continue;
       try {
         const { DiscordConnector } = await import('../../extensions/discord/src/connector');
-        const conn = new DiscordConnector(token, { dmPolicy: dmPolicy as any, allowFrom: allowFromArr, pendingPairings: {}, approvedPairings: [] });
-        conn.on('message', (msg: { chatId: string; text: string }) => handleMsg(msg, wrap(conn as any), 'discord'));
+        const { PairingStore } = await import('./pairing');
+        const discordStore = new PairingStore('discord');
+        const pairingBridge = {
+          isApproved: (senderId: string) => discordStore.isApproved(senderId),
+          createRequest: (senderId: string) => discordStore.createRequest(senderId),
+          verify: (code: string, senderId: string) => discordStore.verify(code, senderId)
+        };
+        const listenGuildIds = Array.isArray(chCfg?.listenGuildIds) ? chCfg.listenGuildIds : (chCfg?.guilds ? Object.keys(chCfg.guilds) : []);
+        const requireMentionInGuild = chCfg?.requireMentionInGuild;
+        const conn = new DiscordConnector(token, {
+          dmPolicy: dmPolicy as any,
+          allowFrom: allowFromArr,
+          pendingPairings: {},
+          approvedPairings: [],
+          pairingBridge,
+          listenGuildIds: listenGuildIds.filter(Boolean),
+          requireMentionInGuild: requireMentionInGuild === false ? false : true
+        });
+        conn.on('message', (msg: { chatId: string; text: string; isDM?: boolean }) => handleMsg(msg, wrap(conn as any), 'discord'));
         await conn.connect();
         connectors.push({ stop: async () => { await conn.disconnect(); } });
       } catch (e: any) {
@@ -118,22 +224,75 @@ export async function startChannelRunners(opts: ChannelRunnerOpts): Promise<Chan
       }
     } else if (id === 'slack') {
       const botToken = chCfg?.botToken || chCfg?.token || process.env.SLACK_BOT_TOKEN;
+      const appToken = chCfg?.appToken || process.env.SLACK_APP_TOKEN;
       const signingSecret = chCfg?.signingSecret || process.env.SLACK_SIGNING_SECRET;
-      if (!botToken || !signingSecret) continue;
+      const mode = (chCfg?.mode || 'socket') as 'socket' | 'http';
+      if (!botToken) continue;
+      if (mode === 'socket' && !appToken) {
+        console.error('[channels] Slack Socket Mode requires appToken (xapp-...). Set SLACK_APP_TOKEN or switch to mode: http');
+        continue;
+      }
+      if (mode === 'http' && !signingSecret) {
+        console.error('[channels] Slack HTTP mode requires signingSecret. Set SLACK_SIGNING_SECRET or switch to mode: socket');
+        continue;
+      }
       try {
         const { SlackConnector } = await import('../../extensions/slack/src/connector');
-        const conn = new SlackConnector({ botToken, signingSecret, dmPolicy: dmPolicy as any, allowFrom: allowFromArr, approvedPairings: [], pendingPairings: {} });
+        const conn = new SlackConnector({
+          botToken,
+          ...(appToken ? { appToken } : {}),
+          ...(signingSecret ? { signingSecret } : {}),
+          mode,
+          ...(chCfg?.userToken ? { userToken: chCfg.userToken } : {}),
+          userTokenReadOnly: chCfg?.userTokenReadOnly !== false,
+          dmPolicy: (dmPolicy ?? 'pairing') as any,
+          allowFrom: allowFromArr,
+          dm: {
+            enabled: chCfg?.dm?.enabled !== false,
+            policy: (chCfg?.dm?.policy ?? chCfg?.dmPolicy ?? dmPolicy ?? 'pairing') as any,
+            allowFrom: chCfg?.dm?.allowFrom ?? allowFromArr,
+            groupEnabled: chCfg?.dm?.groupEnabled === true,
+            groupChannels: chCfg?.dm?.groupChannels,
+            replyToMode: chCfg?.dm?.replyToMode as any
+          },
+          groupPolicy: (chCfg?.groupPolicy || 'allowlist') as any,
+          channels: chCfg?.channels || {},
+          replyToMode: (chCfg?.replyToMode || 'off') as any,
+          replyToModeByChatType: chCfg?.replyToModeByChatType,
+          thread: {
+            historyScope: chCfg?.thread?.historyScope || 'thread',
+            inheritParent: chCfg?.thread?.inheritParent === true,
+            initialHistoryLimit: chCfg?.thread?.initialHistoryLimit ?? 20
+          },
+          textChunkLimit: chCfg?.textChunkLimit ? Number(chCfg.textChunkLimit) : undefined,
+          chunkMode: (chCfg?.chunkMode || 'length') as any,
+          mediaMaxMb: chCfg?.mediaMaxMb ? Number(chCfg.mediaMaxMb) : undefined,
+          streaming: (chCfg?.streaming || 'partial') as any,
+          nativeStreaming: chCfg?.nativeStreaming !== false,
+          ackReaction: chCfg?.ackReaction,
+          typingReaction: chCfg?.typingReaction,
+          actions: chCfg?.actions || {},
+          commands: chCfg?.commands || {},
+          slashCommand: chCfg?.slashCommand || {},
+          configWrites: chCfg?.configWrites !== false,
+          accounts: chCfg?.accounts || {},
+          approvedPairings: [],
+          pendingPairings: {}
+        });
         conn.on('message', (msg: { chatId: string; text: string; threadTs?: string }) => {
           const send = (id: string | number, t: string) => conn.sendMessage(String(id), t, msg.threadTs);
           const typing = conn.sendTyping ? (id: string | number) => conn.sendTyping(String(id)) : undefined;
           handleMsg({ chatId: msg.chatId, text: msg.text }, { sendMessage: send, sendTyping: typing }, 'slack');
         });
         await conn.connect();
-        webhookConnectors['slack'] = {
-          handleWebhook: async (body, opts) => (await conn.handleWebhook(body, opts?.signature ?? '', opts?.timestamp ?? '')) ?? undefined,
-          verifyWebhook: undefined
-        };
-        connectors.push({ stop: async () => {} });
+        // HTTP mode webhook (Socket Mode handles its own events)
+        if (mode === 'http') {
+          webhookConnectors['slack'] = {
+            handleWebhook: async (body, opts) => (await conn.handleWebhook(body, opts?.signature ?? '', opts?.timestamp ?? '')) ?? undefined,
+            verifyWebhook: undefined
+          };
+        }
+        connectors.push({ stop: async () => { conn.disconnect(); } });
       } catch (e: any) {
         console.error(`[channels] Slack failed to start: ${e.message}`);
       }
@@ -143,7 +302,7 @@ export async function startChannelRunners(opts: ChannelRunnerOpts): Promise<Chan
       if (!phoneNumber) continue;
       try {
         const { SignalConnector } = await import('../../extensions/signal/src/connector');
-        const conn = new SignalConnector({ signalCliUrl, phoneNumber, dmPolicy: dmPolicy as any, allowFrom: allowFromArr, approvedPairings: [], pendingPairings: {} });
+        const conn = new SignalConnector({ httpUrl: signalCliUrl, account: phoneNumber, dmPolicy: dmPolicy as any, allowFrom: allowFromArr, approvedPairings: [], pendingPairings: {} });
         conn.on('message', (msg: { chatId: string; text: string }) => handleMsg(msg, wrap(conn as any), 'signal'));
         await conn.connect();
         connectors.push({ stop: async () => { conn.disconnect(); } });
@@ -154,11 +313,44 @@ export async function startChannelRunners(opts: ChannelRunnerOpts): Promise<Chan
       const homeserver = chCfg?.homeserver || chCfg?.homeserverUrl || process.env.MATRIX_HOMESERVER;
       const accessToken = chCfg?.accessToken || chCfg?.token || process.env.MATRIX_ACCESS_TOKEN;
       const userId = chCfg?.userId || process.env.MATRIX_USER_ID;
-      if (!homeserver || !accessToken || !userId) continue;
+      const password = chCfg?.password || process.env.MATRIX_PASSWORD;
+      const hasAccounts = chCfg?.accounts && Object.keys(chCfg.accounts).length > 0;
+      // Need homeserver, plus (accessToken OR password OR multi-account map)
+      if (!homeserver && !hasAccounts) continue;
+      if (!hasAccounts && !accessToken && !password) continue;
       try {
         const { MatrixConnector } = await import('../../extensions/matrix/src/connector');
-        const conn = new MatrixConnector({ homeserver, accessToken, userId, dmPolicy: dmPolicy as any, allowFrom: allowFromArr, approvedPairings: [], pendingPairings: {} });
-        conn.on('message', (msg: { chatId: string; text: string }) => handleMsg(msg, wrap(conn as any), 'matrix'));
+        const conn = new MatrixConnector({
+          homeserver: homeserver || '',
+          ...(accessToken ? { accessToken } : {}),
+          ...(userId ? { userId } : {}),
+          ...(password ? { password } : {}),
+          ...(chCfg?.deviceName ? { deviceName: chCfg.deviceName } : {}),
+          encryption: chCfg?.encryption === true || chCfg?.encryption === 'true',
+          dm: {
+            policy: (chCfg?.dm?.policy ?? chCfg?.dmPolicy ?? dmPolicy ?? 'pairing') as any,
+            allowFrom: chCfg?.dm?.allowFrom ?? allowFromArr
+          },
+          groupPolicy: (chCfg?.groupPolicy || 'allowlist') as any,
+          groupAllowFrom: Array.isArray(chCfg?.groupAllowFrom) ? chCfg.groupAllowFrom : [],
+          groups: chCfg?.groups || {},
+          rooms: chCfg?.rooms || {},
+          threadReplies: (chCfg?.threadReplies || 'inbound') as any,
+          replyToMode: (chCfg?.replyToMode || 'off') as any,
+          textChunkLimit: chCfg?.textChunkLimit ? Number(chCfg.textChunkLimit) : undefined,
+          chunkMode: (chCfg?.chunkMode || 'length') as any,
+          mediaMaxMb: chCfg?.mediaMaxMb ? Number(chCfg.mediaMaxMb) : undefined,
+          autoJoin: (chCfg?.autoJoin || 'always') as any,
+          autoJoinAllowlist: Array.isArray(chCfg?.autoJoinAllowlist) ? chCfg.autoJoinAllowlist : [],
+          accounts: chCfg?.accounts || {},
+          actions: chCfg?.actions || {},
+          approvedPairings: [],
+          pendingPairings: {}
+        });
+        conn.on('message', (msg: { chatId: string; text: string; threadId?: string }) => {
+          const send = (id: string | number, t: string) => conn.sendMessage(String(id), t, msg.threadId);
+          handleMsg({ chatId: msg.chatId, text: msg.text }, { sendMessage: send }, 'matrix');
+        });
         await conn.connect();
         connectors.push({ stop: async () => { conn.disconnect(); } });
       } catch (e: any) {
@@ -180,12 +372,31 @@ export async function startChannelRunners(opts: ChannelRunnerOpts): Promise<Chan
     } else if (id === 'line') {
       const channelAccessToken = chCfg?.channelAccessToken || chCfg?.token || process.env.LINE_CHANNEL_ACCESS_TOKEN;
       const channelSecret = chCfg?.channelSecret || process.env.LINE_CHANNEL_SECRET;
-      if (!channelAccessToken || !channelSecret) continue;
+      const tokenFile = chCfg?.tokenFile;
+      const secretFile = chCfg?.secretFile;
+      // Require at least one of (token+secret) or (tokenFile+secretFile)
+      const hasCredentials = (channelAccessToken && channelSecret) || (tokenFile && secretFile);
+      if (!hasCredentials) continue;
       try {
         const { LINEConnector } = await import('../../extensions/line/src/connector');
-        const conn = new LINEConnector({ channelAccessToken, channelSecret, dmPolicy: dmPolicy as any, allowFrom: allowFromArr, approvedPairings: [], pendingPairings: {} });
+        const conn = new LINEConnector({
+          ...(channelAccessToken ? { channelAccessToken } : {}),
+          ...(channelSecret ? { channelSecret } : {}),
+          ...(tokenFile ? { tokenFile } : {}),
+          ...(secretFile ? { secretFile } : {}),
+          ...(chCfg?.webhookPath ? { webhookPath: chCfg.webhookPath } : {}),
+          ...(chCfg?.mediaMaxMb != null ? { mediaMaxMb: Number(chCfg.mediaMaxMb) } : {}),
+          dmPolicy: dmPolicy as any,
+          allowFrom: allowFromArr,
+          groupPolicy: (chCfg?.groupPolicy || 'allowlist') as any,
+          groupAllowFrom: Array.isArray(chCfg?.groupAllowFrom) ? chCfg.groupAllowFrom : [],
+          groups: chCfg?.groups || {},
+          approvedPairings: [],
+          pendingPairings: {}
+        });
         conn.on('message', async (msg: { chatId: string; text: string; replyToken?: string }) => {
-          const send = (id: string | number, t: string) => msg.replyToken ? conn.replyMessage(msg.replyToken, t) : conn.pushMessage(String(id), t);
+          const send = (id: string | number, t: string) =>
+            msg.replyToken ? conn.replyMessage(msg.replyToken!, t) : conn.pushMessage(String(id), t);
           await handleMsg({ chatId: msg.chatId, text: msg.text }, { sendMessage: send }, 'line');
         });
         await conn.connect();
@@ -257,7 +468,16 @@ export async function startChannelRunners(opts: ChannelRunnerOpts): Promise<Chan
     } else if (id === 'imessage-native' && process.platform === 'darwin') {
       try {
         const { IMessageNativeConnector } = await import('../../extensions/imessage-native/src/connector');
-        const conn = new IMessageNativeConnector({ dmPolicy: dmPolicy as any, allowFrom: allowFromArr, approvedPairings: [], pendingPairings: {} });
+        const cliPath = chCfg?.cliPath || process.env.IMSG_PATH;
+        const dbPath = chCfg?.dbPath;
+        const conn = new IMessageNativeConnector({
+          ...(cliPath ? { cliPath } : {}),
+          ...(dbPath ? { dbPath } : {}),
+          dmPolicy: dmPolicy as any,
+          allowFrom: allowFromArr,
+          approvedPairings: [],
+          pendingPairings: {}
+        });
         conn.on('message', (msg: { chatId: string; text: string }) => handleMsg(msg, wrap(conn as any), 'imessage-native'));
         await conn.connect();
         connectors.push({ stop: async () => { conn.disconnect(); } });
@@ -356,16 +576,43 @@ export async function startChannelRunners(opts: ChannelRunnerOpts): Promise<Chan
         console.error(`[channels] Zalo Personal failed: ${e.message}`);
       }
     } else if (id === 'zalo') {
-      const appId = chCfg?.appId || process.env.ZALO_APP_ID;
-      const appSecret = chCfg?.appSecret || process.env.ZALO_APP_SECRET;
-      const oaAccessToken = chCfg?.oaAccessToken || chCfg?.token || process.env.ZALO_OA_ACCESS_TOKEN;
-      if (!appId || !appSecret || !oaAccessToken) continue;
+      const botToken = chCfg?.botToken || chCfg?.token || process.env.ZALO_BOT_TOKEN;
+      const tokenFile = chCfg?.tokenFile;
+      const hasAccounts = chCfg?.accounts && Object.keys(chCfg.accounts).length > 0;
+      if (!botToken && !tokenFile && !hasAccounts) continue;
       try {
         const { ZaloConnector } = await import('../../extensions/zalo/src/connector');
-        const conn = new ZaloConnector({ appId, appSecret, oaAccessToken, dmPolicy: dmPolicy as any, allowFrom: allowFromArr, approvedPairings: [], pendingPairings: {} });
+        const conn = new ZaloConnector({
+          ...(botToken ? { botToken } : {}),
+          ...(tokenFile ? { tokenFile } : {}),
+          dmPolicy: (dmPolicy ?? 'pairing') as any,
+          allowFrom: allowFromArr,
+          groupPolicy: (chCfg?.groupPolicy || 'allowlist') as any,
+          groupAllowFrom: Array.isArray(chCfg?.groupAllowFrom) ? chCfg.groupAllowFrom : [],
+          ...(chCfg?.webhookUrl ? { webhookUrl: chCfg.webhookUrl } : {}),
+          ...(chCfg?.webhookSecret ? { webhookSecret: chCfg.webhookSecret } : {}),
+          ...(chCfg?.webhookPath ? { webhookPath: chCfg.webhookPath } : {}),
+          mediaMaxMb: chCfg?.mediaMaxMb ? Number(chCfg.mediaMaxMb) : undefined,
+          ...(chCfg?.proxy ? { proxy: chCfg.proxy } : {}),
+          accounts: chCfg?.accounts || {},
+          approvedPairings: [],
+          pendingPairings: {},
+          pendingPairingTs: {}
+        });
         conn.on('message', (msg: { chatId: string; text: string }) => handleMsg(msg, wrap(conn as any), 'zalo'));
         await conn.connect();
-        webhookConnectors['zalo'] = { handleWebhook: (body) => conn.handleWebhook(body), verifyWebhook: undefined };
+        // Webhook mode: register gateway handler for inbound events
+        if (chCfg?.webhookUrl) {
+          const wPath = chCfg?.webhookPath || new URL(chCfg.webhookUrl).pathname || '/zalo-webhook';
+          webhookConnectors[wPath] = {
+            handleWebhook: async (body, opts) => {
+              const secret = (opts as any)?.secret || opts?.signature || '';
+              await conn.handleWebhook(body, secret);
+            },
+            verifyWebhook: undefined
+          };
+          webhookConnectors['zalo'] = webhookConnectors[wPath];
+        }
         connectors.push({ stop: async () => { conn.disconnect(); } });
       } catch (e: any) {
         console.error(`[channels] Zalo failed to start: ${e.message}`);
@@ -472,14 +719,14 @@ export async function startChannelRunners(opts: ChannelRunnerOpts): Promise<Chan
       try {
         const { MattermostConnector } = await import('../../extensions/mattermost/src/connector');
         const conn = new MattermostConnector({
-          serverUrl, token, webhookToken,
+          baseUrl: serverUrl, botToken: token,
           dmPolicy: dmPolicy as any, allowFrom: allowFromArr, approvedPairings: [], pendingPairings: {}
         });
         conn.on('message', (msg: { chatId: string; text: string }) => handleMsg(msg, wrap(conn as any), 'mattermost'));
         await conn.connect();
         webhookConnectors['mattermost'] = {
-          handleWebhook: async (body: string, opts?: WebhookOpts) => {
-            await conn.handleWebhook(body, opts ? { contentType: (opts as any).contentType } : undefined);
+          handleWebhook: async (body: string, _opts?: WebhookOpts) => {
+            await conn.handleWebhook(body, webhookToken ?? '');
           },
           verifyWebhook: undefined
         };
@@ -498,6 +745,44 @@ export async function startChannelRunners(opts: ChannelRunnerOpts): Promise<Chan
       } catch (e: any) {
         console.error(`[channels] Google Chat failed to start: ${e.message}`);
       }
+    } else if (id === 'nextcloud-talk' || id === 'nextcloud') {
+      const baseUrl = chCfg?.baseUrl || chCfg?.serverUrl || chCfg?.token || process.env.NEXTCLOUD_TALK_BASE_URL;
+      const botSecret = chCfg?.botSecret || process.env.NEXTCLOUD_TALK_BOT_SECRET;
+      const botSecretFile = chCfg?.botSecretFile;
+      if (!baseUrl || (!botSecret && !botSecretFile)) continue;
+      try {
+        const { NextcloudTalkConnector } = await import('../../extensions/nextcloud/src/connector');
+        const conn = new NextcloudTalkConnector({
+          baseUrl,
+          ...(botSecret ? { botSecret } : {}),
+          ...(botSecretFile ? { botSecretFile } : {}),
+          ...(chCfg?.apiUser ? { apiUser: chCfg.apiUser } : {}),
+          ...(chCfg?.apiPassword ? { apiPassword: chCfg.apiPassword } : {}),
+          ...(chCfg?.apiPasswordFile ? { apiPasswordFile: chCfg.apiPasswordFile } : {}),
+          ...(chCfg?.webhookPort != null ? { webhookPort: Number(chCfg.webhookPort) } : {}),
+          ...(chCfg?.webhookHost ? { webhookHost: chCfg.webhookHost } : {}),
+          ...(chCfg?.webhookPath ? { webhookPath: chCfg.webhookPath } : {}),
+          ...(chCfg?.webhookPublicUrl ? { webhookPublicUrl: chCfg.webhookPublicUrl } : {}),
+          dmPolicy: (dmPolicy ?? 'pairing') as any,
+          allowFrom: allowFromArr,
+          groupPolicy: (chCfg?.groupPolicy || 'allowlist') as any,
+          groupAllowFrom: Array.isArray(chCfg?.groupAllowFrom) ? chCfg.groupAllowFrom : [],
+          rooms: chCfg?.rooms || {},
+          ...(chCfg?.textChunkLimit != null ? { textChunkLimit: Number(chCfg.textChunkLimit) } : {}),
+          ...(chCfg?.chunkMode ? { chunkMode: chCfg.chunkMode } : {}),
+          ...(chCfg?.mediaMaxMb != null ? { mediaMaxMb: Number(chCfg.mediaMaxMb) } : {}),
+          approvedPairings: [],
+          pendingPairings: {}
+        });
+        conn.on('message', (msg: { chatId: string; text: string }) =>
+          handleMsg(msg, wrap(conn as any), 'nextcloud-talk')
+        );
+        await conn.connect();
+        // NextcloudTalkConnector manages its own inbound HTTP server
+        connectors.push({ stop: async () => { conn.disconnect(); } });
+      } catch (e: any) {
+        console.error(`[channels] Nextcloud Talk failed to start: ${e.message}`);
+      }
     } else if (id === 'synology-chat') {
       const incomingWebhookUrl = chCfg?.incomingWebhookUrl || chCfg?.token || process.env.SYNOLOGY_CHAT_WEBHOOK_URL;
       const webhookToken = chCfg?.webhookToken || process.env.SYNOLOGY_CHAT_OUTGOING_TOKEN;
@@ -506,8 +791,8 @@ export async function startChannelRunners(opts: ChannelRunnerOpts): Promise<Chan
       try {
         const { SynologyChatConnector } = await import('../../extensions/synology-chat/src/connector');
         const conn = new SynologyChatConnector({
-          incomingWebhookUrl,
-          webhookToken,
+          incomingUrl: incomingWebhookUrl,
+          token: webhookToken,
           ...(webhookPort ? { webhookPort: Number(webhookPort) } : {})
         });
         conn.on('message', (msg: { chatId: string; text: string }) => handleMsg(msg, wrap(conn as any), 'synology-chat'));
@@ -527,7 +812,18 @@ export async function startChannelRunners(opts: ChannelRunnerOpts): Promise<Chan
       if (!username || !oauthToken || channels.length === 0) continue;
       try {
         const { TwitchConnector } = await import('../../extensions/twitch/src/connector');
-        const conn = new TwitchConnector({ username, oauthToken, channels });
+        const conn = new TwitchConnector({
+          username,
+          oauthToken,
+          channels,
+          dmPolicy: dmPolicy as any,
+          allowFrom: allowFromArr,
+          commandPrefix: chCfg?.commandPrefix,
+          whispers: chCfg?.whispers,
+          modsBypass: chCfg?.modsBypass,
+          approvedPairings: [],
+          pendingPairings: {}
+        });
         conn.on('message', (msg: { chatId: string; text: string }) => handleMsg(msg, wrap(conn as any), 'twitch'));
         await conn.connect();
         connectors.push({ stop: async () => { await conn.disconnect(); } });
@@ -543,7 +839,7 @@ export async function startChannelRunners(opts: ChannelRunnerOpts): Promise<Chan
       if (!shipUrl || !ship || !code) continue;
       try {
         const { TlonConnector } = await import('../../extensions/tlon/src/connector');
-        const conn = new TlonConnector({ shipUrl, ship, code, ...(group ? { group } : {}) });
+        const conn = new TlonConnector({ url: shipUrl, ship, code, ...(group ? { group } : {}) });
         conn.on('message', (msg: { chatId: string; text: string }) => handleMsg(msg, wrap(conn as any), 'tlon'));
         await conn.connect();
         connectors.push({ stop: async () => { conn.disconnect(); } });
@@ -574,9 +870,19 @@ export async function startChannelRunners(opts: ChannelRunnerOpts): Promise<Chan
   };
 }
 
-function postChat(baseUrl: string, message: string, source?: string, authToken?: string): Promise<string> {
+function postChat(
+  baseUrl: string,
+  message: string,
+  source?: string,
+  authToken?: string,
+  agentId?: string,
+  sessionKey?: string
+): Promise<string> {
   return new Promise((resolve, reject) => {
-    const payload = JSON.stringify({ message });
+    const body: Record<string, string> = { message };
+    if (agentId) body.agentId = agentId;
+    if (sessionKey) body.sessionKey = sessionKey;
+    const payload = JSON.stringify(body);
     const headers: Record<string, string> = { 'Content-Type': 'application/json', 'Content-Length': String(Buffer.byteLength(payload)) };
     if (source) headers['X-HyperClaw-Source'] = source;
     if (authToken) headers['Authorization'] = `Bearer ${authToken}`;

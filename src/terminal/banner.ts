@@ -1,4 +1,4 @@
-import chalk from 'chalk';
+﻿import chalk from 'chalk';
 import gradient from 'gradient-string';
 import figlet from 'figlet';
 import boxen from 'boxen';
@@ -23,7 +23,7 @@ export class Banner {
 
     const subtitle = daemonMode
       ? chalk.hex(t.daemonPrimary)('    🩸 DAEMON MODE — ALWAYS WATCHING ⚡\n')
-      : t.muted('    🦅 HyperClaw Bot — AI Gateway v4.0.2 ⚡\n');
+      : t.muted('    🦅 HyperClaw Bot — AI Gateway v5.0.0 ⚡\n');
 
     console.log(subtitle);
 
@@ -65,7 +65,7 @@ export class Banner {
     } catch {
       console.log(t.bold('\n  🦅 HYPERCLAW\n'));
     }
-    console.log(t.muted('    🦅 HyperClaw Bot — AI Gateway • SETUP WIZARD v4.0.2 ⚡\n'));
+    console.log(t.muted('    🦅 HyperClaw Bot — AI Gateway • SETUP WIZARD v5.0.0 ⚡\n'));
 
     const boxOpts: any = {
       padding: 1,

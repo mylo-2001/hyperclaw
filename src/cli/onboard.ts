@@ -1,4 +1,4 @@
-import inquirer from 'inquirer';
+﻿import inquirer from 'inquirer';
 import chalk from 'chalk';
 import ora from 'ora';
 import boxen from 'boxen';
@@ -20,7 +20,7 @@ function brandIcon(id: string, type: 'channel' | 'provider' = 'channel'): string
   return chalk.hex('#' + ic.color)('■');
 }
 
-interface WizardOptions {
+export interface WizardOptions {
   wizard?: boolean;
   autoConfig?: boolean;
   daemon?: boolean;
@@ -35,6 +35,8 @@ interface WizardOptions {
   gatewayBind?: 'loopback' | 'all';
   anthropicApiKey?: string;
   openaiApiKey?: string;
+  /** Reset config before running wizard */
+  reset?: boolean;
 }
 
 export class HyperClawWizard {
@@ -1659,7 +1661,7 @@ export class HyperClawWizard {
 
     await this.config.save({
       ...current,
-      version: '4.0.2',
+      version: '5.0.0',
       workspaceName: data.workspaceName,
       provider: data.providerConfig,
       providers: data.providers || (data.providerConfig ? [data.providerConfig] : []),
@@ -1758,7 +1760,7 @@ export class HyperClawWizard {
     if (options.jsonOutput) {
       const result = {
         ok: true,
-        version: '4.0.2',
+        version: '5.0.0',
         provider: data.providerConfig?.providerId,
         model: data.providerConfig?.modelId,
         gateway: data.gatewayConfig ? {
@@ -1818,7 +1820,7 @@ export class HyperClawWizard {
     ].join('\n');
 
     console.log('\n' + boxen(
-      chalk.hex('#06b6d4')('🎉 HyperClaw v4.0.2 ready!\n\n') + lines,
+      chalk.hex('#06b6d4')('🎉 HyperClaw v5.0.0 ready!\n\n') + lines,
       { padding: 1, borderStyle: 'round', borderColor: 'cyan', margin: 1, backgroundColor: '#0a0a0a' }
     ));
   }

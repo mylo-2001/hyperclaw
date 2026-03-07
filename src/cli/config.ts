@@ -1,4 +1,4 @@
-﻿/**
+/**
  * src/cli/config.ts
  * ConfigStore — live config mutation + reload, secret scrubbing, key rotation.
  * HyperClaw live config plane (not just read — also writes & notifies gateway).
@@ -11,6 +11,204 @@ import { resolveChannelToken } from '../infra/env-resolve';
 
 const getHC_DIR = () => getHyperClawDir();
 const getCFG_FILE = () => getConfigPath();
+
+// ─── Broadcast Groups ─────────────────────────────────────────────────────────
+
+/**
+ * Broadcast group configuration.
+ * Keys are WhatsApp peer IDs (group JIDs or E.164 numbers for DMs).
+ * Value is the array of agent IDs to run when a message arrives in that peer.
+ * The special `strategy` key controls parallel vs sequential dispatch.
+ */
+export interface BroadcastConfig {
+  /** How to dispatch to multiple agents. Default: "parallel" */
+  strategy?: 'parallel' | 'sequential';
+  /** peerId → agentId[] map */
+  [peerId: string]: string[] | 'parallel' | 'sequential' | undefined;
+}
+
+// ─── Bindings ─────────────────────────────────────────────────────────────────
+
+/** Peer match shape inside a binding rule. */
+export interface BindingPeerMatch {
+  kind: 'dm' | 'group' | 'channel';
+  /** Exact peer/channel/room ID. "*" matches any. */
+  id: string;
+}
+
+/** A single binding rule entry. */
+export interface BindingRule {
+  agentId: string;
+  match: {
+    /** Channel name (e.g. "whatsapp", "telegram", "slack"). "*" matches all. */
+    channel?: string;
+    /** Specific account ID on multi-account channels. "*" matches all. */
+    accountId?: string;
+    /** Peer (DM sender, group, or channel). */
+    peer?: BindingPeerMatch;
+    /** Discord guild ID. */
+    guildId?: string;
+    /** Slack team/workspace ID. */
+    teamId?: string;
+    /** Discord role IDs that must be present (all must match). */
+    roles?: string[];
+  };
+}
+
+// ─── Agents ───────────────────────────────────────────────────────────────────
+
+/** Sandbox configuration for an agent or as the global default. */
+export interface AgentSandboxConfig {
+  /** Sandbox mode. "off" = never sandbox; "all" = always; "non-main" = only non-main sessions. */
+  mode?: 'off' | 'all' | 'non-main';
+  /** Container scope. "session" (one per session), "agent" (one per agent), "shared" (shared across agents). */
+  scope?: 'session' | 'agent' | 'shared';
+  workspaceRoot?: string;
+  workspaceAccess?: 'read-only' | 'read-write';
+  docker?: {
+    image?: string;
+    memoryLimit?: string;
+    cpuLimit?: string;
+    setupCommand?: string;
+    env?: Record<string, string>;
+  };
+  browser?: {
+    enabled?: boolean;
+    headless?: boolean;
+  };
+  prune?: {
+    onSessionEnd?: boolean;
+    maxAgeSec?: number;
+  };
+}
+
+/** Tool policy for an agent. */
+export interface AgentToolPolicy {
+  /** Named tool profile shortcut (e.g. "coding", "messaging"). */
+  profile?: string;
+  allow?: string[];
+  deny?: string[];
+  sandbox?: { tools?: { allow?: string[]; deny?: string[] } };
+  elevated?: { enabled?: boolean; allowFrom?: string[] };
+  byProvider?: Record<string, { profile?: string; allow?: string[]; deny?: string[] }>;
+}
+
+/** A single agent definition in agents.list. */
+export interface AgentListItem {
+  id: string;
+  /** Human-readable display name. */
+  name?: string;
+  /** Agent workspace directory. */
+  workspace?: string;
+  /** Mark as default agent (used when no binding matches). */
+  default?: boolean;
+  /** Provider/model override for this agent. */
+  model?: string;
+  /** Per-agent sandbox config (overrides agents.defaults.sandbox). */
+  sandbox?: AgentSandboxConfig;
+  /** Per-agent tool policy (overrides global tools). */
+  tools?: AgentToolPolicy;
+  /** Agent-specific identity. */
+  identity?: {
+    name?: string;
+    emoji?: string;
+    systemPrompt?: string;
+  };
+}
+
+/** Global agent defaults applied to all agents. */
+export interface AgentDefaults {
+  workspace?: string;
+  sandbox?: AgentSandboxConfig;
+  tools?: AgentToolPolicy;
+}
+
+/** Full agents configuration block. */
+export interface AgentsConfig {
+  defaults?: AgentDefaults;
+  list?: AgentListItem[];
+}
+
+// ─── Session ──────────────────────────────────────────────────────────────────
+
+export type DmScope =
+  | 'main'
+  | 'per-peer'
+  | 'per-channel-peer'
+  | 'per-account-channel-peer';
+
+export interface SessionResetConfig {
+  mode?: 'daily' | 'idle' | 'never';
+  atHour?: number;
+  idleMinutes?: number;
+}
+
+export interface SessionMaintenanceConfig {
+  mode?: 'warn' | 'enforce';
+  pruneAfter?: string;
+  maxEntries?: number;
+  rotateBytes?: string;
+  resetArchiveRetention?: string;
+  maxDiskBytes?: string;
+  highWaterBytes?: string;
+}
+
+export interface SessionSendPolicyRule {
+  action: 'allow' | 'deny';
+  match: {
+    channel?: string;
+    chatType?: 'direct' | 'group' | 'channel';
+    keyPrefix?: string;
+    rawKeyPrefix?: string;
+  };
+}
+
+export interface SessionConfig {
+  /** How to isolate DM sessions. Default: "main". */
+  dmScope?: DmScope;
+  /** Main session key name. Default: "main". */
+  mainKey?: string;
+  /** Map of canonical identity → provider-prefixed peer IDs. */
+  identityLinks?: Record<string, string[]>;
+  /** Session reset policy. */
+  reset?: SessionResetConfig;
+  /** Per-type reset overrides. */
+  resetByType?: {
+    direct?: SessionResetConfig;
+    group?: SessionResetConfig;
+    thread?: SessionResetConfig;
+  };
+  /** Per-channel reset overrides. */
+  resetByChannel?: Record<string, SessionResetConfig>;
+  /** Extra reset trigger strings. */
+  resetTriggers?: string[];
+  /** Session store path (supports {agentId} template). */
+  store?: string;
+  /** Session maintenance settings. */
+  maintenance?: SessionMaintenanceConfig;
+  /** Message send policy rules. */
+  sendPolicy?: {
+    rules?: SessionSendPolicyRule[];
+    default?: 'allow' | 'deny';
+  };
+}
+
+// ─── Tools ────────────────────────────────────────────────────────────────────
+
+export interface ToolsConfig {
+  profile?: string;
+  allow?: string[];
+  deny?: string[];
+  sandbox?: { tools?: { allow?: string[]; deny?: string[] } };
+  elevated?: {
+    enabled?: boolean;
+    allowFrom?: string[];
+  };
+  byProvider?: Record<string, { profile?: string; allow?: string[]; deny?: string[] }>;
+  subagents?: { tools?: { allow?: string[]; deny?: string[] } };
+}
+
+// ─── Main config ──────────────────────────────────────────────────────────────
 
 export interface HyperClawConfig {
   workspaceName?: string;
@@ -42,6 +240,15 @@ export interface HyperClawConfig {
     hooks: boolean;
     /** SSH reverse tunnel for remote access (alternative to Tailscale) */
     sshTunnel?: { enabled: boolean; host: string; user: string; remotePort: number };
+    /** "local" = gateway runs on this host. "remote" = CLI/app connects to remote gateway (SSH tunnel or Tailscale) */
+    mode?: 'local' | 'remote';
+    /** Remote gateway connection (used when mode is "remote") */
+    remote?: {
+      url: string;        // e.g. "http://127.0.0.1:18789" (SSH tunnel) or "https://machine.tailnet.ts.net"
+      token?: string;
+      password?: string;
+      tlsFingerprint?: string;  // pin remote TLS cert when using wss://
+    };
   };
   /** Docker sandboxing for group chat sessions */
   groupSandbox?: {
@@ -92,6 +299,75 @@ export interface HyperClawConfig {
   updateChannel?: 'stable' | 'beta' | 'dev';
   rateLimit?: { maxPerMinute?: number; maxPerHour?: number };
   installedAt?: string;
+
+  // ── Multi-agent ────────────────────────────────────────────────────────────
+
+  /** Named agent definitions and shared defaults. */
+  agents?: AgentsConfig;
+
+  /**
+   * Binding rules: maps inbound channel/account/peer → agentId.
+   * Evaluated in order; first match wins.
+   * Broadcast groups (broadcast key) take precedence when set.
+   */
+  bindings?: BindingRule[];
+
+  /**
+   * Broadcast groups: run multiple agents for the same peer simultaneously.
+   * Keys are peer IDs (WhatsApp JIDs, E.164 DM numbers, etc.).
+   * Current scope: WhatsApp (web channel).
+   */
+  broadcast?: BroadcastConfig;
+
+  // ── Session ────────────────────────────────────────────────────────────────
+
+  /** Session lifecycle, isolation, and maintenance settings. */
+  session?: SessionConfig;
+
+  // ── Tools ─────────────────────────────────────────────────────────────────
+
+  /** Global tool policy (applied before agent-specific policies). */
+  tools?: ToolsConfig & {
+    /**
+     * exec tool configuration.
+     * Keys: backgroundMs, timeoutSec, cleanupMs, notifyOnExit, notifyOnExitEmptySuccess.
+     */
+    exec?: {
+      /** Auto-background after this delay (ms). Default: 10000 */
+      backgroundMs?: number;
+      /** Kill process after this many seconds. Default: 1800 */
+      timeoutSec?: number;
+      /** TTL for finished sessions in memory (ms). Default: 1800000 */
+      cleanupMs?: number;
+      /** Enqueue system event when a backgrounded exec exits. Default: true */
+      notifyOnExit?: boolean;
+      /** Also notify on successful no-output exits. Default: false */
+      notifyOnExitEmptySuccess?: boolean;
+      /** Host exec mode: "sandbox" (default) | "gateway" | "deny" */
+      host?: 'sandbox' | 'gateway' | 'deny';
+      /** Security level: "ask" | "allow" | "deny" */
+      security?: 'ask' | 'allow' | 'deny';
+      /** Restrict apply_patch to workspace root only. Default: true */
+      applyPatch?: { workspaceOnly?: boolean };
+      /** Safe command bins allowed without exec approval */
+      safeBins?: string[];
+    };
+    /** Filesystem access guardrails. */
+    fs?: {
+      /** Restrict read/write/edit to workspace root only. Default: false */
+      workspaceOnly?: boolean;
+    };
+    /** Session visibility for session tools. */
+    sessions?: {
+      /** "self" | "tree" | "agent" | "all" */
+      visibility?: 'self' | 'tree' | 'agent' | 'all';
+    };
+    /** Sub-agent delegation guardrails. */
+    subagents?: {
+      tools?: { allow?: string[]; deny?: string[] };
+      allowAgents?: string[];
+    };
+  };
 }
 
 export class ConfigStore {

@@ -1,7 +1,20 @@
 {
   "name": "@hyperclaw/extension-tlon",
   "version": "1.0.0",
-  "description": "HyperClaw extension: Tlon (Urbit Groups) channel support",
+  "description": "HyperClaw plugin: Tlon (Urbit Groups) — DMs, group channels, reactions, owner approval system",
   "main": "index.ts",
-  "license": "MIT"
+  "types": "index.ts",
+  "keywords": ["hyperclaw", "tlon", "urbit", "groups", "chat"],
+  "license": "MIT",
+  "peerDependencies": {
+    "chalk": ">=5",
+    "fs-extra": ">=11"
+  },
+  "hyperclaw": {
+    "plugin": true,
+    "channelId": "tlon",
+    "displayName": "Tlon (Urbit Groups)",
+    "icon": "🌊",
+    "install": "hyperclaw plugins install @hyperclaw/extension-tlon"
+  }
 }

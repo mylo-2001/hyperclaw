@@ -30,17 +30,21 @@ export const CHANNELS: ChannelDef[] = [
     platforms: ['all'],
     tokenLabel: 'Telegram Bot Token',
     tokenHint: 'Get from @BotFather → /newbot',
+    extraFields: [
+      { name: 'dmPolicy', label: 'DM policy', hint: 'pairing (default) | allowlist | open | disabled', required: false },
+      { name: 'groupActivation', label: 'Group activation', hint: 'mention (default) | always', required: false }
+    ],
     setupSteps: [
-      '1. Open Telegram and search for @BotFather (the official bot for creating bots).',
-      '2. Start a conversation with /start and type /newbot to create a new bot.',
-      '3. Give the bot a name (e.g. "My HyperClaw Bot") and a username ending in "bot" (e.g. my_hyperclaw_bot).',
-      '4. @BotFather will send you the Bot Token — a string starting with 7xxxxxx:AAH... Keep it secret!',
-      '5. Copy the token and paste it below.',
+      '1. Open Telegram → @BotFather → /newbot. Save the token.',
+      '2. Config: channels.telegram.botToken, dmPolicy (default: pairing), groups.',
+      '3. Start gateway, approve first DM: hyperclaw pairing approve telegram <CODE>',
+      '4. Add bot to groups; set groups["*"].requireMention for mention gating.',
       '',
-      '  🔗 t.me/BotFather'
+      '  🔗 docs/telegram.md — full setup'
     ],
     status: 'recommended',
-    npmPackage: 'node-telegram-bot-api'
+    npmPackage: 'node-telegram-bot-api',
+    notes: 'DMs + groups. Pairing, allowlist, voice notes. Long polling default.'
   },
   {
     id: 'discord',
@@ -52,18 +56,22 @@ export const CHANNELS: ChannelDef[] = [
     tokenLabel: 'Discord Bot Token',
     tokenHint: 'discord.com/developers/applications',
     setupSteps: [
-      '1. Go to Discord Developer Portal: https://discord.com/developers/applications',
-      '2. Click "New Application", give it a name and create it.',
-      '3. Left menu: Bot → Add Bot.',
-      '4. Click "Reset Token" and copy the token (keep it secret!).',
-      '5. Settings → OAuth2 → General, copy the Application ID (Client ID).',
-      '6. Optional: To add the bot to a server, Bot → OAuth2 → URL Generator, scope: bot.',
+      '1. Discord Developer Portal → New Application → Bot → Reset Token.',
+      '2. Enable Message Content Intent (and Server Members if needed).',
+      '3. OAuth2 URL Generator: scope bot + applications.commands, permissions: View Channels, Send Messages, Read Message History.',
+      '4. Add bot to server, enable Developer Mode, copy Server ID and User ID.',
+      '5. Enable DMs from server members (right‑click server → Privacy Settings).',
+      '6. hyperclaw gateway → DM the bot → hyperclaw pairing approve discord <CODE>',
       '',
-      '  🔗 discord.com/developers/applications'
+      '  🔗 docs/discord-setup.md — full setup guide'
     ],
-    extraFields: [{ name: 'clientId', label: 'Client ID (Application ID)', hint: 'From OAuth2 → General', required: true }],
+    extraFields: [
+      { name: 'listenGuildIds', label: 'Guild IDs to listen in', hint: '[] = all. Add Server IDs to restrict.', required: false },
+      { name: 'requireMentionInGuild', label: 'Require @mention in guild', hint: 'true (default) | false', required: false },
+      { name: 'dmPolicy', label: 'DM policy', hint: '"pairing" (default) | "allowlist" | "open" | "none"', required: false }
+    ],
     status: 'recommended',
-    npmPackage: 'discord.js'
+    npmPackage: 'ws'
   },
   {
     id: 'whatsapp',
@@ -72,18 +80,23 @@ export const CHANNELS: ChannelDef[] = [
     requiresGateway: true,
     supportsDM: true,
     platforms: ['all'],
-    tokenLabel: 'WhatsApp Business API key',
+    tokenLabel: 'Access Token',
     tokenHint: 'business.whatsapp.com',
+    extraFields: [
+      { name: 'phoneNumberId', label: 'Phone Number ID', hint: 'From Meta API Setup', required: true },
+      { name: 'verifyToken', label: 'Webhook verify token', hint: 'Any string for webhook verification', required: false },
+      { name: 'dmPolicy', label: 'DM policy', hint: 'pairing (default) | allowlist | open | disabled', required: false }
+    ],
     setupSteps: [
-      '1. Go to Meta for Developers: https://developers.facebook.com/',
-      '2. My Apps → Create App → Business type.',
-      '3. Add product: WhatsApp → Get started.',
-      '4. WhatsApp → API Setup: copy the Temporary access token or create a permanent one.',
-      '5. You also need a Phone Number ID and WhatsApp Business Account ID.',
+      '1. Meta for Developers → Create App → Business → Add WhatsApp.',
+      '2. API Setup: copy Phone Number ID and Access Token.',
+      '3. Webhook: https://<host>/webhook/whatsapp, subscribe to messages.',
+      '4. Start gateway. Approve DMs: hyperclaw pairing approve whatsapp <CODE>',
       '',
-      '  🔗 developers.facebook.com — business.whatsapp.com'
+      '  🔗 docs/whatsapp.md — full setup'
     ],
     status: 'available',
+    notes: 'Meta Business API. Webhook required.',
     npmPackage: undefined
   },
   {
@@ -93,38 +106,54 @@ export const CHANNELS: ChannelDef[] = [
     requiresGateway: true,
     supportsDM: true,
     platforms: ['all'],
+    extraFields: [
+      { name: 'dmPolicy', label: 'DM policy', hint: 'pairing (default) | allowlist | open | disabled', required: false }
+    ],
     setupSteps: [
-      '1. No Meta Business API needed — uses WhatsApp Web.',
-      '2. Make sure you have installed: npm install @whiskeysockets/baileys',
-      '3. Start the gateway. On first connection a QR code will appear.',
-      '4. Scan the QR with your phone (WhatsApp → Linked Devices → Link a device).',
-      '5. After connecting, the session is saved — no QR needed again.',
+      '1. No Meta API — uses WhatsApp Web. Install: npm install @whiskeysockets/baileys',
+      '2. hyperclaw channels add whatsapp-baileys, then hyperclaw gateway',
+      '3. Scan QR (WhatsApp → Linked Devices → Link a device)',
+      '4. Approve first DM: hyperclaw pairing approve whatsapp-baileys <CODE>',
       '',
-      '  📖 docs: github.com/WhiskeySockets/Baileys'
+      '  🔗 docs/whatsapp.md — full setup'
     ],
     status: 'available',
-    notes: 'WhatsApp Web via Baileys — no Meta Business. Scan QR on first run.',
+    notes: 'WhatsApp Web via Baileys. No Meta Business. Pairing, voice notes.',
     npmPackage: '@whiskeysockets/baileys'
   },
   {
     id: 'slack',
     name: 'Slack',
     emoji: '💼',
-    requiresGateway: false,
+    requiresGateway: true,
     supportsDM: true,
     platforms: ['all'],
     tokenLabel: 'Slack Bot Token (xoxb-...)',
-    extraFields: [{ name: 'signingSecret', label: 'Signing Secret', required: true }],
+    extraFields: [
+      { name: 'appToken', label: 'App Token (xapp-...)', hint: 'Required for Socket Mode (default) — connections:write scope', required: false },
+      { name: 'signingSecret', label: 'Signing Secret', hint: 'Required for HTTP Events API mode only', required: false },
+      { name: 'mode', label: 'Connection mode', hint: 'socket (default) | http', required: false },
+      { name: 'userToken', label: 'User Token (xoxp-...)', hint: 'Optional — for read operations', required: false },
+      { name: 'ackReaction', label: 'Ack reaction emoji', hint: 'Shortcode without colons, e.g. eyes', required: false },
+      { name: 'typingReaction', label: 'Typing reaction emoji', hint: 'Shortcode, e.g. hourglass_flowing_sand', required: false }
+    ],
     setupSteps: [
       '1. Go to api.slack.com/apps → Create New App → From scratch.',
-      '2. Give it a name and choose a workspace.',
-      '3. OAuth & Permissions: Add Bot Token Scopes (chat:write, users:read, im:read, im:history, etc.).',
-      '4. Install App to workspace — copy the "Bot User OAuth Token" (starts with xoxb-).',
-      '5. Basic Information → App Credentials → Signing Secret — copy it.',
+      '2. Socket Mode (default — no public URL needed):',
+      '   a. Settings → Socket Mode → Enable Socket Mode.',
+      '   b. Settings → Basic Information → App-Level Tokens → Generate Token (connections:write) → copy xapp-...',
+      '   c. OAuth & Permissions: add bot scopes (chat:write, im:read, im:history, channels:history, etc.).',
+      '   d. Install App → copy Bot Token (xoxb-...).',
+      '3. HTTP mode (alternative):',
+      '   a. Event Subscriptions → Request URL: https://<host>/webhook/slack.',
+      '   b. Basic Information → Signing Secret — copy it.',
+      '4. Subscribe to bot events: app_mention, message.im, message.channels, message.groups, message.mpim, reaction_added.',
+      '5. App Home → Messages Tab → Enable.',
       '',
       '  🔗 api.slack.com/apps'
     ],
-    status: 'available',
+    status: 'recommended',
+    notes: 'Socket Mode (default) requires appToken. HTTP mode requires signingSecret. Supports DMs, channels, threads, reactions, streaming.',
     npmPackage: '@slack/bolt'
   },
   {
@@ -134,37 +163,95 @@ export const CHANNELS: ChannelDef[] = [
     requiresGateway: true,
     supportsDM: true,
     platforms: ['linux', 'darwin'],
-    tokenLabel: 'Signal phone number',
-    tokenHint: 'Requires signal-cli installed',
+    tokenLabel: 'Bot phone number (E.164)',
+    tokenHint: 'e.g. +15551234567 — use a dedicated bot number',
     setupSteps: [
       '1. Install signal-cli: https://github.com/AsamK/signal-cli',
-      '2. Register number: signal-cli -a +1XXXXXXXXX register',
-      '3. Verify electronically (if available) or via SMS code.',
-      '4. Enter your phone number here (e.g. +1XXXXXXXXX).',
       '',
-      '  🔗 github.com/AsamK/signal-cli'
+      '  Path A — Link existing Signal account (QR):',
+      '    signal-cli link -n "HyperClaw"  then scan in Signal.',
+      '',
+      '  Path B — Register dedicated bot number (SMS):',
+      '    signal-cli -a +<BOT_NUMBER> register',
+      '    signal-cli -a +<BOT_NUMBER> register --captcha \'<URL>\'  (if captcha required)',
+      '    signal-cli -a +<BOT_NUMBER> verify <CODE>',
+      '',
+      '2. Set account: "+<BOT_NUMBER>" in config.',
+      '3. autoStart=true (default) spawns daemon automatically.',
+      '   Or run daemon yourself and set httpUrl: "http://127.0.0.1:8080".',
+      '',
+      '  Access control:',
+      '    dmPolicy=pairing (default) — senders get pairing code (expires 1h)',
+      '    groupPolicy=allowlist (default) — only groupAllowFrom senders trigger bot',
+      '',
+      '  Chunking: textChunkLimit=4000, chunkMode=length|newline',
+      '  Reactions: actions.reactions=true, reactionLevel=off|ack|minimal|extensive',
+      '',
+      '  🔗 github.com/AsamK/signal-cli',
+      '  🔗 github.com/AsamK/signal-cli/wiki/Registration-with-captcha'
+    ],
+    extraFields: [
+      { name: 'account', label: 'Bot number (E.164)', hint: '+15551234567', required: true },
+      { name: 'cliPath', label: 'signal-cli path', hint: 'signal-cli (if on PATH)', required: false },
+      { name: 'httpUrl', label: 'Daemon URL (external)', hint: 'http://127.0.0.1:8080 — skips autoStart', required: false },
+      { name: 'httpPort', label: 'Daemon port', hint: '8080 (default)', required: false },
+      { name: 'autoStart', label: 'Auto-spawn daemon', hint: 'true (default) / false', required: false },
+      { name: 'startupTimeoutMs', label: 'Startup timeout (ms)', hint: '15000 default, max 120000', required: false },
+      { name: 'dmPolicy', label: 'DM policy', hint: '"pairing" (default) | "allowlist" | "open" | "disabled"', required: false },
+      { name: 'groupPolicy', label: 'Group policy', hint: '"allowlist" (default) | "open" | "disabled"', required: false },
+      { name: 'textChunkLimit', label: 'Text chunk limit (chars)', hint: '4000 default', required: false },
+      { name: 'chunkMode', label: 'Chunk mode', hint: '"length" (default) | "newline"', required: false }
     ],
     status: 'available',
-    notes: 'Requires signal-cli to be installed and registered'
+    notes: 'signal-cli HTTP daemon + SSE events. DMs, groups, typing, reactions, chunking, multi-account.'
   },
   {
     id: 'imessage',
-    name: 'iMessage',
+    name: 'iMessage (BlueBubbles)',
     emoji: '💬',
     requiresGateway: true,
     supportsDM: true,
     platforms: ['darwin'],
+    tokenLabel: 'BlueBubbles server URL',
+    extraFields: [
+      { name: 'password', label: 'BlueBubbles password', hint: 'Set in BlueBubbles server settings', required: true },
+      { name: 'dmPolicy', label: 'DM policy', hint: 'pairing (default) | allowlist | open | disabled', required: false }
+    ],
     setupSteps: [
-      '1. macOS only. You need BlueBubbles (bluebubbles.app) or Beeper bridge.',
-      '2. BlueBubbles: install on Mac, check server URL and API key.',
-      '3. Or Beeper: connect to iMessage via Beeper desktop app.',
-      '4. Set server URL and token in the channel configuration.',
+      '1. macOS only. Install BlueBubbles server: bluebubbles.app',
+      '2. BlueBubbles → Settings: enable web API, set password, note Server URL.',
+      '3. Add channel (imessage or bluebubbles), enter serverUrl + password.',
+      '4. hyperclaw gateway → hyperclaw pairing approve bluebubbles <CODE>',
       '',
-      '  🔗 bluebubbles.app — beeper.com'
+      '  🔗 docs/bluebubbles.md — bluebubbles.app'
+    ],
+    status: os.platform() === 'darwin' ? 'recommended' : 'unavailable',
+    notes: 'BlueBubbles server on Mac. DMs, pairing. Groups planned.',
+    npmPackage: 'bluebubbles-api'
+  },
+  {
+    id: 'imessage-native',
+    name: 'iMessage (imsg CLI — legacy)',
+    emoji: '💬',
+    requiresGateway: true,
+    supportsDM: true,
+    platforms: ['darwin'],
+    extraFields: [
+      { name: 'cliPath', label: 'imsg binary path', hint: 'Default: imsg (must be in PATH)', required: false },
+      { name: 'dbPath', label: 'Messages DB path', hint: 'Default: ~/Library/Messages/chat.db', required: false }
+    ],
+    setupSteps: [
+      '1. macOS only. Install imsg: brew install steipete/tap/imsg',
+      '2. Verify: imsg rpc --help',
+      '3. Grant Full Disk Access + Automation to Terminal/Node (one-time: imsg chats --limit 1).',
+      '4. No token needed — imsg runs locally via JSON-RPC on stdio.',
+      '5. (Optional) Set cliPath if imsg is not in PATH.',
+      '',
+      '  ⚠️  Legacy integration — for new setups use iMessage (BlueBubbles)',
+      '  🔗 github.com/steipete/imsg'
     ],
     status: os.platform() === 'darwin' ? 'available' : 'unavailable',
-    notes: 'macOS only — uses BlueBubbles or Beeper bridge',
-    npmPackage: 'bluebubbles-api'
+    notes: 'Legacy — gateway spawns imsg rpc over JSON-RPC stdio. For new setups prefer BlueBubbles.'
   },
   {
     id: 'matrix',
@@ -173,20 +260,34 @@ export const CHANNELS: ChannelDef[] = [
     requiresGateway: true,
     supportsDM: true,
     platforms: ['all'],
-    tokenLabel: undefined,
+    tokenLabel: 'Access Token (syt_...)',
+    tokenHint: 'Or set userId + password instead',
     extraFields: [
-      { name: 'homeserver', label: 'Homeserver URL', hint: 'e.g. https://matrix.org', required: true },
-      { name: 'accessToken', label: 'Access Token', required: true }
+      { name: 'homeserver', label: 'Homeserver URL', hint: 'e.g. https://matrix.example.org', required: true },
+      { name: 'accessToken', label: 'Access Token (syt_...)', hint: 'Preferred; userId auto-fetched via /whoami', required: false },
+      { name: 'userId', label: 'Matrix User ID', hint: '@bot:example.org — required only for password login', required: false },
+      { name: 'password', label: 'Password (alternative to token)', hint: 'Token cached to credentials file on first login', required: false },
+      { name: 'deviceName', label: 'Device display name', hint: 'Shown in Matrix clients', required: false },
+      { name: 'encryption', label: 'Enable E2EE', hint: 'true | false — requires crypto native module', required: false },
+      { name: 'threadReplies', label: 'Thread replies', hint: 'off | inbound (default) | always', required: false },
+      { name: 'textChunkLimit', label: 'Text chunk limit (chars)', hint: 'Default: 16000', required: false },
+      { name: 'mediaMaxMb', label: 'Media size limit (MB)', hint: 'Default: 10', required: false },
+      { name: 'autoJoin', label: 'Auto-join invites', hint: 'always (default) | allowlist | off', required: false }
     ],
     setupSteps: [
-      '1. Create a bot account on matrix.org or another homeserver.',
-      '2. Access token: Element/SchildiChat → Settings → Help & About → Access Token.',
-      '3. Or via API: POST /_matrix/client/r0/login with type=m.login.password.',
-      '4. Homeserver URL: https://matrix.org or your server URL.',
+      '1. Create a Matrix bot account on any homeserver (matrix.org has free accounts).',
+      '2. Get an access token via the login API:',
+      '     curl -X POST https://<homeserver>/_matrix/client/v3/login \\',
+      '       -H "Content-Type: application/json" \\',
+      '       -d \'{"type":"m.login.password","identifier":{"type":"m.id.user","user":"<username>"},"password":"<password>"}\'',
+      '   Or set userId + password — HyperClaw will call the login API and cache the token.',
+      '3. Invite the bot account to a room or DM it from any Matrix client (Element, Beeper, etc.).',
+      '4. For Beeper, enable E2EE: set encryption: true and verify the device in Element.',
       '',
-      '  🔗 matrix.org — element.io'
+      '  🔗 matrix.org/ecosystem/hosting/ — element.io'
     ],
     status: 'available',
+    notes: 'Supports DMs, rooms, threads, media, reactions, polls, location, E2EE, multi-account.',
     npmPackage: 'matrix-js-sdk'
   },
   {
@@ -198,14 +299,31 @@ export const CHANNELS: ChannelDef[] = [
     platforms: ['all'],
     tokenLabel: undefined,
     extraFields: [
-      { name: 'server', label: 'Server', hint: 'e.g. irc.libera.chat', required: true },
-      { name: 'nick', label: 'Nickname', required: true },
-      { name: 'channels', label: 'Default channels (#room)', required: false }
+      { name: 'server', label: 'Server (IRC_HOST)', hint: 'e.g. irc.libera.chat', required: true },
+      { name: 'port', label: 'Port (IRC_PORT)', hint: 'Default: 6697 (TLS) or 6667', required: false },
+      { name: 'tls', label: 'TLS (IRC_TLS)', hint: 'true / false — default: false', required: false },
+      { name: 'nick', label: 'Nickname (IRC_NICK)', required: true },
+      { name: 'username', label: 'Username / ident (IRC_USERNAME)', required: false },
+      { name: 'realname', label: 'Real name (IRC_REALNAME)', required: false },
+      { name: 'password', label: 'Server password (IRC_PASSWORD)', hint: 'Not NickServ — leave blank if none', required: false },
+      { name: 'channels', label: 'Channels to join (IRC_CHANNELS)', hint: '#room1,#room2', required: false },
+      { name: 'nickservPassword', label: 'NickServ password (IRC_NICKSERV_PASSWORD)', hint: 'Identify after connect', required: false },
+      { name: 'groupPolicy', label: 'Group policy', hint: '"allowlist" (default) or "open"', required: false },
+      { name: 'dmPolicy', label: 'DM policy', hint: '"pairing" (default) | "allowlist" | "open"', required: false }
     ],
     setupSteps: [
       '1. Choose an IRC server (e.g. irc.libera.chat, irc.oftc.net).',
-      '2. You need a nickname for the bot and optionally a channel to join.',
-      '3. Some servers require authentication before /join.',
+      '2. Set a nickname for the bot and the channels it should join.',
+      '3. Enable TLS (recommended): set port 6697 and tls: true.',
+      '4. If your nick is registered, set nickservPassword to auto-identify.',
+      '5. Access control defaults: groupPolicy=allowlist (bot only replies in',
+      '   configured groups), dmPolicy=pairing (new DMs need pairing approval).',
+      '6. To allow everyone in a channel without mention, set per-channel:',
+      '   groups["#mychan"].requireMention = false, allowFrom = ["*"].',
+      '',
+      '  Env vars: IRC_HOST IRC_PORT IRC_TLS IRC_NICK IRC_USERNAME',
+      '            IRC_REALNAME IRC_PASSWORD IRC_CHANNELS',
+      '            IRC_NICKSERV_PASSWORD IRC_NICKSERV_REGISTER_EMAIL',
       '',
       '  🔗 libera.chat — oftc.net'
     ],
@@ -219,24 +337,41 @@ export const CHANNELS: ChannelDef[] = [
     requiresGateway: true,
     supportsDM: true,
     platforms: ['all'],
-    tokenLabel: 'Personal Access Token (or Bot token)',
-    tokenHint: 'Account Settings > Security > Personal Access Tokens',
+    tokenLabel: 'Bot Token (MATTERMOST_BOT_TOKEN)',
+    tokenHint: 'System Console → Integrations → Bot Accounts → Add Bot Account',
     setupSteps: [
-      '1. In Mattermost: Profile → Account Settings → Security → Personal Access Tokens.',
-      '2. Create token — copy it (not shown again).',
-      '3. Integrations → Outgoing Webhooks → Add outgoing webhook.',
-      '4. Note the webhook URL and Trigger Word. The webhook token is needed for verification.',
-      '5. Webhook URL for gateway: https://<gateway>/webhook/mattermost',
+      '1. Create a Bot Account: System Console → Integrations → Bot Accounts → Add Bot Account.',
+      '2. Copy the bot token shown after creation (not shown again).',
+      '3. Note your Mattermost base URL (e.g. https://chat.example.com).',
+      '4. The connector uses WebSocket events — no outgoing webhook needed.',
+      '5. For slash commands: set commands.native=true and expose callbackUrl.',
+      '6. For buttons: add capabilities: ["inlineButtons"] and set interactions.callbackBaseUrl.',
       '',
-      '  🔗 docs.mattermost.com'
+      '  Env vars: MATTERMOST_BOT_TOKEN  MATTERMOST_URL',
+      '',
+      '  Chat modes:',
+      '    oncall (default) — reply only when @mentioned',
+      '    onmessage        — reply to every channel message',
+      '    onchar           — reply when message starts with a prefix (e.g. ">", "!")',
+      '',
+      '  Access control:',
+      '    dmPolicy=pairing (default) | allowlist | open | none',
+      '    groupPolicy=allowlist (default) | open',
+      '    groupAllowFrom=[userId1, ...] — sender gate for channels',
+      '',
+      '  🔗 docs.mattermost.com — mattermost.com'
     ],
     extraFields: [
-      { name: 'serverUrl', label: 'Server URL', hint: 'https://mattermost.example.com', required: true },
-      { name: 'webhookToken', label: 'Outgoing Webhook Token', hint: 'From Integrations > Outgoing Webhook', required: true }
+      { name: 'baseUrl', label: 'Base URL (MATTERMOST_URL)', hint: 'https://chat.example.com', required: true },
+      { name: 'chatmode', label: 'Chat mode', hint: '"oncall" (default) | "onmessage" | "onchar"', required: false },
+      { name: 'oncharPrefixes', label: 'onchar prefixes', hint: '>, ! (comma-separated, for chatmode=onchar)', required: false },
+      { name: 'dmPolicy', label: 'DM policy', hint: '"pairing" (default) | "open" | "allowlist" | "none"', required: false },
+      { name: 'groupPolicy', label: 'Group policy', hint: '"allowlist" (default) | "open"', required: false },
+      { name: 'capabilities', label: 'Capabilities', hint: '"inlineButtons" — comma-separated', required: false }
     ],
     status: 'available',
-    notes: 'Requires Outgoing Webhook + PAT. Webhook URL: /webhook/mattermost',
-    npmPackage: '@mattermost/client'
+    notes: 'WebSocket + REST. Supports DMs, channels, buttons, reactions, slash commands, multi-account.',
+    npmPackage: 'ws'
   },
   {
     id: 'googlechat',
@@ -259,18 +394,24 @@ export const CHANNELS: ChannelDef[] = [
     id: 'msteams',
     name: 'Microsoft Teams',
     emoji: '🟣',
-    requiresGateway: false,
-    supportsDM: false,
+    requiresGateway: true,
+    supportsDM: true,
     platforms: ['all'],
-    tokenLabel: 'Teams incoming webhook URL',
-    setupSteps: [
-      '1. In Teams: Channel → Connectors → Incoming Webhook → Configure.',
-      '2. Give it a name and copy the Webhook URL.',
-      '3. Paste the URL below.',
-      '',
-      '  🔗 docs.microsoft.com/microsoftteams/platform/webhooks-and-connectors'
+    tokenLabel: 'App ID (Azure Bot)',
+    extraFields: [
+      { name: 'appPassword', label: 'App Password (client secret)', hint: 'From Azure Bot → Manage → Certificates & secrets', required: true }
     ],
-    status: 'available'
+    setupSteps: [
+      '1. Create an Azure Bot: portal.azure.com → Create a resource → Azure Bot',
+      '2. Type of App: Single Tenant. Create new Microsoft App ID.',
+      '3. Configuration → copy App ID. Manage → Certificates & secrets → New client secret → copy Value (appPassword).',
+      '4. Channels → Microsoft Teams → Configure. Set Messaging endpoint: https://<your-host>/webhook/msteams',
+      '5. Build a Teams app manifest with botId = App ID. Upload to Teams.',
+      '',
+      '  🔗 docs/msteams.md — full setup guide'
+    ],
+    status: 'available',
+    notes: 'Bot Framework. Text + DM. Channel/group files require Graph + SharePoint.'
   },
   {
     id: 'nostr',
@@ -295,20 +436,31 @@ export const CHANNELS: ChannelDef[] = [
     id: 'line',
     name: 'LINE',
     emoji: '🟩',
-    requiresGateway: false,
+    requiresGateway: true,
     supportsDM: true,
     platforms: ['all'],
     tokenLabel: 'LINE Channel access token',
-    extraFields: [{ name: 'secret', label: 'Channel Secret', required: true }],
+    extraFields: [
+      { name: 'channelSecret', label: 'Channel Secret', hint: 'From LINE Developers Console → Basic settings', required: true },
+      { name: 'tokenFile', label: 'Token file path (optional)', hint: 'Alternative to pasting token directly', required: false },
+      { name: 'secretFile', label: 'Secret file path (optional)', hint: 'Alternative to pasting secret directly', required: false },
+      { name: 'webhookPath', label: 'Webhook path', hint: 'Default: /line/webhook', required: false },
+      { name: 'mediaMaxMb', label: 'Media download limit (MB)', hint: 'Default: 10', required: false },
+      { name: 'groupPolicy', label: 'Group policy', hint: 'open | allowlist | disabled (default: allowlist)', required: false }
+    ],
     setupSteps: [
-      '1. Go to developers.line.biz → Console → Create provider & channel.',
-      '2. Messaging API channel → Configure Basic settings.',
-      '3. Channel access token: Issue or Regenerate — copy it.',
-      '4. Channel secret: from Basic settings — copy it.',
+      '1. Go to developers.line.biz → Console → Create provider & Messaging API channel.',
+      '2. Channel access token: Issue or Regenerate — copy it.',
+      '3. Channel secret: from Basic settings — copy it.',
+      '4. Enable "Use webhook" in Messaging API settings.',
+      '5. Set webhook URL (HTTPS required):',
+      '     https://<gateway-host>/line/webhook',
+      '6. Paste token + secret below.',
       '',
       '  🔗 developers.line.biz'
     ],
     status: 'available',
+    notes: 'Webhook receiver. Supports DMs, groups, media, Flex messages, quick replies, locations.',
     npmPackage: '@line/bot-sdk'
   },
   {
@@ -332,24 +484,38 @@ export const CHANNELS: ChannelDef[] = [
   {
     id: 'synology-chat',
     name: 'Synology Chat',
-    emoji: 'π’¬',
+    emoji: '💬',
     requiresGateway: true,
     supportsDM: true,
     platforms: ['all'],
-    tokenLabel: 'Incoming Webhook URL',
-    tokenHint: 'Synology Chat incoming webhook URL',
+    tokenLabel: 'Outgoing Webhook Token (SYNOLOGY_CHAT_TOKEN)',
+    tokenHint: 'From Synology Chat Integrations Outgoing Webhook',
     extraFields: [
-      { name: 'outgoingToken', label: 'Outgoing Webhook Token', hint: 'Optional verification token', required: false }
+      { name: 'incomingUrl', label: 'Incoming Webhook URL (SYNOLOGY_CHAT_INCOMING_URL)', hint: 'From Synology Chat Integrations Incoming Webhook', required: true },
+      { name: 'webhookPath', label: 'Gateway inbound path', hint: '/webhook/synology (default)', required: false },
+      { name: 'dmPolicy', label: 'DM policy', hint: '"allowlist" (default) | "open" | "pairing" | "disabled"', required: false },
+      { name: 'allowedUserIds', label: 'Allowed user IDs (SYNOLOGY_ALLOWED_USER_IDS)', hint: 'Numeric Synology Chat user IDs, comma-separated', required: false },
+      { name: 'rateLimitPerMinute', label: 'Rate limit per sender/min (SYNOLOGY_RATE_LIMIT)', hint: '30 (default)', required: false },
+      { name: 'allowInsecureSsl', label: 'Allow insecure SSL', hint: 'false (default) — true only for self-signed NAS certs', required: false }
     ],
     setupSteps: [
-      '1. Synology Chat → Integration → Incoming Webhook: create a webhook and copy the URL.',
-      '2. If you want inbound bot events, create an Outgoing Webhook pointing to /webhook/synology-chat.',
-      '3. Paste the incoming webhook URL below.',
+      '1. Synology Chat Integrations Incoming Webhook Create copy URL.',
+      '2. Synology Chat Integrations Outgoing Webhook Create:',
+      '     Outgoing URL: https://<gateway>/webhook/synology',
+      '     Copy the generated token.',
+      '3. Set token + incomingUrl in config (or env vars).',
+      '4. dmPolicy=allowlist requires at least one allowedUserId.',
+      '',
+      '  Env vars: SYNOLOGY_CHAT_TOKEN  SYNOLOGY_CHAT_INCOMING_URL',
+      '            SYNOLOGY_ALLOWED_USER_IDS  SYNOLOGY_RATE_LIMIT  OPENCLAW_BOT_NAME',
+      '',
+      '  Multi-account: channels.synology-chat.accounts.{ default, alerts }',
+      '  Targets: <numericId>, synology-chat:<id>, user:<id>',
       '',
       '  🔗 kb.synology.com'
     ],
     status: 'available',
-    notes: 'Webhook bridge for Synology Chat rooms / bot automation.'
+    notes: 'Gateway webhooks. Token verify, rate limiting, multi-account, allowInsecureSsl.'
   },
   {
     id: 'twitch',
@@ -361,42 +527,49 @@ export const CHANNELS: ChannelDef[] = [
     tokenLabel: 'OAuth Token (oauth:...)',
     tokenHint: 'Generate a Twitch chat token for your bot account',
     extraFields: [
-      { name: 'username', label: 'Bot Username', required: true },
-      { name: 'channels', label: 'Channels (#name or comma-separated)', required: true }
+      { name: 'username', label: 'Bot username', required: true },
+      { name: 'channels', label: 'Channels (comma-separated)', hint: 'vevisk,secondchannel', required: true },
+      { name: 'commandPrefix', label: 'Command prefix', hint: '! (default)', required: false }
     ],
     setupSteps: [
-      '1. Create or use a Twitch bot account.',
-      '2. Generate an IRC OAuth token for Twitch chat (format: oauth:...).',
-      '3. Add one or more channels the bot should join.',
+      '1. Create Twitch bot account. Generate OAuth: twitchapps.com/tmi',
+      '2. Config: username, oauthToken, channels (required).',
+      '3. Add allowFrom (recommended) to restrict who can trigger.',
+      '4. Public chat: prefix required (default !). Whispers: no prefix.',
       '',
-      '  🔗 dev.twitch.tv'
+      '  🔗 docs/twitch.md — dev.twitch.tv'
     ],
     status: 'available',
-    notes: 'Twitch IRC chat integration for streams / channel chat.'
+    notes: 'IRC over WebSocket. Channel chat + whispers. Pairing, allowlist, modsBypass.'
   },
   {
     id: 'tlon',
-    name: 'Tlon',
-    emoji: 'π”µ',
+    name: 'Tlon (Urbit Groups)',
+    emoji: '🌊',
     requiresGateway: true,
     supportsDM: true,
     platforms: ['all'],
-    tokenLabel: 'API Key',
-    tokenHint: 'Token for your Tlon API / bot gateway',
+    tokenLabel: 'Login Code',
+    tokenHint: 'Ship login code from Landscape → Settings → Access key (e.g. lidlut-tabwed-pillex-ridrup)',
     extraFields: [
-      { name: 'apiBaseUrl', label: 'API Base URL', hint: 'e.g. https://tlon.example.com', required: true },
-      { name: 'channelId', label: 'Default Channel ID', required: false },
-      { name: 'webhookSecret', label: 'Webhook Secret', required: false }
+      { name: 'ship', label: 'Ship Name', hint: 'e.g. ~sampel-palnet', required: true },
+      { name: 'url', label: 'Ship URL', hint: 'e.g. https://sampel-palnet.tlon.network or http://localhost:8080', required: true },
+      { name: 'ownerShip', label: 'Owner Ship', hint: 'Your personal ship — always authorized, receives approval notifications', required: false },
+      { name: 'allowPrivateNetwork', label: 'Allow Private Network', hint: 'Enable for localhost/LAN ships (SSRF opt-in)', required: false }
     ],
     setupSteps: [
-      '1. Point Tlon events to /webhook/tlon on your HyperClaw gateway.',
-      '2. Use the API base URL and API key for outbound sends.',
-      '3. Optionally set a default channel ID and webhook secret.',
+      '1. Install plugin: hyperclaw plugins install @hyperclaw/extension-tlon',
+      '2. Get your ship login code from Landscape (Settings → System → Access key).',
+      '3. Configure channels.tlon with ship name, URL, and login code.',
+      '4. Optionally set ownerShip to receive approval notifications.',
+      '5. Restart gateway: hyperclaw gateway restart',
+      '6. DM the bot ship in Tlon or mention it in a group channel.',
       '',
-      '  🔗 Tlon bot gateway / integration endpoint'
+      '  Plugin required — connects via Urbit Eyre HTTP API + SSE stream.',
+      '  See: docs/tlon.md'
     ],
     status: 'available',
-    notes: 'Generic Tlon bridge via webhook ingress + outbound API send.'
+    notes: 'Urbit Eyre HTTP API + SSE. DMs, groups, reactions, owner approval, auto-discovery. Plugin: @hyperclaw/extension-tlon'
   },
   {
     id: 'instagram',
@@ -489,41 +662,66 @@ export const CHANNELS: ChannelDef[] = [
     status: 'available'
   },
   {
-    id: 'nextcloud',
+    id: 'nextcloud-talk',
     name: 'Nextcloud Talk',
     emoji: '☁️',
     requiresGateway: true,
     supportsDM: true,
     platforms: ['all'],
-    tokenLabel: 'Nextcloud URL',
+    tokenLabel: 'Nextcloud instance URL',
+    tokenHint: 'e.g. https://cloud.example.com',
     extraFields: [
-      { name: 'username', label: 'Username', required: true },
-      { name: 'password', label: 'App Password', required: true }
+      { name: 'botSecret', label: 'Bot shared secret', hint: 'From: occ talk:bot:install', required: true },
+      { name: 'botSecretFile', label: 'Bot secret file path (optional)', hint: 'Alternative to inline secret', required: false },
+      { name: 'apiUser', label: 'API username (optional)', hint: 'For DM detection + fallback send via OCS API', required: false },
+      { name: 'apiPassword', label: 'API/app password (optional)', hint: 'Nextcloud app password for apiUser', required: false },
+      { name: 'webhookPort', label: 'Webhook listener port', hint: 'Default: 8788', required: false },
+      { name: 'webhookPath', label: 'Webhook path', hint: 'Default: /nextcloud-talk-webhook', required: false },
+      { name: 'webhookPublicUrl', label: 'Webhook public URL', hint: 'If behind a proxy — set this in occ talk:bot:install', required: false },
+      { name: 'groupPolicy', label: 'Room policy', hint: 'allowlist (default) | open | disabled', required: false },
+      { name: 'textChunkLimit', label: 'Text chunk limit (chars)', hint: 'Default: 32000', required: false }
     ],
     setupSteps: [
-      '1. Create App Password: Nextcloud → Profile → Security → App passwords.',
-      '2. You need the Nextcloud URL, username and App Password.',
+      '1. On your Nextcloud server, create the bot:',
+      '     ./occ talk:bot:install "HyperClaw" "<shared-secret>" "<webhook-url>" --feature reaction',
+      '   Replace <webhook-url> with your gateway URL, e.g. https://yourhost/nextcloud-talk-webhook',
+      '2. Enable the bot in the target room settings (room → ⋯ → Bots).',
+      '3. Enter the Nextcloud URL (token field) and the shared secret below.',
+      '4. (Optional) Add apiUser + app password to enable DM detection via OCS API.',
       '',
-      '  🔗 nextcloud.com'
+      '  🔗 nextcloud.com — docs.nextcloud.com/server/latest/admin_manual/talk_bots.html'
     ],
-    status: 'available'
+    status: 'available',
+    notes: 'Webhook bot. Supports DMs (with apiUser), rooms, reactions. No media uploads.'
   },
   {
     id: 'zalo',
     name: 'Zalo',
     emoji: '🔵',
-    requiresGateway: false,
+    requiresGateway: true,
     supportsDM: true,
     platforms: ['all'],
-    tokenLabel: 'Zalo OA Access Token',
-    setupSteps: [
-      '1. Zalo Official Account (OA): developers.zalo.me → My Apps.',
-      '2. Create an app and connect it to your OA.',
-      '3. Access Token from Zalo API (OAuth flow or test token for development).',
-      '',
-      '  🔗 developers.zalo.me'
+    tokenLabel: 'Zalo Bot Token (12345689:abc-xyz)',
+    tokenHint: 'From bot.zaloplatforms.com',
+    extraFields: [
+      { name: 'tokenFile', label: 'Token file path (optional)', hint: 'Alternative to inline token', required: false },
+      { name: 'groupPolicy', label: 'Group policy', hint: 'allowlist (default) | open | disabled', required: false },
+      { name: 'webhookUrl', label: 'Webhook URL (optional)', hint: 'HTTPS required — leave blank for long-polling', required: false },
+      { name: 'webhookSecret', label: 'Webhook secret (optional)', hint: '8-256 chars — required if webhookUrl is set', required: false },
+      { name: 'mediaMaxMb', label: 'Media size limit (MB)', hint: 'Default: 5', required: false }
     ],
-    status: 'available'
+    setupSteps: [
+      '1. Go to https://bot.zaloplatforms.com and sign in.',
+      '2. Create a new bot and configure its settings.',
+      '3. Copy the bot token (format: 12345689:abc-xyz).',
+      '4. Paste the token below.',
+      '5. (Optional) Set webhookUrl for webhook mode (HTTPS required).',
+      '   Leave blank to use long-polling (no public URL needed).',
+      '',
+      '  🔗 bot.zaloplatforms.com'
+    ],
+    status: 'available',
+    notes: 'Experimental. DMs supported; groups with allowlist policy. Long-polling by default.'
   },
   {
     id: 'web',
@@ -620,18 +818,21 @@ export const ZALO_PERSONAL: ChannelDef = {
   requiresGateway: true,
   supportsDM: true,
   platforms: ['all'],
-  tokenLabel: 'Zalo Personal cookie token',
-  tokenHint: 'Extract from browser',
+  tokenLabel: 'Cookie (from chat.zalo.me)',
+  tokenHint: 'DevTools → Application → Cookies',
+  extraFields: [
+    { name: 'dmPolicy', label: 'DM policy', hint: 'pairing (default) | allowlist | open | disabled', required: false }
+  ],
   setupSteps: [
-    '1. Unofficial API — uses browser cookies. May break with Zalo updates.',
-    '2. Open Zalo Web in browser, Developer Tools → Application → Cookies.',
-    '3. Look for the token/cookie Zalo uses for auth.',
-    '4. See docs/channels/zalo-personal.md for details.',
+    '1. ⚠️ Experimental — unofficial. Account ban risk. Use at your own risk.',
+    '2. Open chat.zalo.me, log in. DevTools → Application → Cookies → copy.',
+    '3. Add channel, set cookie (or ZALO_PERSONAL_COOKIE env).',
+    '4. hyperclaw gateway → hyperclaw pairing approve zalo-personal <CODE>',
     '',
-    '  ⚠️  Unofficial — use at your own risk'
+    '  🔗 docs/zalo-personal.md — full setup'
   ],
   status: 'available',
-  notes: 'Uses unofficial Zalo personal API — may break on Zalo app updates'
+  notes: 'Zalo Web cookie auth. DMs only. No groups. Text chunked ~2000 chars.'
 };
 
 // Add to CHANNELS array
