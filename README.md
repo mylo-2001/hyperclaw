@@ -1,4 +1,4 @@
-﻿<p align="center">
+<p align="center">
   <img src="assets/icon.png" width="120" alt="HyperClaw">
   <br>
   <h1 align="center">🦅 HyperClaw — Personal AI Assistant</h1>
@@ -31,6 +31,8 @@
   <a href="docs/architecture.md">Architecture</a> ·
   <a href="docs/configuration.md">Configuration</a> ·
   <a href="docs/security.md">Security</a> ·
+  <a href="docs/google-chat.md">Google Chat</a> ·
+  <a href="docs/tlon.md">Tlon</a> ·
   <a href="docs/deployment.md">Docker</a> ·
   <a href="docs/tailscale.md">Tailscale</a> ·
   <a href="CONTRIBUTING.md">Contributing</a>
@@ -148,6 +150,7 @@ HyperClaw connects to the channels you already use (28+ channels):
 | 📧 Email | ✅ Available | SMTP + IMAP |
 | 🎙️ Voice Call | ✅ Available | Terminal voice session |
 | 🌐 Chrome Extension | ✅ Available | Browser sidebar |
+| 🌊 Tlon (Urbit Groups) | ✅ Available | Decentralized — see [docs/tlon.md](docs/tlon.md) |
 
 Twitch is also available via IRC over WebSocket.
 
@@ -229,6 +232,47 @@ Or use OpenRouter (access to all models with one key):
 
 Full reference: [docs/configuration.md](docs/configuration.md)
 
+### Config hot reload
+
+The gateway watches `~/.hyperclaw/hyperclaw.json` and applies changes automatically — no restart needed for most settings:
+
+```json
+{
+  "gateway": {
+    "reload": { "mode": "hybrid", "debounceMs": 300 }
+  }
+}
+```
+
+| Mode | Behavior |
+|------|----------|
+| `hybrid` _(default)_ | Hot-applies safe changes, auto-restarts for critical ones |
+| `hot` | Hot-applies only — warns when a restart is needed |
+| `restart` | Restarts on any change |
+| `off` | Disables file watching |
+
+### Reverse proxy / trustedProxies
+
+If you run behind Nginx, Caddy, or Cloudflare Tunnel, set `trustedProxies` so the gateway resolves the real client IP from `X-Forwarded-For`:
+
+```json
+{
+  "gateway": {
+    "trustedProxies": ["127.0.0.1", "10.0.0.0/8"]
+  }
+}
+```
+
+### DM scope isolation
+
+Isolate DM sessions per channel/peer (useful when multiple people share one gateway):
+
+```json
+{
+  "session": { "dmScope": "per-channel-peer" }
+}
+```
+
 ---
 
 ## Security defaults
@@ -242,7 +286,14 @@ HyperClaw connects to real messaging surfaces. Inbound DMs are treated as untrus
 - Set `dmPolicy: "open"` only if you want anyone to reach your assistant.
 - Non-main sessions (groups/channels) can run in Docker sandboxes: `agents.defaults.sandbox.mode: "non-main"`
 
-Run `hyperclaw doctor` to surface risky/misconfigured policies.
+Run the security audit regularly:
+
+```bash
+hyperclaw security audit           # standard scan
+hyperclaw security audit --deep    # live gateway probe
+hyperclaw security audit --fix     # auto-fix safe issues
+hyperclaw security audit --json    # machine-readable output
+```
 
 Full guide: [docs/security.md](docs/security.md)
 
@@ -251,7 +302,8 @@ Full guide: [docs/security.md](docs/security.md)
 ## Features
 
 - **Local-first Gateway** — single control plane for sessions, channels, tools, and events
-- **Multi-channel inbox** — 27+ channels, unified session model
+- **Config hot reload** — gateway watches `~/.hyperclaw/hyperclaw.json`, hot-applies changes (hybrid/hot/restart/off)
+- **Multi-channel inbox** — 28+ channels, unified session model
 - **Multi-agent routing** — route channels/accounts to isolated agent workspaces
 - **Extended thinking** — Claude extended thinking with `/think high` in chat
 - **Voice** — Talk Mode with ElevenLabs TTS + system TTS fallback
@@ -378,6 +430,18 @@ Sandbox image (no PC access, restricted tools):
 ```bash
 docker build -f Dockerfile.sandbox -t hyperclaw:sandbox .
 ```
+
+Or use **Docker Compose** for the full stack (gateway + browser sandbox):
+
+```bash
+# Copy and fill in your API keys
+cp env.example .env
+
+# Start gateway + sandbox
+docker compose --profile full up -d
+```
+
+See [`docker-compose.yml`](docker-compose.yml) and [`env.example`](env.example) for all options.
 
 ---
 
