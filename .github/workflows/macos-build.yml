@@ -21,10 +21,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: apps/macos/package-lock.json
-      - run: npm ci
-      - run: npm test
+      - name: Install dependencies
+        run: npm install
+      - name: Run tests
+        run: npm test
 
   build:
     needs: test
@@ -37,10 +37,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: apps/macos/package-lock.json
-      - run: npm ci
-      - run: npm run build:mac
+      - name: Install dependencies
+        run: npm install
+      - name: Build macOS app
+        run: npm run build:mac
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
       - uses: actions/upload-artifact@v4
         with:
           name: hyperclaw-macos
