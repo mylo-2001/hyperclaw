@@ -1,4 +1,4 @@
-﻿# Update Notifications
+# Update Notifications
 
 HyperClaw automatically checks for newer versions on npm and notifies you at startup — no extra tools or packages needed.
 
@@ -7,7 +7,7 @@ HyperClaw automatically checks for newer versions on npm and notifies you at sta
 When a newer version is available, this appears right after any command:
 
 ```
-  ⬆  Update available: 5.0.3 → 5.0.3
+  ⬆  Update available: 5.0.4 → 5.0.4
      npm install -g hyperclaw@latest
 ```
 
