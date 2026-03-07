@@ -37,7 +37,7 @@
     "core:build": "tsc --noEmit -p packages/core/tsconfig.json",
     "prepare": "npm run build",
     "prepublishOnly": "npm run build && npm run sdk:build && npm run core:build",
-    "postinstall": "node scripts/postinstall.js 2>/dev/null || true",
+    "postinstall": "node scripts/postinstall.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
