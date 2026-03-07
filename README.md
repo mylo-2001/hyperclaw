@@ -88,7 +88,10 @@ The wizard walks you through: AI provider → model → channels → skills. Don
 # After setup, start your assistant
 hyperclaw daemon start
 
-# Send a test message
+# Interactive terminal chat (multi-turn, streams responses)
+hyperclaw chat
+
+# Send a single message (non-interactive)
 hyperclaw agent --message "What can you do?"
 
 # Health check
@@ -126,7 +129,7 @@ HyperClaw connects to the channels you already use (28+ channels):
 | ✈️ Telegram | ✅ Recommended | Bot API via @BotFather |
 | 🎮 Discord | ✅ Recommended | discord.js — full bot |
 | 🌐 WebChat | ✅ Built-in | Gateway WebSocket, no setup |
-| 🖥️ CLI / Terminal | ✅ Built-in | `hyperclaw agent` |
+| 🖥️ CLI / Terminal | ✅ Built-in | `hyperclaw chat` (interactive) · `hyperclaw agent -m "..."` (single) |
 | 📲 WhatsApp (Baileys) | ✅ Available | No Meta API — scan QR |
 | 📱 WhatsApp (Cloud API) | ✅ Available | Meta Business API |
 | 💼 Slack | ✅ Available | Bolt — Events API |
@@ -377,7 +380,7 @@ hyperclaw update --channel dev      # moving head of main
 
 ## Integrations (Skills & Tools)
 
-The agent has built-in tools for common integrations — no extra packages needed:
+The agent has built-in tools for common integrations — no extra packages needed. Full reference: [docs/integrations.md](docs/integrations.md)
 
 ### Core Tools
 
@@ -460,6 +463,31 @@ Example — ask the agent:
 
 ---
 
+## Terminal chat (`hyperclaw chat`)
+
+Interactive multi-turn chat with the agent directly from your terminal:
+
+```bash
+hyperclaw chat                          # start a session
+hyperclaw chat --thinking high          # enable extended thinking
+hyperclaw chat --session my-session     # named session
+hyperclaw chat --model claude-opus-4-6  # override model
+```
+
+| Input | Action |
+|-------|--------|
+| Any text + Enter | Send message to agent |
+| `exit` / `quit` / `bye` | Quit the chat |
+| `/exit` / `/quit` / `/bye` | Quit the chat |
+| `Ctrl+C` | Quit the chat |
+| `/clear` | Clear conversation history |
+| `/model` | Show current model |
+| `/help` | Show available commands |
+
+Responses stream token-by-token as they are generated. The full conversation history is kept for the entire session (true multi-turn context).
+
+---
+
 ## Chat commands
 
 Send these in any connected channel (Telegram, Discord, Slack, etc.):
@@ -477,7 +505,9 @@ Send these in any connected channel (Telegram, Discord, Slack, etc.):
 
 ## SkillHub
 
-SkillHub is HyperClaw's skill registry. The agent can install skills on demand or you can install them via the wizard:
+SkillHub is HyperClaw's skill registry. Full guide: [docs/skillhub.md](docs/skillhub.md)
+
+The agent can install skills on demand or you can install them via the wizard:
 
 ```bash
 # Install a skill
@@ -635,6 +665,9 @@ hyperclaw/
 | Environment variables | [docs/environment.md](docs/environment.md) |
 | API keys guide | [docs/API-KEYS-README.md](docs/API-KEYS-README.md) |
 | OAuth providers | [docs/oauth-providers.md](docs/oauth-providers.md) |
+| **Integrations (all tools)** | [docs/integrations.md](docs/integrations.md) |
+| **SkillHub & custom skills** | [docs/skillhub.md](docs/skillhub.md) |
+| **Update notifications** | [docs/update-notifications.md](docs/update-notifications.md) |
 | **Security** | [docs/security.md](docs/security.md) · [SECURITY.md](SECURITY.md) |
 | Deployment / Docker | [docs/deployment.md](docs/deployment.md) |
 | Tailscale remote access | [docs/tailscale.md](docs/tailscale.md) |

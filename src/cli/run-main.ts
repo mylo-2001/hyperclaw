@@ -1096,6 +1096,25 @@ program.command('osint setup')
     process.exit(0);
   });
 
+// ─── CHAT (interactive terminal) ─────────────────────────────────────────────
+
+program.command('chat')
+  .description('Interactive terminal chat with the agent')
+  .option('--session <id>', 'Resume a named session')
+  .option('--model <model>', 'Override model')
+  .option('--thinking <level>', 'Thinking level: high|medium|low|none', 'none')
+  .option('--workspace <dir>', 'Override workspace directory')
+  .action(async (opts) => {
+    const { runChat } = await import('./chat');
+    await runChat({
+      sessionId: opts.session,
+      model: opts.model,
+      thinking: opts.thinking,
+      workspace: opts.workspace,
+    });
+    // chat loop blocks — process.exit called internally on /exit or Ctrl+C
+  });
+
 // ─── AGENT ───────────────────────────────────────────────────────────────────
 
 const agentRunCmd = program.command('agent').description('Run agent with thinking control');
@@ -1976,9 +1995,19 @@ program.command('setup')
     process.exit(0);
   });
 
-checkForUpdate();
-
 // ─── PARSE (single entry point at the very end) ──────────────────────────────
+
+async function runUpdateCheck(): Promise<void> {
+  try {
+    const { checkForUpdates, notifyUpdateAvailable } = await import('../infra/update-check');
+    const path = require('path');
+    const { readFileSync } = require('fs');
+    const pkgPath = path.resolve(__dirname, '../../package.json');
+    const current: string = JSON.parse(readFileSync(pkgPath, 'utf8')).version;
+    const result = await checkForUpdates(current);
+    if (result?.available) notifyUpdateAvailable(current, result.latest);
+  } catch { /* silent */ }
+}
 
 if (process.argv.length === 2) {
   // No command given → auto-launch onboard wizard (first-run UX)
@@ -2006,11 +2035,13 @@ if (process.argv.length === 2) {
       const { HyperClawWizard } = await import('./onboard');
       await (new HyperClawWizard()).run({ wizard: true });
     }
+    await runUpdateCheck();
     process.exit(0);
   })();
 } else {
-  program.parseAsync(process.argv).then(() => {
-    setTimeout(() => process.exit(0), 500);
+  program.parseAsync(process.argv).then(async () => {
+    await runUpdateCheck();
+    process.exit(0);
   }).catch((e) => {
     console.error(e.message);
     process.exit(1);
