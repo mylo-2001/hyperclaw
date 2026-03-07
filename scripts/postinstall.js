@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 // scripts/postinstall.js
 // Shown after `npm install -g hyperclaw` — guides user to onboard.
 // Kept dependency-free (plain Node.js) so it works before npm install completes.
@@ -17,7 +17,7 @@ try {
   const gray  = (s) => `\x1b[90m${s}\x1b[0m`;
   const green = (s) => `\x1b[32m${s}\x1b[0m`;
 
-  let version = '5.0.2';
+  let version = '5.0.3';
   try {
     const path = require('path');
     const fs   = require('fs');
