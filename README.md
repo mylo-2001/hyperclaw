@@ -462,7 +462,7 @@ hyperclaw/
 │   ├── media/              # Voice, TTS, STT, audio
 │   ├── routing/            # Session routing + multi-agent dispatch
 │   ├── security/           # Auth, sandboxing, DM policy
-│   └── …                  # (sdk, types, webhooks, logging, plugins…)
+│   └── …                   # (sdk, types, webhooks, logging, plugins…)
 ├── packages/
 │   ├── core/               # Inference engine, agent loop
 │   ├── gateway/            # Gateway package (standalone)
@@ -480,6 +480,51 @@ hyperclaw/
 ├── tests/                  # Vitest — unit / integration / e2e
 └── docs/                   # Full documentation
 ```
+
+---
+
+## Documentation
+
+| Topic | File |
+|-------|------|
+| **Getting started** | [docs/README.md](docs/README.md) |
+| Architecture overview | [docs/architecture.md](docs/architecture.md) |
+| Configuration reference | [docs/configuration.md](docs/configuration.md) |
+| Environment variables | [docs/environment.md](docs/environment.md) |
+| API keys guide | [docs/API-KEYS-README.md](docs/API-KEYS-README.md) |
+| OAuth providers | [docs/oauth-providers.md](docs/oauth-providers.md) |
+| **Security** | [docs/security.md](docs/security.md) · [SECURITY.md](SECURITY.md) |
+| Deployment / Docker | [docs/deployment.md](docs/deployment.md) |
+| Tailscale remote access | [docs/tailscale.md](docs/tailscale.md) |
+| Remote gateway setup | [docs/remote-gateway-setup.md](docs/remote-gateway-setup.md) |
+| Multi-agent routing | [docs/multi-agent.md](docs/multi-agent.md) |
+| Session management | [docs/session-management.md](docs/session-management.md) |
+| Voice / Talk Mode | [docs/voice.md](docs/voice.md) |
+| Canvas (A2UI) | [docs/canvas-a2ui.md](docs/canvas-a2ui.md) |
+| Browser control | [docs/browser.md](docs/browser.md) |
+| **Channel guides** | |
+| Telegram | [docs/telegram.md](docs/telegram.md) |
+| Discord | [docs/discord-setup.md](docs/discord-setup.md) |
+| WhatsApp | [docs/whatsapp.md](docs/whatsapp.md) |
+| Slack | [docs/slack.md](docs/slack.md) |
+| Google Chat | [docs/google-chat.md](docs/google-chat.md) |
+| Tlon (Urbit Groups) | [docs/tlon.md](docs/tlon.md) |
+| Matrix | [docs/matrix.md](docs/matrix.md) |
+| Zalo / Zalo Personal | [docs/zalo.md](docs/zalo.md) · [docs/zalo-personal.md](docs/zalo-personal.md) |
+| LINE | [docs/line.md](docs/line.md) |
+| Nostr | [docs/nostr.md](docs/nostr.md) |
+| Nextcloud Talk | [docs/nextcloud-talk.md](docs/nextcloud-talk.md) |
+| Microsoft Teams | [docs/msteams.md](docs/msteams.md) |
+| Twitch | [docs/twitch.md](docs/twitch.md) |
+| iMessage (BlueBubbles) | [docs/imessage-native.md](docs/imessage-native.md) |
+| **Apps** | |
+| Mobile & Desktop apps | [docs/mobile-desktop-apps.md](docs/mobile-desktop-apps.md) |
+| Mobile nodes (iOS/Android) | [docs/mobile-nodes.md](docs/mobile-nodes.md) |
+| macOS remote control | [docs/macos-remote-control.md](docs/macos-remote-control.md) |
+| **Help** | |
+| FAQ | [docs/faq.md](docs/faq.md) |
+| Troubleshooting | [docs/troubleshooting.md](docs/troubleshooting.md) |
+| Contributing | [docs/contributing.md](docs/contributing.md) |
 
 ---
 
