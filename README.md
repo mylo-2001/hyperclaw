@@ -499,6 +499,7 @@ hyperclaw/
 | Remote gateway setup | [docs/remote-gateway-setup.md](docs/remote-gateway-setup.md) |
 | Multi-agent routing | [docs/multi-agent.md](docs/multi-agent.md) |
 | Session management | [docs/session-management.md](docs/session-management.md) |
+| Sandboxing (Docker isolation) | [docs/sandboxing.md](docs/sandboxing.md) |
 | Voice / Talk Mode | [docs/voice.md](docs/voice.md) |
 | Canvas (A2UI) | [docs/canvas-a2ui.md](docs/canvas-a2ui.md) |
 | Browser control | [docs/browser.md](docs/browser.md) |
