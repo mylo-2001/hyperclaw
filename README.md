@@ -100,6 +100,8 @@ hyperclaw doctor
 
 > **Windows**: No WSL2, no admin rights needed. The daemon uses Task Scheduler and runs as your account.
 
+> **Linux**: If you get an `EACCES: permission denied` error during `npm install -g`, see the [Linux install fix](#-linux-permission-fix) below.
+
 <details>
 <summary>More install options</summary>
 
@@ -115,6 +117,38 @@ hyperclaw daemon uninstall
 npm uninstall -g hyperclaw
 rm -rf ~/.hyperclaw   # optional — removes config and data
 ```
+
+</details>
+
+<details>
+<summary id="-linux-permission-fix">🐧 Linux permission fix (EACCES error)</summary>
+
+On Linux, `npm install -g` may fail with `EACCES: permission denied` if npm tries to write to `/usr/local/lib/node_modules`.
+
+**Option A — Quick fix (sudo):**
+
+```bash
+sudo npm install -g hyperclaw@latest
+```
+
+**Option B — Permanent fix (recommended, no sudo needed):**
+
+```bash
+# Set a user-local npm prefix
+mkdir -p ~/.npm-global
+npm config set prefix '~/.npm-global'
+
+# Add it to your PATH (for bash)
+echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+
+# Now install without sudo
+npm install -g hyperclaw@latest
+```
+
+> For `zsh` users, replace `~/.bashrc` with `~/.zshrc` and run `source ~/.zshrc`.
+
+Option B is the recommended approach — you will never need `sudo` for npm global installs again.
 
 </details>
 
