@@ -23,7 +23,7 @@ export class Banner {
 
     const subtitle = daemonMode
       ? chalk.hex(t.daemonPrimary)('    ?? DAEMON MODE � ALWAYS WATCHING ?\n')
-      : t.muted('    ?? HyperClaw Bot � AI Gateway v5.0.4 ?\n');
+      : t.muted('    ?? HyperClaw Bot � AI Gateway v5.0.5 ?\n');
 
     console.log(subtitle);
 
@@ -65,7 +65,7 @@ export class Banner {
     } catch {
       console.log(t.bold('\n  ?? HYPERCLAW\n'));
     }
-    console.log(t.muted('    ?? HyperClaw Bot � AI Gateway � SETUP WIZARD v5.0.4 ?\n'));
+    console.log(t.muted('    ?? HyperClaw Bot � AI Gateway � SETUP WIZARD v5.0.5 ?\n'));
 
     const boxOpts: any = {
       padding: 1,
