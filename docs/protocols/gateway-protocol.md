@@ -1,4 +1,4 @@
-﻿# Gateway Protocol — HyperClaw
+# Gateway Protocol — HyperClaw
 
 The Gateway WebSocket is the control plane for HyperClaw. All clients (CLI, web UI, macOS app, iOS/Android nodes) connect over WebSocket.
 
@@ -143,5 +143,5 @@ Gateway responds with `session:restored` and `transcript` when available.
 ## Related
 
 - [Gateway API](../api/gateway-api.md) — HTTP REST endpoints
-- [Connect Tab Protocol](connect-tab-protocol.md) — Mobile node protocol
+- [Connect Tab Protocol](../connect-tab-protocol.md) — Mobile node protocol
 - [Architecture](../architecture.md)
