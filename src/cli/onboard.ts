@@ -1949,20 +1949,64 @@ export class HyperClawWizard {
           { env: 'OP_SERVICE_ACCOUNT_TOKEN', label: 'Service Account Token', secret: true }
         ]
       },
+      {
+        name: 'Image Generation (DALL-E / Stability AI)', value: 'image_gen',
+        instructions: [
+          'Option A — OpenAI DALL-E 3 (recommended):',
+          '1. Go to → https://platform.openai.com/api-keys',
+          '2. Click "Create new secret key", give it a name',
+          '3. Copy the key — shown only once (starts with sk-...)',
+          '   Note: DALL-E 3 requires a paid OpenAI plan',
+          '',
+          'Option B — Stability AI (Stable Diffusion):',
+          '1. Go to → https://platform.stability.ai/account/keys',
+          '2. Create an account and click "Create API Key"',
+          '3. Copy the key',
+          '   (You can set both — the agent will prefer DALL-E if both are present)',
+        ],
+        keys: [
+          { env: 'OPENAI_API_KEY', label: 'OpenAI API Key (for DALL-E 3, leave blank to skip)', secret: true },
+          { env: 'STABILITY_API_KEY', label: 'Stability AI Key (for Stable Diffusion, leave blank to skip)', secret: true }
+        ]
+      },
+      {
+        name: 'Gmail', value: 'gmail',
+        instructions: [
+          '1. Go to → https://console.cloud.google.com',
+          '2. Create a project (or select an existing one)',
+          '3. Enable APIs: "Gmail API" and "Cloud Pub/Sub API"',
+          '4. Go to → APIs & Services → Credentials → Create OAuth 2.0 Client ID',
+          '   Application type: Desktop App',
+          '5. Download the JSON credentials file',
+          '6. Set GOOGLE_CREDENTIALS_PATH to the path of that file',
+          '7. For Pub/Sub (push notifications), create a topic and subscription:',
+          '   gcloud pubsub topics create hyperclaw-gmail',
+          '   gcloud pubsub subscriptions create hyperclaw-sub --topic=hyperclaw-gmail',
+          '   Then set GMAIL_PUBSUB_TOPIC to projects/<project-id>/topics/hyperclaw-gmail',
+        ],
+        keys: [
+          { env: 'GOOGLE_CREDENTIALS_PATH', label: 'Path to credentials JSON file (e.g. ~/Downloads/credentials.json)' },
+          { env: 'GMAIL_PUBSUB_TOPIC', label: 'Pub/Sub topic (leave blank to skip push notifications)' }
+        ]
+      },
     ];
+
+    console.log(chalk.gray('\n  Free / built-in (no key needed):'));
+    console.log(chalk.gray('  • Weather (Open-Meteo)  • Music search (iTunes)  • Canvas  • Browser'));
+    console.log(chalk.gray('  • Apple Notes / Reminders / Things 3 / Bear (macOS)  • iMessage (macOS)\n'));
 
     const { chosen } = await inquirer.prompt<{ chosen: string[] }>([{
       type: 'checkbox',
       name: 'chosen',
-      message: 'Select integrations to configure:',
+      message: 'Select integrations to configure (need API keys):',
       choices: [
         ...INTEGRATIONS.map(i => ({ name: i.name, value: i.value })),
       ],
-      pageSize: 12
+      pageSize: 14
     }]);
 
     if (chosen.length === 0) {
-      console.log(chalk.gray('  No integrations selected.\n'));
+      console.log(chalk.gray('  No integrations selected. You can add them later with: hyperclaw config set-key KEY value\n'));
       return;
     }
 
