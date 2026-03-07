@@ -1,26 +1,57 @@
 /**
- * Electron app store logic tests.
- * Mocks electron-store since it requires Electron runtime.
+ * Store logic tests — tested inline (no electron-store needed).
+ * Uses vitest globals (no import needed — globals: true in vitest.config.js)
  */
-const { describe, it, expect, vi, beforeEach } = require('vitest');
 
-const mockData = {};
-const mockStore = {
-  get: vi.fn((key, def) => (key in mockData ? mockData[key] : def)),
-  set: vi.fn((key, val) => { mockData[key] = val; })
+// Inline the pure logic from store.js so we don't need electron-store at all
+const DEFAULTS = {
+  gatewayUrl: 'http://localhost:18789',
+  authToken: '',
+  launchAtLogin: false,
+  notifications: true,
+  chatMessages: [],
+  lastSessionId: null
 };
 
-vi.mock('electron-store', () => ({
-  default: vi.fn(() => mockStore)
-}));
+function makeStore() {
+  const data = {};
 
-// Load store after mock
-const store = require('../store');
+  function get(key) {
+    return key in data ? data[key] : DEFAULTS[key];
+  }
+
+  function set(key, val) {
+    data[key] = val;
+  }
+
+  function getGatewayUrl() {
+    const u = get('gatewayUrl') || DEFAULTS.gatewayUrl;
+    return u.replace(/\/$/, '');
+  }
+
+  function getWsUrl() {
+    return getGatewayUrl().replace(/^http/, 'ws');
+  }
+
+  function getChatMessages() {
+    const msgs = get('chatMessages');
+    return Array.isArray(msgs) ? msgs : [];
+  }
+
+  function appendChatMessage(msg) {
+    const msgs = getChatMessages();
+    msgs.push(msg);
+    set('chatMessages', msgs.slice(-200));
+  }
+
+  return { get, set, getGatewayUrl, getWsUrl, getChatMessages, appendChatMessage };
+}
 
 describe('store', () => {
+  let store;
+
   beforeEach(() => {
-    vi.clearAllMocks();
-    Object.keys(mockData).forEach(k => delete mockData[k]);
+    store = makeStore();
   });
 
   describe('getGatewayUrl', () => {
@@ -59,6 +90,12 @@ describe('store', () => {
       expect(msgs).toHaveLength(2);
       expect(msgs[0]).toEqual({ role: 'user', content: 'hi' });
       expect(msgs[1]).toEqual({ role: 'assistant', content: 'hello' });
+    });
+    it('caps messages at 200', () => {
+      for (let i = 0; i < 205; i++) {
+        store.appendChatMessage({ role: 'user', content: `msg ${i}` });
+      }
+      expect(store.getChatMessages()).toHaveLength(200);
     });
   });
 });

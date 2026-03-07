@@ -1,7 +1,7 @@
 /**
  * Connect flow logic tests — URL/token parsing, wsUrl derivation.
+ * Uses vitest globals (no import needed — globals: true in vitest.config.js)
  */
-const { describe, it, expect } = require('vitest');
 
 function deriveWsUrl(baseUrl) {
   const u = (baseUrl || 'http://localhost:18789').replace(/\/$/, '');
