@@ -444,6 +444,52 @@ Example — ask the agent:
 "What's playing on my Sonos?"
 ```
 
+### How to add integration API keys
+
+**Option 1 — During onboarding wizard** (recommended for first setup):
+```bash
+hyperclaw onboard
+# At the end of the wizard, you'll be asked:
+# "Configure integrations now? (Spotify, Home Assistant, GitHub, Trello, etc.)"
+# Select the ones you want and enter your keys interactively.
+```
+
+**Option 2 — Tell the agent** (easiest after setup):
+```
+You › Save my Spotify keys:
+      CLIENT_ID: abc123
+      CLIENT_SECRET: xyz456
+      REFRESH_TOKEN: def789
+```
+
+**Option 3 — CLI command**:
+```bash
+hyperclaw config set-key SPOTIFY_CLIENT_ID abc123
+hyperclaw config set-key SPOTIFY_CLIENT_SECRET xyz456
+hyperclaw config set-key GITHUB_TOKEN ghp_xxxx
+hyperclaw config set-key HA_URL http://homeassistant.local:8123
+hyperclaw config set-key HA_TOKEN your-long-lived-token
+```
+
+**Option 4 — Edit directly** `~/.hyperclaw/.env`:
+```bash
+SPOTIFY_CLIENT_ID=abc123
+SPOTIFY_CLIENT_SECRET=xyz456
+GITHUB_TOKEN=ghp_xxxx
+HA_URL=http://homeassistant.local:8123
+HA_TOKEN=your-token
+TRELLO_API_KEY=abc
+TRELLO_TOKEN=xyz
+OBSIDIAN_API_KEY=abc
+HUE_BRIDGE_IP=192.168.1.100
+HUE_USERNAME=your-username
+SONOS_IP=192.168.1.50
+GIPHY_API_KEY=abc
+OP_SERVICE_ACCOUNT_TOKEN=ops_xxxx
+```
+
+All keys are stored locally in `~/.hyperclaw/.env` — never sent anywhere except the respective service.
+
 ---
 
 ## Agent-to-Agent (sessions tools)

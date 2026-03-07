@@ -1,7 +1,10 @@
-﻿import inquirer from 'inquirer';
+import inquirer from 'inquirer';
 import chalk from 'chalk';
 import ora from 'ora';
 import boxen from 'boxen';
+import fs from 'fs-extra';
+import path from 'path';
+import os from 'os';
 import { ConfigManager } from './config';
 import { DaemonManager } from '../infra/daemon';
 import { GatewayManager, GatewayConfig, GATEWAY_DEFAULTS } from './gateway';
@@ -1714,6 +1717,9 @@ export class HyperClawWizard {
 
     await this.testConnections(data.channelConfigs || {});
 
+    // -- Optional integrations step -------------------------------------------
+    await this.setupIntegrations();
+
     if (data.installDaemon || options.daemon || options.installDaemon) {
       const runtime = options.daemonRuntime ?? data.daemonRuntime ?? 'node';
       const s = ora(`?? Installing system daemon (runtime: ${runtime})...`).start();
@@ -1777,6 +1783,141 @@ export class HyperClawWizard {
     }
 
     this.showSuccessScreen(data);
+  }
+
+  private async setupIntegrations(): Promise<void> {
+    console.log();
+
+    const { skip } = await inquirer.prompt<{ skip: boolean }>([{
+      type: 'confirm',
+      name: 'skip',
+      message: chalk.cyan('Configure integrations now?') + chalk.gray(' (Spotify, Home Assistant, GitHub, Trello, etc.)'),
+      default: false
+    }]);
+
+    if (skip === false) {
+      // They said yes (default false = confirmed)
+    } else {
+      console.log(chalk.gray('  Skipped — configure later by telling the agent or running: hyperclaw config set-key KEY value\n'));
+      return;
+    }
+
+    const INTEGRATIONS: Array<{
+      name: string;
+      value: string;
+      keys: Array<{ env: string; label: string; secret?: boolean }>;
+    }> = [
+      {
+        name: 'Spotify', value: 'spotify', keys: [
+          { env: 'SPOTIFY_CLIENT_ID', label: 'Client ID' },
+          { env: 'SPOTIFY_CLIENT_SECRET', label: 'Client Secret', secret: true },
+          { env: 'SPOTIFY_REFRESH_TOKEN', label: 'Refresh Token', secret: true }
+        ]
+      },
+      {
+        name: 'Home Assistant', value: 'ha', keys: [
+          { env: 'HA_URL', label: 'URL (e.g. http://homeassistant.local:8123)' },
+          { env: 'HA_TOKEN', label: 'Long-lived Access Token', secret: true }
+        ]
+      },
+      {
+        name: 'GitHub', value: 'github', keys: [
+          { env: 'GITHUB_TOKEN', label: 'Personal Access Token', secret: true }
+        ]
+      },
+      {
+        name: 'Trello', value: 'trello', keys: [
+          { env: 'TRELLO_API_KEY', label: 'API Key' },
+          { env: 'TRELLO_TOKEN', label: 'Token', secret: true }
+        ]
+      },
+      {
+        name: 'Obsidian', value: 'obsidian', keys: [
+          { env: 'OBSIDIAN_API_KEY', label: 'Local REST API Key', secret: true },
+          { env: 'OBSIDIAN_PORT', label: 'Port (default: 27123, leave blank to skip)' }
+        ]
+      },
+      {
+        name: 'Philips Hue', value: 'hue', keys: [
+          { env: 'HUE_BRIDGE_IP', label: 'Bridge IP (e.g. 192.168.1.100)' },
+          { env: 'HUE_USERNAME', label: 'Username (from bridge discovery)' }
+        ]
+      },
+      {
+        name: '8Sleep', value: 'eightsleep', keys: [
+          { env: 'EIGHTSLEEP_EMAIL', label: 'Email' },
+          { env: 'EIGHTSLEEP_PASSWORD', label: 'Password', secret: true }
+        ]
+      },
+      {
+        name: 'Sonos', value: 'sonos', keys: [
+          { env: 'SONOS_IP', label: 'Speaker IP (e.g. 192.168.1.50)' }
+        ]
+      },
+      {
+        name: 'Giphy / GIF search', value: 'giphy', keys: [
+          { env: 'GIPHY_API_KEY', label: 'Giphy API Key (or leave blank for Tenor)' },
+          { env: 'TENOR_API_KEY', label: 'Tenor API Key (optional, alternative to Giphy)' }
+        ]
+      },
+      {
+        name: '1Password', value: '1password', keys: [
+          { env: 'OP_SERVICE_ACCOUNT_TOKEN', label: 'Service Account Token', secret: true }
+        ]
+      },
+    ];
+
+    const { chosen } = await inquirer.prompt<{ chosen: string[] }>([{
+      type: 'checkbox',
+      name: 'chosen',
+      message: 'Select integrations to configure:',
+      choices: [
+        ...INTEGRATIONS.map(i => ({ name: i.name, value: i.value })),
+      ],
+      pageSize: 12
+    }]);
+
+    if (chosen.length === 0) {
+      console.log(chalk.gray('  No integrations selected.\n'));
+      return;
+    }
+
+    const envPath = path.join(os.homedir(), '.hyperclaw', '.env');
+    const envLines: string[] = [];
+
+    try {
+      const existing = await fs.readFile(envPath, 'utf8').catch(() => '');
+      envLines.push(...existing.split('\n').filter(l => l.trim()));
+    } catch {}
+
+    for (const id of chosen) {
+      const integration = INTEGRATIONS.find(i => i.value === id)!;
+      console.log(chalk.cyan(`\n  ${integration.name}`));
+
+      for (const key of integration.keys) {
+        const { val } = await inquirer.prompt<{ val: string }>([{
+          type: key.secret ? 'password' : 'input',
+          name: 'val',
+          message: `  ${key.label}:`,
+          mask: key.secret ? '*' : undefined
+        }]);
+
+        if (val && val.trim()) {
+          const line = `${key.env}=${val.trim()}`;
+          const idx = envLines.findIndex(l => l.startsWith(`${key.env}=`));
+          if (idx >= 0) envLines[idx] = line;
+          else envLines.push(line);
+          console.log(chalk.green(`  ✔  ${key.env} saved`));
+        } else {
+          console.log(chalk.gray(`  –  ${key.env} skipped`));
+        }
+      }
+    }
+
+    await fs.ensureDir(path.dirname(envPath));
+    await fs.writeFile(envPath, envLines.filter(Boolean).join('\n') + '\n', 'utf8');
+    console.log(chalk.green(`\n  ✔  Integration keys saved to ~/.hyperclaw/.env`));
+    console.log(chalk.gray('  To add more later: hyperclaw config set-key KEY value\n'));
   }
 
   private async testConnections(configs: Record<string, any>): Promise<void> {
