@@ -102,6 +102,8 @@ hyperclaw doctor
 
 > **Linux**: If you get an `EACCES: permission denied` error during `npm install -g`, see the [Linux install fix](#-linux-permission-fix) below.
 
+> **Emojis not showing?** See the [Terminal emoji fix](#-emojis-not-showing-in-terminal) below.
+
 <details>
 <summary>More install options</summary>
 
@@ -195,6 +197,65 @@ sudo npm install -g hyperclaw@latest
 ```
 
 > On macOS with **Homebrew Node**, `sudo` is usually not needed. If it is, prefer the user-local prefix or nvm approach above.
+
+</details>
+
+<details>
+<summary id="-emojis-not-showing-in-terminal">🎨 Emojis not showing in terminal (showing as ?? or □)</summary>
+
+HyperClaw uses emojis in its banner and wizard. If you see `??` or empty boxes, your terminal or font doesn't support emoji rendering.
+
+---
+
+### 🪟 Windows — CMD / PowerShell
+
+The old `cmd.exe` and classic PowerShell window do **not** support emoji.
+
+**Fix: Use Windows Terminal** (free, from Microsoft Store):
+
+1. Open **Microsoft Store** → search **"Windows Terminal"** → Install
+2. Open Windows Terminal → Settings → Profiles → Defaults → Appearance
+3. Set font to **Cascadia Code** (already included) or install [JetBrains Mono Nerd Font](https://www.nerdfonts.com/font-downloads)
+4. Run `hyperclaw onboard` from Windows Terminal — emojis will show correctly
+
+---
+
+### 🐧 Linux — XFCE / Konsole / other terminals
+
+Install the Google Noto emoji font:
+
+```bash
+# Debian / Ubuntu / Kali
+sudo apt install fonts-noto-color-emoji
+
+# Arch / Manjaro
+sudo pacman -S noto-fonts-emoji
+
+# Fedora / RHEL
+sudo dnf install google-noto-emoji-fonts
+```
+
+Then **restart your terminal** — emojis will appear.
+
+> If you use **XFCE Terminal**: go to Edit → Preferences → Appearance and set a font like **JetBrains Mono** or **DejaVu Sans Mono**.
+
+---
+
+### 🍎 macOS — Terminal.app
+
+macOS Terminal.app supports emoji out of the box on recent versions. If you still see `?`:
+
+1. Terminal → Settings → Profiles → Text → Change Font
+2. Set to **Menlo**, **SF Mono**, or any font from [Nerd Fonts](https://www.nerdfonts.com/)
+3. Alternatively, use **iTerm2** (free) which has full emoji support by default
+
+```bash
+brew install --cask iterm2
+```
+
+---
+
+> **Note**: If you prefer to keep using your current terminal without emoji, HyperClaw works perfectly — only the visual display is affected, not the functionality.
 
 </details>
 
@@ -519,6 +580,7 @@ Example — ask the agent:
 "Create a note in Obsidian: Meeting notes..."
 "Add a card to my Trello board"
 "Set my 8Sleep to temperature 20 on the left side"
+
 "Get my GitHub password from 1Password"
 "Send an iMessage to +1234567890: I'll be late"
 "What's playing on my Sonos?"
