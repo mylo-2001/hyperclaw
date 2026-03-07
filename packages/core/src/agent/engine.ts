@@ -108,9 +108,10 @@ export async function resolveTools(opts: {
   const { loadMCPTools } = await import('../../../../src/services/mcp-loader');
   const { applyToolPolicy } = await import('../../../../src/infra/tool-policy');
 
-  const isLocal = cfg?.provider?.providerId === 'local' || cfg?.provider?.providerId === 'ollama';
-  const provider = cfg?.provider?.providerId === 'anthropic' ? 'anthropic'
-    : cfg?.provider?.providerId === 'custom' || isLocal ? 'custom' : 'openrouter';
+  const CUSTOM_BASEURL_PROVIDERS = new Set(['groq','mistral','deepseek','perplexity','huggingface','ollama','lmstudio','local','xai','openai','google','minimax','moonshot','qwen','zai','litellm','cloudflare','copilot','vercel-ai','opencode-zen']);
+  const isLocal = cfg?.provider?.providerId === 'local' || cfg?.provider?.providerId === 'ollama' || cfg?.provider?.providerId === 'lmstudio';
+  const provider = cfg?.provider?.providerId === 'anthropic' || cfg?.provider?.providerId === 'anthropic-oauth' || cfg?.provider?.providerId === 'anthropic-setup-token' ? 'anthropic'
+    : (cfg?.provider?.providerId === 'custom' || isLocal || CUSTOM_BASEURL_PROVIDERS.has(cfg?.provider?.providerId ?? '')) ? 'custom' : 'openrouter';
   const visionProvider: 'anthropic' | 'openrouter' = (cfg?.provider?.providerId === 'custom' || isLocal) ? 'openrouter' : (provider === 'anthropic' ? 'anthropic' : 'openrouter');
   const apiKey = await (await import('../../../../src/infra/env-resolve')).getProviderCredentialAsync(cfg);
   const visionTools = getVisionTools({ apiKey: apiKey || '', provider: visionProvider });
@@ -167,11 +168,17 @@ export async function runAgentEngine(
   opts: AgentEngineOptions & { activeServer?: unknown; appendTranscript?: (sid: string, role: string, content: string) => void }
 ): Promise<AgentEngineResult> {
   const cfg: HyperClawConfig = await fs.readJson(getConfigPath()).catch(() => ({}));
-  const isLocalProvider = cfg?.provider?.providerId === 'local' || cfg?.provider?.providerId === 'ollama';
+  const CUSTOM_BASEURL_IDS = new Set(['groq','mistral','deepseek','perplexity','huggingface','ollama','lmstudio','local','xai','openai','google','minimax','moonshot','qwen','zai','litellm','cloudflare','copilot','vercel-ai','opencode-zen']);
+  const isLocalProvider = cfg?.provider?.providerId === 'local' || cfg?.provider?.providerId === 'ollama' || cfg?.provider?.providerId === 'lmstudio';
   const apiKey = await (await import('../../../../src/infra/env-resolve')).getProviderCredentialAsync(cfg);
   if (!apiKey && !isLocalProvider) {
     return { text: 'No API key configured. Run: hyperclaw config set-key', error: 'no_api_key' };
   }
+
+  // Resolve baseUrl from providers registry (for Groq, Mistral, DeepSeek, etc.)
+  const { getProvider } = await import('../../../../src/cli/providers');
+  const providerMeta = getProvider(cfg?.provider?.providerId ?? '');
+  const registryBaseUrl = providerMeta?.baseUrl;
 
   const sid = opts.sessionId;
   if (sid && opts.appendTranscript) opts.appendTranscript(sid, 'user', message);
@@ -200,10 +207,12 @@ export async function runAgentEngine(
   });
 
   const rawModel = opts.modelOverride || cfg?.provider?.modelId || 'claude-sonnet-4-5';
-  const isLocal2 = cfg?.provider?.providerId === 'local' || cfg?.provider?.providerId === 'ollama';
+  const isLocal2 = cfg?.provider?.providerId === 'local' || cfg?.provider?.providerId === 'ollama' || cfg?.provider?.providerId === 'lmstudio';
   const model = rawModel.startsWith('ollama/') ? rawModel.slice(7) : rawModel;
-  const provider: 'anthropic' | 'openrouter' | 'custom' | 'openai' = cfg?.provider?.providerId === 'anthropic' ? 'anthropic'
-    : (cfg?.provider?.providerId === 'custom' || isLocal2) ? 'custom' : 'openrouter';
+  const isAnthropicVariant = cfg?.provider?.providerId === 'anthropic' || cfg?.provider?.providerId === 'anthropic-oauth' || cfg?.provider?.providerId === 'anthropic-setup-token';
+  const provider: 'anthropic' | 'openrouter' | 'custom' | 'openai' = isAnthropicVariant ? 'anthropic'
+    : (cfg?.provider?.providerId === 'custom' || isLocal2 || CUSTOM_BASEURL_IDS.has(cfg?.provider?.providerId ?? '')) ? 'custom' : 'openrouter';
+  const resolvedBaseUrl = cfg?.provider?.baseUrl || registryBaseUrl || (isLocal2 ? 'http://localhost:11434/v1' : undefined);
   const ollamaBaseUrl = isLocal2 ? (cfg?.provider?.baseUrl || 'http://localhost:11434/v1') : undefined;
   const thinkingBudget = opts.thinkingBudget ?? 0;
   const maxTokens = thinkingBudget > 0 ? thinkingBudget + 4096 : 4096;
@@ -219,7 +228,7 @@ export async function runAgentEngine(
       onThinking: opts.onThinking,
       onToolCall: opts.onToolCall,
       onToolResult: opts.onToolResult,
-      ...(provider === 'custom' ? { baseUrl: ollamaBaseUrl || cfg?.provider?.baseUrl || '' } : {}),
+      ...(provider === 'custom' ? { baseUrl: ollamaBaseUrl || resolvedBaseUrl || '' } : {}),
       ...(thinkingBudget > 0 && (model.includes('claude') || model.includes('anthropic'))
         ? { thinking: { budget_tokens: thinkingBudget } } : {})
     };

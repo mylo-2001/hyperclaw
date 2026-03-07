@@ -225,6 +225,96 @@ export const PROVIDERS: Provider[] = [
     ]
   },
   {
+    id: 'groq',
+    displayName: '⚡ Groq (Fast Inference)',
+    authType: 'api_key',
+    authLabel: 'Groq API Key',
+    authHint: 'console.groq.com/keys',
+    baseUrl: 'https://api.groq.com/openai/v1',
+    models: [
+      { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile', contextK: 128, flagship: true },
+      { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B Instant', contextK: 128, fast: true },
+      { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B', contextK: 32 },
+      { id: 'gemma2-9b-it', name: 'Gemma 2 9B', contextK: 8, fast: true },
+    ]
+  },
+  {
+    id: 'mistral',
+    displayName: '🌀 Mistral AI',
+    authType: 'api_key',
+    authLabel: 'Mistral API Key',
+    authHint: 'console.mistral.ai/api-keys',
+    baseUrl: 'https://api.mistral.ai/v1',
+    models: [
+      { id: 'mistral-large-latest', name: 'Mistral Large', contextK: 128, flagship: true },
+      { id: 'mistral-medium-latest', name: 'Mistral Medium', contextK: 128 },
+      { id: 'mistral-small-latest', name: 'Mistral Small', contextK: 128, fast: true },
+      { id: 'codestral-latest', name: 'Codestral (code)', contextK: 256 },
+    ]
+  },
+  {
+    id: 'deepseek',
+    displayName: '🔬 DeepSeek',
+    authType: 'api_key',
+    authLabel: 'DeepSeek API Key',
+    authHint: 'platform.deepseek.com/api_keys',
+    baseUrl: 'https://api.deepseek.com/v1',
+    models: [
+      { id: 'deepseek-chat', name: 'DeepSeek V3', contextK: 64, flagship: true },
+      { id: 'deepseek-reasoner', name: 'DeepSeek R1 (reasoning)', contextK: 64, reasoning: true },
+    ]
+  },
+  {
+    id: 'perplexity',
+    displayName: '🔍 Perplexity (Search-augmented)',
+    authType: 'api_key',
+    authLabel: 'Perplexity API Key',
+    authHint: 'perplexity.ai/settings/api',
+    baseUrl: 'https://api.perplexity.ai',
+    models: [
+      { id: 'sonar-pro', name: 'Sonar Pro (search)', contextK: 200, flagship: true },
+      { id: 'sonar', name: 'Sonar (search, fast)', contextK: 128, fast: true },
+      { id: 'sonar-reasoning', name: 'Sonar Reasoning', contextK: 128, reasoning: true },
+    ]
+  },
+  {
+    id: 'huggingface',
+    displayName: '🤗 Hugging Face',
+    authType: 'api_key',
+    authLabel: 'HuggingFace API Token',
+    authHint: 'huggingface.co/settings/tokens',
+    baseUrl: 'https://api-inference.huggingface.co/v1',
+    models: [
+      { id: 'Qwen/Qwen2.5-72B-Instruct', name: 'Qwen 2.5 72B', contextK: 128, flagship: true },
+      { id: 'meta-llama/Llama-3.3-70B-Instruct', name: 'Llama 3.3 70B', contextK: 128 },
+      { id: 'mistralai/Mistral-7B-Instruct-v0.3', name: 'Mistral 7B', contextK: 32, fast: true },
+    ]
+  },
+  {
+    id: 'ollama',
+    displayName: '🦙 Ollama (Local)',
+    authType: 'none',
+    authLabel: 'No API key needed',
+    authHint: 'ollama.ai — run `ollama serve` first',
+    baseUrl: 'http://localhost:11434/v1',
+    models: [
+      { id: 'llama3.3', name: 'Llama 3.3 (local)', contextK: 128, flagship: true },
+      { id: 'mistral', name: 'Mistral (local)', contextK: 32 },
+      { id: 'codellama', name: 'CodeLlama (local)', contextK: 16 },
+      { id: 'phi4', name: 'Phi-4 (local)', contextK: 16, fast: true },
+      { id: '__manual__', name: 'Enter model name manually', contextK: 128 },
+    ]
+  },
+  {
+    id: 'lmstudio',
+    displayName: '🖥️ LM Studio (Local)',
+    authType: 'none',
+    authLabel: 'No API key needed',
+    authHint: 'lmstudio.ai — enable local server in app',
+    baseUrl: 'http://localhost:1234/v1',
+    models: [{ id: '__manual__', name: 'Enter loaded model ID', contextK: 128, flagship: true }],
+  },
+  {
     id: 'custom',
     displayName: '🔌 Custom (OpenAI-compatible API)',
     authType: 'api_key',

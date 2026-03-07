@@ -161,7 +161,7 @@ export function getSkillCapabilities(skills: LoadedSkill[]): Array<{ id: string;
 export async function writeSkill(
   skillId: string,
   opts: { name?: string; description?: string; content: string }
-): Promise<{ path: string; id: string }> {
+): Promise<{ path: string; id: string; dir: string }> {
   const id = skillId.replace(/[^a-z0-9-_]/gi, '-').toLowerCase() || 'unnamed-skill';
   const dir = path.join(WORKSPACE_SKILLS, id);
   await fs.ensureDir(dir);
@@ -170,5 +170,5 @@ export async function writeSkill(
     : '';
   const full = header + opts.content.trim();
   await fs.writeFile(path.join(dir, 'SKILL.md'), full, 'utf8');
-  return { path: path.join(dir, 'SKILL.md'), id };
+  return { path: path.join(dir, 'SKILL.md'), id, dir };
 }

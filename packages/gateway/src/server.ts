@@ -311,7 +311,7 @@ export class GatewayServer {
 
     if (url === '/api/v1/check') {
       res.writeHead(200);
-      res.end(JSON.stringify({ ok: true, service: 'hyperclaw', version: '5.0.0' }));
+      res.end(JSON.stringify({ ok: true, service: 'hyperclaw', version: '5.0.2' }));
       return;
     }
 
@@ -730,7 +730,7 @@ export class GatewayServer {
     if (authToken && !session.authenticated) {
       this.send(session, { type: 'connect.challenge', sessionId: id });
     } else {
-      this.send(session, { type: 'connect.ok', sessionId: id, version: '5.0.0', heartbeatInterval: 30000 });
+      this.send(session, { type: 'connect.ok', sessionId: id, version: '5.0.2', heartbeatInterval: 30000 });
       if (this.config.hooks && this.config.deps.createHookLoader) {
         this.config.deps.createHookLoader().execute('session:start', { sessionId: id }).catch(() => {});
       }

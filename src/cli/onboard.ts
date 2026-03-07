@@ -1661,7 +1661,7 @@ export class HyperClawWizard {
 
     await this.config.save({
       ...current,
-      version: '5.0.1',
+      version: '5.0.2',
       workspaceName: data.workspaceName,
       provider: data.providerConfig,
       providers: data.providers || (data.providerConfig ? [data.providerConfig] : []),
@@ -1760,7 +1760,7 @@ export class HyperClawWizard {
     if (options.jsonOutput) {
       const result = {
         ok: true,
-        version: '5.0.1',
+        version: '5.0.2',
         provider: data.providerConfig?.providerId,
         model: data.providerConfig?.modelId,
         gateway: data.gatewayConfig ? {
@@ -1820,7 +1820,7 @@ export class HyperClawWizard {
     ].join('\n');
 
     console.log('\n' + boxen(
-      chalk.hex('#06b6d4')('?? HyperClaw v5.0.1 ready!\n\n') + lines,
+      chalk.hex('#06b6d4')('?? HyperClaw v5.0.2 ready!\n\n') + lines,
       { padding: 1, borderStyle: 'round', borderColor: 'cyan', margin: 1, backgroundColor: '#0a0a0a' }
     ));
   }

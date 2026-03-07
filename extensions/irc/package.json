@@ -1,6 +1,6 @@
 ﻿{
   "name": "@hyperclaw/irc",
-  "version": "5.0.0",
+  "version": "5.0.2",
   "private": true,
   "main": "src/connector.ts",
   "dependencies": {

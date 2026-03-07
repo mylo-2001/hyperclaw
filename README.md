@@ -186,18 +186,30 @@ Google Chat / Matrix / IRC / Mattermost / Teams / Nostr / WebChat
 
 ---
 
-## Providers
+## AI Models
 
-HyperClaw supports any OpenAI-compatible API and Anthropic natively:
+HyperClaw supports 20+ providers. Pick one in the wizard or set `provider.providerId` in config:
 
-| Provider | IDs |
-|----------|-----|
-| **Anthropic** | `anthropic` — Claude 4 Opus/Sonnet/Haiku |
-| **OpenRouter** | `openrouter` — 200+ models |
-| **OpenAI** | `openai` — GPT-4o, GPT-4.1 |
-| **xAI** | `xai` — Grok |
-| **Groq** | `groq` — Llama, Mixtral (fast) |
-| **Custom** | `custom` — any OpenAI-compatible endpoint |
+| Provider | ID | Notes |
+|----------|-----|-------|
+| **Anthropic** | `anthropic` | Claude Opus/Sonnet/Haiku — native streaming |
+| **Anthropic OAuth** | `anthropic-oauth` | Claude Code / Max subscription |
+| **OpenRouter** | `openrouter` | 200+ models — one key |
+| **OpenAI** | `openai` | GPT-4o, o3, o4-mini |
+| **Google** | `google` | Gemini 2.5 Pro, 2.0 Flash |
+| **xAI** | `xai` | Grok 3, Grok 3 Mini |
+| **Groq** | `groq` | Llama 3.3, Mixtral — fast inference |
+| **Mistral** | `mistral` | Mistral Large, Codestral |
+| **DeepSeek** | `deepseek` | DeepSeek V3, R1 reasoning |
+| **Perplexity** | `perplexity` | Sonar — search-augmented AI |
+| **Hugging Face** | `huggingface` | Open-source models |
+| **MiniMax** | `minimax` | MiniMax Text-01 |
+| **Qwen** | `qwen` | Alibaba Qwen 3, Qwen Max |
+| **Z.AI** | `zai` | GLM-4 models |
+| **Vercel AI Gateway** | `vercel-ai` | Multi-model proxy |
+| **Ollama** | `ollama` | Local models — `ollama serve` |
+| **LM Studio** | `lmstudio` | Local models — enable local server |
+| **Custom** | `custom` | Any OpenAI-compatible `/chat/completions` |
 
 ---
 
@@ -344,6 +356,109 @@ The Gateway alone delivers a great experience. Apps add extra features:
 
 ---
 
+## Development channels
+
+Three release channels, switch any time:
+
+```bash
+hyperclaw update --channel stable   # tagged releases (default)
+hyperclaw update --channel beta     # prereleases
+hyperclaw update --channel dev      # moving head of main
+```
+
+| Channel | npm dist-tag | Notes |
+|---------|-------------|-------|
+| `stable` | `latest` | Tagged releases — recommended |
+| `beta` | `beta` | Prerelease — new features, may have rough edges |
+| `dev` | `dev` | Latest main branch (when published) |
+
+---
+
+## Integrations (Skills & Tools)
+
+The agent has built-in tools for common integrations — no extra packages needed:
+
+### Core Tools
+
+| Tool | How to enable |
+|------|---------------|
+| **Weather** | Free — no key needed (Open-Meteo) |
+| **Image generation** | Set `OPENAI_API_KEY` (DALL-E 3) or `STABILITY_API_KEY` |
+| **GIF search** | Set `GIPHY_API_KEY` or `TENOR_API_KEY` |
+| **Spotify** | Set `SPOTIFY_CLIENT_ID` + `SPOTIFY_CLIENT_SECRET` + `SPOTIFY_REFRESH_TOKEN` |
+| **Home Assistant** | Set `HA_URL` + `HA_TOKEN` (long-lived access token) |
+| **GitHub** | Set `GITHUB_TOKEN` |
+| **Canvas** | Built-in — view at `http://localhost:18789/canvas` |
+| **Browser** | Built-in — enable `browser.enabled: true` |
+| **Gmail** | Set `GOOGLE_CREDENTIALS_PATH` + configure Pub/Sub |
+
+### Productivity
+
+| Tool | How to enable |
+|------|---------------|
+| **Apple Notes** | macOS only — built-in (requires Accessibility permissions) |
+| **Apple Reminders** | macOS only — built-in (requires Accessibility permissions) |
+| **Things 3** | macOS only — install Things 3, no extra config |
+| **Obsidian** | Install Local REST API plugin, set `OBSIDIAN_API_KEY` (and optionally `OBSIDIAN_PORT`, default 27123) |
+| **Bear Notes** | macOS only — install Bear, no extra config |
+| **Trello** | Set `TRELLO_API_KEY` + `TRELLO_TOKEN` (from trello.com/app-key) |
+
+### Music
+
+| Tool | How to enable |
+|------|---------------|
+| **Sonos** | Set `SONOS_IP` to your speaker's local IP address |
+| **Music search** | Free — no key needed (iTunes Search API) |
+
+### Smart Home
+
+| Tool | How to enable |
+|------|---------------|
+| **Philips Hue** | Set `HUE_BRIDGE_IP` + `HUE_USERNAME` (from bridge discovery) |
+| **8Sleep** | Set `EIGHTSLEEP_EMAIL` + `EIGHTSLEEP_PASSWORD` |
+
+### Security & Messaging
+
+| Tool | How to enable |
+|------|---------------|
+| **1Password** | Install `op` CLI, set `OP_SERVICE_ACCOUNT_TOKEN` |
+| **iMessage** | macOS only — built-in (requires Full Disk Access + Accessibility) |
+
+Example — ask the agent:
+```
+"What's the weather in Athens for the next 3 days?"
+"Generate an image of a space lobster"
+"Play some Daft Punk on Spotify"
+"Turn on the living room lights"      # Home Assistant or Philips Hue
+"List my open GitHub issues"
+"Add 'Buy milk' to my Reminders"
+"Create a note in Obsidian: Meeting notes..."
+"Add a card to my Trello board"
+"Set my 8Sleep to temperature 20 on the left side"
+"Get my GitHub password from 1Password"
+"Send an iMessage to +1234567890: I'll be late"
+"What's playing on my Sonos?"
+```
+
+---
+
+## Agent-to-Agent (sessions tools)
+
+When the gateway is running, the agent can communicate with other connected sessions:
+
+| Tool | Description |
+|------|-------------|
+| `sessions_list` | List all active sessions connected to the gateway |
+| `sessions_send` | Send a message to another session by session ID |
+| `sessions_history` | Get the chat transcript of a session (`"self"` for current) |
+
+Example — ask the agent:
+```
+"List all connected sessions and send a briefing to the first one"
+```
+
+---
+
 ## Chat commands
 
 Send these in any connected channel (Telegram, Discord, Slack, etc.):
@@ -356,6 +471,26 @@ Send these in any connected channel (Telegram, Discord, Slack, etc.):
 | `/think <level>` | `off` · `low` · `medium` · `high` · `xhigh` |
 | `/verbose on\|off` | Verbose mode |
 | `/usage off\|tokens\|full` | Per-response usage footer |
+| `/restart` | Restart the gateway (owner-only in groups) |
+| `/activation mention\|always` | Group activation toggle |
+
+## SkillHub
+
+SkillHub is HyperClaw's skill registry. The agent can install skills on demand or you can install them via the wizard:
+
+```bash
+# Install a skill
+hyperclaw skills install web-search
+
+# List installed skills
+hyperclaw skills list
+```
+
+Featured skills: `web-search` · `file-manager` · `code-runner` · `github-tools` · `calendar-tools` · `summarizer`
+
+The agent can also self-write custom skills with the `create_skill` tool — just ask it.
+
+---
 
 ## HyperClaw Bot commands
 

@@ -2,7 +2,13 @@
  * @hyperclaw/shared — shared types across all packages
  */
 
-export type ProviderID = 'anthropic' | 'openrouter' | 'custom' | 'openai' | 'xai' | 'groq' | 'local' | 'ollama';
+export type ProviderID =
+  | 'anthropic' | 'anthropic-oauth' | 'anthropic-setup-token'
+  | 'openrouter' | 'openai' | 'custom'
+  | 'xai' | 'groq' | 'mistral' | 'deepseek' | 'perplexity' | 'huggingface'
+  | 'google' | 'minimax' | 'moonshot' | 'qwen' | 'zai'
+  | 'litellm' | 'cloudflare' | 'copilot' | 'vercel-ai' | 'opencode-zen'
+  | 'ollama' | 'lmstudio' | 'local';
 export type UpdateChannel = 'stable' | 'beta' | 'dev';
 export type DmPolicy = 'allowlist' | 'open' | 'pairing' | 'disabled';
 export type SandboxMode = 'off' | 'all' | 'non-main';
