@@ -325,6 +325,7 @@ Full guide: [docs/security.md](docs/security.md)
 - **Auto-memory** — extracts facts from conversations automatically
 - **Skills** — bundled and workspace skills (reminders, translator, web search, etc.)
 - **Daemon mode** — launchd/systemd user service, auto-restart, `🩸` icon
+- **Update notifications** — notifies when a newer version is available on npm (non-blocking check at startup)
 - **MCP support** — Model Context Protocol server and client
 - **Docker** — sandboxed agent execution, browser tools with Puppeteer
 - **Tailscale** — Serve/Funnel for remote access without port forwarding
@@ -488,7 +489,30 @@ hyperclaw skills list
 
 Featured skills: `web-search` · `file-manager` · `code-runner` · `github-tools` · `calendar-tools` · `summarizer`
 
-The agent can also self-write custom skills with the `create_skill` tool — just ask it.
+### Install from URL
+
+Give the agent a clawhub.ai link and it installs automatically:
+
+```
+"Install this skill: https://clawhub.ai/b0tresch/stealth-browser"
+```
+
+The agent calls `install_skill_from_hub` — fetches SKILL.md + extra files, writes them to `~/.hyperclaw/workspace/skills/`, and runs `npm install` if needed.
+
+### Self-writing skills
+
+The agent can create fully custom skills on demand:
+
+```
+"Create a skill that summarizes my daily Telegram messages"
+```
+
+`create_skill` supports:
+- **`content`** — SKILL.md instructions
+- **`files`** — JSON map of extra files (e.g. `{"scripts/run.js": "..."}`)
+- **`npmInstall: "true"`** — auto-runs `npm install` after writing files
+
+Skills are saved to `~/.hyperclaw/workspace/skills/{id}/` and loaded on the next message.
 
 ---
 
@@ -512,23 +536,6 @@ Control the gateway remotely via your Telegram or Discord bot (`hyperclaw bot st
 | `/activation always` | Bot responds to all messages in a group |
 | `/security` | Security audit summary |
 | `/help` | List all commands |
-
-## Agent-to-Agent (session tools)
-
-When the gateway is running, the agent has access to session tools for agent-to-agent communication:
-
-| Tool | Description |
-|------|-------------|
-| `sessions_list` | List all active WebSocket sessions connected to the gateway |
-| `sessions_send` | Send a message to another session (by session ID) |
-| `sessions_history` | Get the chat transcript of a session (`"self"` for current) |
-
-Example — ask the agent to ping another session:
-```
-"List all connected sessions and send a hello to the first one"
-```
-
----
 
 ## From source
 
