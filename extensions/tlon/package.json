@@ -7,7 +7,7 @@
   "keywords": ["hyperclaw", "tlon", "urbit", "groups", "chat"],
   "license": "MIT",
   "peerDependencies": {
-    "chalk": ">=5",
+    "chalk": ">=4",
     "fs-extra": ">=11"
   },
   "hyperclaw": {

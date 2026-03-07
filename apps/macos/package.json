@@ -1,6 +1,6 @@
-﻿{
+{
   "name": "@hyperclaw/macos",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "HyperClaw menu bar app — production macOS helper",
   "main": "main.js",
   "private": true,

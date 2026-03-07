@@ -5,9 +5,13 @@ on:
     branches: [main]
     paths:
       - 'apps/macos/**'
+      - '!apps/macos/**/*.md'
+      - '!apps/macos/docs/**'
   pull_request:
     paths:
       - 'apps/macos/**'
+      - '!apps/macos/**/*.md'
+      - '!apps/macos/docs/**'
 
 jobs:
   test:
@@ -23,7 +27,7 @@ jobs:
         with:
           node-version: '22'
       - name: Install dependencies
-        run: npm install --ignore-scripts
+        run: npm install --ignore-scripts --legacy-peer-deps
       - name: Run tests
         run: npm test
 
@@ -42,7 +46,7 @@ jobs:
         with:
           node-version: '22'
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
       - name: Build macOS app
         run: npm run build:mac
         continue-on-error: true
