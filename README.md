@@ -121,34 +121,80 @@ rm -rf ~/.hyperclaw   # optional — removes config and data
 </details>
 
 <details>
-<summary id="-linux-permission-fix">🐧 Linux permission fix (EACCES error)</summary>
+<summary id="-linux-permission-fix">🐧 Linux / macOS permission fix (EACCES error)</summary>
 
-On Linux, `npm install -g` may fail with `EACCES: permission denied` if npm tries to write to `/usr/local/lib/node_modules`.
+If `npm install -g hyperclaw@latest` fails with `EACCES: permission denied`, it means npm is trying to write to a system directory it doesn't own. This can happen on **any Linux distro or macOS** depending on how Node.js was installed.
 
-**Option A — Quick fix (sudo):**
+---
+
+### ✅ Universal fix — user-local npm prefix (works on ALL distros + macOS)
+
+This is the **recommended permanent solution** — works on Ubuntu, Debian, Arch, Fedora, Kali, openSUSE, macOS, and any other Unix system:
+
+```bash
+# 1. Create a user-owned npm directory
+mkdir -p ~/.npm-global
+
+# 2. Tell npm to use it
+npm config set prefix '~/.npm-global'
+
+# 3. Add it to your PATH
+#    bash users:
+echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc && source ~/.bashrc
+#    zsh users (macOS default, Kali zsh, etc.):
+echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.zshrc && source ~/.zshrc
+#    fish users:
+echo 'set -x PATH ~/.npm-global/bin $PATH' >> ~/.config/fish/config.fish
+
+# 4. Install (no sudo needed)
+npm install -g hyperclaw@latest
+```
+
+---
+
+### Distro-specific notes
+
+| Distro | Node install method | Typical fix |
+|--------|-------------------|-------------|
+| Ubuntu / Debian | `apt install nodejs` | User-local prefix (above) |
+| **Arch / Manjaro** | `pacman -S nodejs npm` | User-local prefix — **do NOT use sudo** with pacman-installed npm |
+| Fedora / RHEL | `dnf install nodejs` | User-local prefix (above) |
+| Kali Linux | `apt install nodejs` | User-local prefix (above) |
+| openSUSE | `zypper install nodejs` | User-local prefix (above) |
+| **Any distro** via `nvm` | `nvm install 22` | ✅ No fix needed — nvm installs to `~/.nvm`, no permissions issue |
+| macOS via Homebrew | `brew install node` | ✅ Usually works out of the box |
+| macOS via system Node | (not recommended) | User-local prefix (above) |
+
+> **Arch Linux note**: `sudo npm install -g` can break your system's npm installation because pacman manages `/usr/lib/node_modules`. Always use the user-local prefix on Arch.
+
+---
+
+### Alternative: Use nvm (Node Version Manager)
+
+[nvm](https://github.com/nvm-sh/nvm) manages Node per-user with no root access needed — the cleanest long-term solution:
+
+```bash
+# Install nvm
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+source ~/.bashrc   # or ~/.zshrc
+
+# Install Node 22
+nvm install 22
+nvm use 22
+
+# Install HyperClaw (no sudo, no prefix config needed)
+npm install -g hyperclaw@latest
+```
+
+---
+
+### macOS: Quick fix with sudo (if all else fails)
 
 ```bash
 sudo npm install -g hyperclaw@latest
 ```
 
-**Option B — Permanent fix (recommended, no sudo needed):**
-
-```bash
-# Set a user-local npm prefix
-mkdir -p ~/.npm-global
-npm config set prefix '~/.npm-global'
-
-# Add it to your PATH (for bash)
-echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
-source ~/.bashrc
-
-# Now install without sudo
-npm install -g hyperclaw@latest
-```
-
-> For `zsh` users, replace `~/.bashrc` with `~/.zshrc` and run `source ~/.zshrc`.
-
-Option B is the recommended approach — you will never need `sudo` for npm global installs again.
+> On macOS with **Homebrew Node**, `sudo` is usually not needed. If it is, prefer the user-local prefix or nvm approach above.
 
 </details>
 
