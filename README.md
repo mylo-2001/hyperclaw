@@ -1,4 +1,4 @@
-﻿<div align="center">
+<div align="center">
   <img src="assets/icon.png" width="140" alt="HyperClaw">
   <h1>🦅 HyperClaw</h1>
   <p><strong>Your personal AI assistant — running on your hardware, talking on your channels.</strong></p>
@@ -518,6 +518,46 @@ hyperclaw skills list
 ```
 
 Featured skills: `web-search` · `file-manager` · `code-runner` · `github-tools` · `calendar-tools` · `summarizer`
+
+### Installing skills — 3 ways
+
+**Option 1 — tell the agent (easiest):**
+
+```
+You › Install the web-search skill
+You › Install this: https://clawhub.ai/user/skill-name
+```
+
+The agent automatically calls `install_skill_from_hub` — no commands needed.
+
+**Option 2 — `/skills` inside `hyperclaw chat`:**
+
+```
+You › /skills
+```
+
+Shows installed skills and how to add more:
+
+```
+  Installed skills:
+  • Web Search      (web-search)
+  • File Manager    (file-manager)
+
+  How to add a skill:
+  1. Tell the agent:  "Install the web-search skill"
+  2. Paste a link:    "Install this: https://clawhub.ai/user/skill-name"
+  3. CLI:             hyperclaw skill install <name>
+  4. Re-run wizard:   hyperclaw onboard
+```
+
+`/skills` also appears in `/help` and in the chat header when you open `hyperclaw chat`.
+
+**Option 3 — CLI:**
+
+```bash
+hyperclaw skill install web-search
+hyperclaw skills list
+```
 
 ### Install from URL
 
