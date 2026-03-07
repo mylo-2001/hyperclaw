@@ -1805,63 +1805,147 @@ export class HyperClawWizard {
     const INTEGRATIONS: Array<{
       name: string;
       value: string;
+      instructions: string[];
       keys: Array<{ env: string; label: string; secret?: boolean }>;
     }> = [
       {
-        name: 'Spotify', value: 'spotify', keys: [
+        name: 'Spotify', value: 'spotify',
+        instructions: [
+          '1. Go to → https://developer.spotify.com/dashboard',
+          '2. Log in and click "Create App"',
+          '3. Fill in name/description, set Redirect URI to http://localhost:8888/callback',
+          '4. Click "Settings" → copy your Client ID and Client Secret',
+          '5. To get a Refresh Token, run this after saving Client ID/Secret:',
+          '   npx spotify-token  (or use the Spotify OAuth Playground)',
+        ],
+        keys: [
           { env: 'SPOTIFY_CLIENT_ID', label: 'Client ID' },
           { env: 'SPOTIFY_CLIENT_SECRET', label: 'Client Secret', secret: true },
           { env: 'SPOTIFY_REFRESH_TOKEN', label: 'Refresh Token', secret: true }
         ]
       },
       {
-        name: 'Home Assistant', value: 'ha', keys: [
+        name: 'Home Assistant', value: 'ha',
+        instructions: [
+          '1. Open Home Assistant in your browser',
+          '2. Go to → Profile (bottom left) → Long-lived access tokens',
+          '3. Click "Create Token", give it a name (e.g. HyperClaw)',
+          '4. Copy the token immediately — it won\'t be shown again',
+          '5. Your URL is usually http://homeassistant.local:8123 or your local IP',
+        ],
+        keys: [
           { env: 'HA_URL', label: 'URL (e.g. http://homeassistant.local:8123)' },
           { env: 'HA_TOKEN', label: 'Long-lived Access Token', secret: true }
         ]
       },
       {
-        name: 'GitHub', value: 'github', keys: [
+        name: 'GitHub', value: 'github',
+        instructions: [
+          '1. Go to → https://github.com/settings/tokens',
+          '2. Click "Generate new token (classic)"',
+          '3. Give it a name (e.g. HyperClaw)',
+          '4. Select scopes: repo, read:user, read:org (or as needed)',
+          '5. Click "Generate token" and copy it — shown only once',
+        ],
+        keys: [
           { env: 'GITHUB_TOKEN', label: 'Personal Access Token', secret: true }
         ]
       },
       {
-        name: 'Trello', value: 'trello', keys: [
+        name: 'Trello', value: 'trello',
+        instructions: [
+          '1. Go to → https://trello.com/app-key',
+          '2. Copy your API Key from the top of the page',
+          '3. On the same page, click "Token" link to generate a Token',
+          '4. Authorize the app and copy the token',
+        ],
+        keys: [
           { env: 'TRELLO_API_KEY', label: 'API Key' },
           { env: 'TRELLO_TOKEN', label: 'Token', secret: true }
         ]
       },
       {
-        name: 'Obsidian', value: 'obsidian', keys: [
+        name: 'Obsidian', value: 'obsidian',
+        instructions: [
+          '1. Open Obsidian → Settings → Community Plugins',
+          '2. Search for "Local REST API" and install it',
+          '3. Enable the plugin and go to its settings',
+          '4. Copy the API Key shown in the plugin settings',
+          '5. The default port is 27123 (leave blank to use default)',
+        ],
+        keys: [
           { env: 'OBSIDIAN_API_KEY', label: 'Local REST API Key', secret: true },
-          { env: 'OBSIDIAN_PORT', label: 'Port (default: 27123, leave blank to skip)' }
+          { env: 'OBSIDIAN_PORT', label: 'Port (press Enter for default 27123)' }
         ]
       },
       {
-        name: 'Philips Hue', value: 'hue', keys: [
+        name: 'Philips Hue', value: 'hue',
+        instructions: [
+          '1. Find your Hue Bridge IP: open the Hue app → Settings → My Hue System → Bridge',
+          '   OR check your router\'s device list for "Philips-hue"',
+          '2. Go to → http://<BRIDGE_IP>/debug/clip.html',
+          '3. In the URL field type: /api',
+          '   Body: {"devicetype":"hyperclaw#mydevice"}',
+          '4. Press the physical button on the bridge, then click POST',
+          '5. Copy the "username" value from the response — that\'s your HUE_USERNAME',
+        ],
+        keys: [
           { env: 'HUE_BRIDGE_IP', label: 'Bridge IP (e.g. 192.168.1.100)' },
-          { env: 'HUE_USERNAME', label: 'Username (from bridge discovery)' }
+          { env: 'HUE_USERNAME', label: 'Username (from bridge pairing)' }
         ]
       },
       {
-        name: '8Sleep', value: 'eightsleep', keys: [
+        name: '8Sleep', value: 'eightsleep',
+        instructions: [
+          '1. Use your Eight Sleep account email and password',
+          '2. These are the same credentials you use in the Eight Sleep app',
+          '   Note: 8Sleep has rate limits — don\'t query too frequently',
+        ],
+        keys: [
           { env: 'EIGHTSLEEP_EMAIL', label: 'Email' },
           { env: 'EIGHTSLEEP_PASSWORD', label: 'Password', secret: true }
         ]
       },
       {
-        name: 'Sonos', value: 'sonos', keys: [
+        name: 'Sonos', value: 'sonos',
+        instructions: [
+          '1. Find your Sonos speaker\'s local IP address',
+          '2. Open the Sonos app → System → (your room) → About My System',
+          '   OR check your router\'s device list for your Sonos device',
+          '3. The IP looks like: 192.168.1.x',
+        ],
+        keys: [
           { env: 'SONOS_IP', label: 'Speaker IP (e.g. 192.168.1.50)' }
         ]
       },
       {
-        name: 'Giphy / GIF search', value: 'giphy', keys: [
-          { env: 'GIPHY_API_KEY', label: 'Giphy API Key (or leave blank for Tenor)' },
-          { env: 'TENOR_API_KEY', label: 'Tenor API Key (optional, alternative to Giphy)' }
+        name: 'Giphy / GIF search', value: 'giphy',
+        instructions: [
+          'Option A — Giphy:',
+          '1. Go to → https://developers.giphy.com',
+          '2. Log in or sign up → Dashboard → Create an App → API',
+          '3. Copy your API Key',
+          '',
+          'Option B — Tenor (Google):',
+          '1. Go to → https://console.cloud.google.com',
+          '2. Enable the "Tenor API" → Create credentials → API Key',
+          '   (You can leave one blank and only fill the other)',
+        ],
+        keys: [
+          { env: 'GIPHY_API_KEY', label: 'Giphy API Key (leave blank to skip)' },
+          { env: 'TENOR_API_KEY', label: 'Tenor API Key (leave blank to skip)' }
         ]
       },
       {
-        name: '1Password', value: '1password', keys: [
+        name: '1Password', value: '1password',
+        instructions: [
+          '1. Install the 1Password CLI: https://developer.1password.com/docs/cli/get-started/',
+          '2. Go to → https://my.1password.com → Integrations → Service Accounts',
+          '3. Create a new Service Account, give it read access to the vaults you need',
+          '4. Copy the Service Account Token — shown only once',
+          '5. Verify the CLI works: op account list',
+        ],
+        keys: [
           { env: 'OP_SERVICE_ACCOUNT_TOKEN', label: 'Service Account Token', secret: true }
         ]
       },
@@ -1892,7 +1976,35 @@ export class HyperClawWizard {
 
     for (const id of chosen) {
       const integration = INTEGRATIONS.find(i => i.value === id)!;
-      console.log(chalk.cyan(`\n  ${integration.name}`));
+
+      console.log('\n' + chalk.bold.cyan(`  ── ${integration.name} ──`));
+
+      // Show step-by-step instructions
+      if (integration.instructions.length > 0) {
+        console.log(chalk.gray('\n  How to get your credentials:\n'));
+        for (const line of integration.instructions) {
+          if (line === '') {
+            console.log();
+          } else if (/^\d+\./.test(line.trim())) {
+            console.log(chalk.white(`  ${line}`));
+          } else {
+            console.log(chalk.gray(`  ${line}`));
+          }
+        }
+        console.log();
+
+        const { ready } = await inquirer.prompt<{ ready: boolean }>([{
+          type: 'confirm',
+          name: 'ready',
+          message: `  Ready to enter your ${integration.name} credentials?`,
+          default: true
+        }]);
+
+        if (!ready) {
+          console.log(chalk.gray(`  Skipped — add later: hyperclaw config set-key KEY value\n`));
+          continue;
+        }
+      }
 
       for (const key of integration.keys) {
         const { val } = await inquirer.prompt<{ val: string }>([{
