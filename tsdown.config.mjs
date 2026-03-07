@@ -21,6 +21,7 @@ export default {
     'node-telegram-bot-api',
     '@slack/bolt',
     'matrix-js-sdk',
+    '@matrix-org/matrix-sdk-crypto-nodejs',
     'nostr-tools',
     '@line/bot-sdk',
     'tmi.js',
