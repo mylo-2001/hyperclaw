@@ -1,42 +1,55 @@
-<p align="center">
-  <img src="assets/icon.png" width="120" alt="HyperClaw">
-  <br>
-  <h1 align="center">🦅 HyperClaw — Personal AI Assistant</h1>
-</p>
+<div align="center">
+  <img src="assets/icon.png" width="140" alt="HyperClaw">
+  <h1>🦅 HyperClaw</h1>
+  <p><strong>Your personal AI assistant — running on your hardware, talking on your channels.</strong></p>
+  <p><em>One command to install. Works on Telegram, Discord, WhatsApp, Signal, iMessage and 25+ more.</em></p>
+</div>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/build-passing-brightgreen?style=flat-square" alt="build">
-  <img src="https://img.shields.io/badge/release-v5.0.0-blue?style=flat-square" alt="release">
-  <img src="https://img.shields.io/badge/node-%E2%89%A522-green?style=flat-square" alt="node">
-  <img src="https://img.shields.io/badge/license-MIT-gray?style=flat-square" alt="license">
+  <a href="https://github.com/mylo-2001/hyperclaw/stargazers"><img src="https://img.shields.io/github/stars/mylo-2001/hyperclaw?style=flat-square&logo=github&color=yellow" alt="GitHub Stars"></a>
+  <a href="https://github.com/mylo-2001/hyperclaw/network/members"><img src="https://img.shields.io/github/forks/mylo-2001/hyperclaw?style=flat-square&logo=github" alt="GitHub Forks"></a>
+  <a href="https://www.npmjs.com/package/hyperclaw"><img src="https://img.shields.io/npm/dw/hyperclaw?style=flat-square&logo=npm&color=red" alt="npm downloads"></a>
+  <a href="https://www.npmjs.com/package/hyperclaw"><img src="https://img.shields.io/npm/v/hyperclaw?style=flat-square&logo=npm&label=npm" alt="npm version"></a>
+  <a href="https://github.com/mylo-2001/hyperclaw/actions"><img src="https://img.shields.io/github/actions/workflow/status/mylo-2001/hyperclaw/secrets-scan.yml?branch=main&style=flat-square&label=CI" alt="CI"></a>
+  <img src="https://img.shields.io/badge/node-%E2%89%A522-green?style=flat-square&logo=node.js" alt="node">
   <img src="https://img.shields.io/badge/typescript-5.4-3178c6?style=flat-square&logo=typescript&logoColor=white" alt="typescript">
-  <img src="https://img.shields.io/badge/security-ethical%20hacking-red?style=flat-square&logo=hackthebox&logoColor=white" alt="security">
+  <img src="https://img.shields.io/badge/license-MIT-gray?style=flat-square" alt="license">
+  <img src="https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-blue?style=flat-square" alt="platforms">
 </p>
 
 <p align="center">
-  <strong>HyperClaw</strong> is a personal AI assistant you run on your own devices.<br>
-  It answers you on the channels you already use — Telegram, Discord, WhatsApp, Slack, Signal, iMessage,<br>
-  Matrix, IRC, Mattermost, Google Chat, Microsoft Teams, Nostr, and more.<br>
-  It can speak and listen on macOS/iOS/Android, and render a live Canvas you control.<br>
-  The Gateway is just the control plane — the product is the assistant.
+  <a href="docs/README.md">📚 Docs</a> ·
+  <a href="docs/architecture.md">🏗 Architecture</a> ·
+  <a href="docs/configuration.md">⚙️ Config</a> ·
+  <a href="docs/security.md">🔒 Security</a> ·
+  <a href="docs/sandboxing.md">🐳 Sandboxing</a> ·
+  <a href="docs/tlon.md">🌊 Tlon</a> ·
+  <a href="docs/google-chat.md">💬 Google Chat</a> ·
+  <a href="CONTRIBUTING.md">🤝 Contributing</a>
 </p>
 
-<p align="center">
-  <em>If you want a personal, single-user assistant that feels local, fast, and always-on, this is it.</em><br>
-  <em>Built for developers, security researchers, and power users who want full control.</em>
-</p>
+---
 
-<p align="center">
-  <a href="docs/README.md">Docs</a> ·
-  <a href="docs/architecture.md">Architecture</a> ·
-  <a href="docs/configuration.md">Configuration</a> ·
-  <a href="docs/security.md">Security</a> ·
-  <a href="docs/google-chat.md">Google Chat</a> ·
-  <a href="docs/tlon.md">Tlon</a> ·
-  <a href="docs/deployment.md">Docker</a> ·
-  <a href="docs/tailscale.md">Tailscale</a> ·
-  <a href="CONTRIBUTING.md">Contributing</a>
-</p>
+> **"One `npm install -g hyperclaw` and your AI is live on Telegram."**
+
+---
+
+## Why HyperClaw?
+
+| Feature | HyperClaw | Cloud assistants | Self-hosted alternatives |
+|---------|:---------:|:----------------:|:------------------------:|
+| Runs on your own hardware | ✅ | ❌ | ✅ |
+| No subscription / pay-per-token only | ✅ | ❌ | ✅ |
+| 28+ messaging channels built-in | ✅ | ❌ | ⚠️ few |
+| Windows native (no WSL) | ✅ | — | ❌ |
+| Config hot-reload (no restart) | ✅ | — | ❌ |
+| Built-in security audit (`--fix`) | ✅ | — | ❌ |
+| DM pairing / allowlist by default | ✅ | — | ⚠️ manual |
+| Voice (TTS + STT) | ✅ | ✅ | ⚠️ |
+| Docker sandbox for agent tools | ✅ | — | ⚠️ |
+| MCP (Model Context Protocol) | ✅ | ⚠️ | ⚠️ |
+| One-command wizard (`hyperclaw onboard`) | ✅ | — | ❌ |
+| Ethical hacking / OSINT mode | ✅ | ❌ | ❌ |
 
 ---
 
@@ -55,65 +68,50 @@
 
 ---
 
-## Install
+## 🚀 Get started in 60 seconds
 
-Runtime: Node ≥ 22. Runs **natively on Windows, macOS, and Linux** — no WSL2 required.
+**Requires Node ≥ 22.** Runs natively on Windows, macOS, and Linux — no WSL2 required.
 
 ```bash
+# Install
 npm install -g hyperclaw@latest
-# or: pnpm add -g hyperclaw@latest
 
-# First-time setup wizard
+# Run the interactive setup wizard
 hyperclaw onboard
-
-# Or install with daemon (auto-start on boot, full PC access)
-hyperclaw onboard --install-daemon
 ```
 
-## Uninstall
+The wizard walks you through: AI provider → model → channels → skills. Done.
 
 ```bash
-# Stop and remove daemon (if running)
-hyperclaw daemon uninstall
-
-# Remove the package
-npm uninstall -g hyperclaw
-
-# Remove config and data (optional)
-rm -rf ~/.hyperclaw
-```
-
-> **Windows users**: HyperClaw runs natively via Node.js. No WSL2, no admin rights needed.
-> The daemon uses **Task Scheduler** and runs as your user account with full desktop access.
-
-The wizard guides you step by step — provider, model, gateway, channels, and skills.
-Works on **macOS, Linux, and Windows** (native — no WSL2 required). Compatible with npm, pnpm, and bun.
-
----
-
-## Quick start
-
-```bash
-# 1. Run the onboarding wizard (first time)
-hyperclaw onboard
-
-# 2a. Start the gateway in foreground
-hyperclaw gateway --port 18789 --verbose
-
-# 2b. Or run as a background daemon (auto-start on boot)
+# After setup, start your assistant
 hyperclaw daemon start
 
-# 3. Talk to your assistant
+# Send a test message
 hyperclaw agent --message "What can you do?"
 
-# 4. Security / bug bounty — run recon from your phone
-# Just message your Telegram bot: "search HackerOne for targets on acme.com"
-
-# 5. Check status
+# Health check
 hyperclaw doctor
 ```
 
-Upgrading? Run `hyperclaw doctor` to check and migrate.
+> **Windows**: No WSL2, no admin rights needed. The daemon uses Task Scheduler and runs as your account.
+
+<details>
+<summary>More install options</summary>
+
+```bash
+# pnpm
+pnpm add -g hyperclaw@latest
+
+# Install with daemon (auto-start on boot + full PC access)
+hyperclaw onboard --install-daemon
+
+# Uninstall
+hyperclaw daemon uninstall
+npm uninstall -g hyperclaw
+rm -rf ~/.hyperclaw   # optional — removes config and data
+```
+
+</details>
 
 ---
 
@@ -531,7 +529,30 @@ hyperclaw/
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines. AI/vibe-coded PRs welcome! 🤖
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines. AI/vibe-coded PRs welcome!
+
+Found a bug? [Open an issue](https://github.com/mylo-2001/hyperclaw/issues/new/choose).  
+Found a vulnerability? Email [securityhyperclaw.ai@gmail.com](mailto:securityhyperclaw.ai@gmail.com) — we respond within 48 h.
+
+---
+
+## Community
+
+| | |
+|--|--|
+| 💬 **Discussions** | [GitHub Discussions](https://github.com/mylo-2001/hyperclaw/discussions) — questions, ideas, show & tell |
+| 🐛 **Bug reports** | [GitHub Issues](https://github.com/mylo-2001/hyperclaw/issues) — templates for bugs & features |
+| 🔒 **Security** | [SECURITY.md](SECURITY.md) — responsible disclosure |
+
+---
+
+<div align="center">
+
+**If HyperClaw is useful to you, a ⭐ helps others find it.**
+
+[![Star on GitHub](https://img.shields.io/github/stars/mylo-2001/hyperclaw?style=social)](https://github.com/mylo-2001/hyperclaw)
+
+</div>
 
 ---
 
