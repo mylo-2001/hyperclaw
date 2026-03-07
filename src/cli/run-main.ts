@@ -1,4 +1,4 @@
-/**
+﻿/**
  * src/cli/run-main.ts
  * HyperClaw CLI — full command surface.
  *

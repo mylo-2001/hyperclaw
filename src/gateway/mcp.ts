@@ -1,4 +1,4 @@
-/**
+ï»¿/**
  * src/gateway/mcp.ts
  * MCP (Model Context Protocol) server registry and proxy.
  * `hyperclaw mcp list / add / remove / test`
@@ -294,7 +294,7 @@ export class MCPRegistry {
 
       setTimeout(() => {
         if (!responded) {
-          spinner.fail(`${s.name} timed out — no response within 3s`);
+          spinner.fail(`${s.name} timed out ï¿½ no response within 3s`);
           proc.kill();
         }
       }, 3000);
@@ -322,7 +322,7 @@ export class MCPRegistry {
           lines.push(`- \`${tool}\``);
         }
       } else {
-        lines.push('- (tools not yet discovered — run: hyperclaw mcp test ' + s.id + ')');
+        lines.push('- (tools not yet discovered ï¿½ run: hyperclaw mcp test ' + s.id + ')');
       }
       lines.push('');
     }

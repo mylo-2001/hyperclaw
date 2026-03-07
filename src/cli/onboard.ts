@@ -1,4 +1,4 @@
-import inquirer from 'inquirer';
+ï»¿import inquirer from 'inquirer';
 import chalk from 'chalk';
 import ora from 'ora';
 import boxen from 'boxen';
@@ -12,12 +12,12 @@ import { showSecurityDisclaimer, configureDMPolicy } from './security';
 import { Banner } from '../terminal/banner';
 import { CHANNEL_ICONS, PROVIDER_ICONS } from '../infra/channel-icons';
 
-/** Brand-colored ¦ square — closest we can get to a real icon in a terminal */
+/** Brand-colored ï¿½ square ï¿½ closest we can get to a real icon in a terminal */
 function brandIcon(id: string, type: 'channel' | 'provider' = 'channel'): string {
   const map = type === 'channel' ? CHANNEL_ICONS : PROVIDER_ICONS;
   const ic = map[id];
-  if (!ic) return chalk.gray('¦');
-  return chalk.hex('#' + ic.color)('¦');
+  if (!ic) return chalk.gray('ï¿½');
+  return chalk.hex('#' + ic.color)('ï¿½');
 }
 
 export interface WizardOptions {
@@ -90,7 +90,7 @@ export class HyperClawWizard {
         }
         console.log(chalk.green(`\n  ?  Config backed up to ${backupDir}\n  Starting fresh...\n`));
       } else if (configAction === 'modify') {
-        // Partial reconfigure — just run the wizard with existing values as defaults
+        // Partial reconfigure ï¿½ just run the wizard with existing values as defaults
         console.log(chalk.gray('\n  Continuing with existing config as defaults...\n'));
       }
     }
@@ -107,9 +107,9 @@ export class HyperClawWizard {
       message: '?? Choose a color theme:',
       default: currentTheme,
       choices: [
-        { name: `${chalk.hex('#06b6d4')('¦')} Dark Professional   ${chalk.gray('(neon cyan on black)')}`,   value: 'dark' },
-        { name: `${chalk.hex('#64748b')('¦')} Grey Professional   ${chalk.gray('(muted cyan, neutral)')}`,  value: 'grey' },
-        { name: `${chalk.hex('#0284c7')('¦')} White / Light       ${chalk.gray('(deep cyan, light bg)')}`,  value: 'white' },
+        { name: `${chalk.hex('#06b6d4')('ï¿½')} Dark Professional   ${chalk.gray('(neon cyan on black)')}`,   value: 'dark' },
+        { name: `${chalk.hex('#64748b')('ï¿½')} Grey Professional   ${chalk.gray('(muted cyan, neutral)')}`,  value: 'grey' },
+        { name: `${chalk.hex('#0284c7')('ï¿½')} White / Light       ${chalk.gray('(deep cyan, light bg)')}`,  value: 'white' },
       ]
     }]);
     if (chosenTheme !== currentTheme) {
@@ -145,7 +145,7 @@ export class HyperClawWizard {
     const t = getTheme(false);
     const bar = chalk.gray('-'.repeat(52));
     console.log(`\n${bar}`);
-    console.log(`  ${t.c(`Step ${n} / ${total}`)}  ·  ${chalk.bold(title)}`);
+    console.log(`  ${t.c(`Step ${n} / ${total}`)}  ï¿½  ${chalk.bold(title)}`);
     console.log(`${bar}\n`);
   }
 
@@ -260,7 +260,7 @@ export class HyperClawWizard {
           message: 'Daemon runtime:',
           default: 'node',
           choices: [
-            { name: `Node.js  ${chalk.green('(recommended)')} — required for WhatsApp/Telegram`, value: 'node' },
+            { name: `Node.js  ${chalk.green('(recommended)')} ï¿½ required for WhatsApp/Telegram`, value: 'node' },
             { name: `Bun      ${chalk.gray('(faster startup, experimental)')}`, value: 'bun' },
           ],
           when: (answers: any) => answers.installDaemon
@@ -298,12 +298,12 @@ export class HyperClawWizard {
 
     this.stepHeader(9, STEPS, 'Launch');
     const launchChoices: any[] = [
-      { name: `TUI  — terminal dashboard`, value: 'tui' }
+      { name: `TUI  ï¿½ terminal dashboard`, value: 'tui' }
     ];
     if (gatewayConfig && !(gatewayConfig as any).remote) {
-      launchChoices.push({ name: `Web  — browser at http://localhost:${(gatewayConfig as any).port}`, value: 'web' });
+      launchChoices.push({ name: `Web  ï¿½ browser at http://localhost:${(gatewayConfig as any).port}`, value: 'web' });
     }
-    launchChoices.push({ name: chalk.gray('Do this later — I will start manually'), value: 'skip' });
+    launchChoices.push({ name: chalk.gray('Do this later ï¿½ I will start manually'), value: 'skip' });
     const { hatchMode } = await inquirer.prompt([{
       type: 'list', name: 'hatchMode', message: 'How do you want to hatch your bot?',
       choices: launchChoices
@@ -325,7 +325,7 @@ export class HyperClawWizard {
 
     console.log(chalk.gray('  Select one or more AI providers. The first one will be primary.\n'));
 
-    // Step A: checkbox — pick providers
+    // Step A: checkbox ï¿½ pick providers
     const { selectedProviderIds } = await inquirer.prompt([{
       type: 'checkbox',
       name: 'selectedProviderIds',
@@ -363,7 +363,7 @@ export class HyperClawWizard {
         if (credExists) {
           console.log(chalk.green(`  ? Found Claude credentials: ${credPath}`));
           console.log(chalk.gray('    HyperClaw will reuse these credentials automatically.\n'));
-          apiKey = '__claude_oauth__'; // sentinel — gateway reads from .claude/.credentials.json
+          apiKey = '__claude_oauth__'; // sentinel ï¿½ gateway reads from .claude/.credentials.json
         } else {
           console.log(chalk.yellow(`  ?  ~/.claude/.credentials.json not found.\n`));
           console.log(chalk.gray('  Run `claude` CLI on this machine first to authenticate,\n  or paste a setup-token (use "Anthropic setup-token" provider instead).\n'));
@@ -451,7 +451,7 @@ export class HyperClawWizard {
           choices: [
             { name: `Off        ${chalk.gray('(standard responses)')}`, value: 'off' },
             { name: `Standard   ${chalk.gray('(~8 000 token budget)')}`, value: 'standard' },
-            { name: `Extended   ${chalk.gray('(~32 000 token budget — slower, deeper)')}`, value: 'extended' },
+            { name: `Extended   ${chalk.gray('(~32 000 token budget ï¿½ slower, deeper)')}`, value: 'extended' },
           ],
           default: 'off'
         }]);
@@ -480,8 +480,8 @@ export class HyperClawWizard {
       message: 'Gateway setup:',
       choices: [
         { name: `Local gateway   ${chalk.gray('(run on this machine)')}`, value: 'local' },
-        { name: `Remote gateway  ${chalk.gray('(info-only — connect to existing server)')}`, value: 'remote' },
-        { name: chalk.gray('Skip            (no gateway — CLI-only mode)'), value: 'skip' }
+        { name: `Remote gateway  ${chalk.gray('(info-only ï¿½ connect to existing server)')}`, value: 'remote' },
+        { name: chalk.gray('Skip            (no gateway ï¿½ CLI-only mode)'), value: 'skip' }
       ]
     }]);
 
@@ -687,9 +687,9 @@ export class HyperClawWizard {
             expires_at,
             token_url: 'https://oauth2.googleapis.com/token'
           });
-          console.log(chalk.green('  ?  Gmail OAuth configured — next: hyperclaw gmail watch-setup'));
+          console.log(chalk.green('  ?  Gmail OAuth configured ï¿½ next: hyperclaw gmail watch-setup'));
         } catch (e: any) {
-          console.log(chalk.yellow(`  ?  OAuth failed — you can run it later: hyperclaw auth oauth google-gmail`));
+          console.log(chalk.yellow(`  ?  OAuth failed ï¿½ you can run it later: hyperclaw auth oauth google-gmail`));
         }
       }
     }
@@ -707,11 +707,11 @@ export class HyperClawWizard {
     if (!wantSearch) return null;
 
     const SEARCH_PROVIDERS = [
-      { id: 'tavily',     name: 'Tavily',       hint: 'app.tavily.com — best for agents',         prefix: 'tvly-' },
+      { id: 'tavily',     name: 'Tavily',       hint: 'app.tavily.com ï¿½ best for agents',         prefix: 'tvly-' },
       { id: 'perplexity', name: 'Perplexity',   hint: 'perplexity.ai/settings/api',               prefix: 'pplx-' },
       { id: 'brave',      name: 'Brave Search', hint: 'api.search.brave.com',                     prefix: 'BSA' },
       { id: 'gemini',     name: 'Gemini',        hint: 'aistudio.google.com/app/apikey',           prefix: 'AIza' },
-      { id: 'grok',       name: 'Grok/xAI',     hint: 'console.x.ai — same key as xAI provider', prefix: 'xai-' },
+      { id: 'grok',       name: 'Grok/xAI',     hint: 'console.x.ai ï¿½ same key as xAI provider', prefix: 'xai-' },
       { id: 'kimi',       name: 'Kimi (Moonshot)', hint: 'platform.moonshot.cn/user-center/api-keys', prefix: 'sk-' },
     ];
 
@@ -737,12 +737,12 @@ export class HyperClawWizard {
   }
 
   private async configureServiceApiKeys(): Promise<Record<string, string>> {
-    console.log(chalk.hex('#06b6d4')('\n  ?? Service API Keys — any app with an API key\n'));
+    console.log(chalk.hex('#06b6d4')('\n  ?? Service API Keys ï¿½ any app with an API key\n'));
     console.log(chalk.gray('  Stored securely in config. How they work:\n'));
-    console.log(chalk.gray('  • Wizard: add keys here\n'));
-    console.log(chalk.gray('  • Config: ~/.hyperclaw/hyperclaw.json > skills.apiKeys\n'));
-    console.log(chalk.gray('  • Env: HACKERONE_*, BUGCROWD_*, SYNACK_*, or CUSTOM_ID_API_KEY\n'));
-    console.log(chalk.gray('  • Tools: built-in tools read them automatically for research.\n'));
+    console.log(chalk.gray('  ï¿½ Wizard: add keys here\n'));
+    console.log(chalk.gray('  ï¿½ Config: ~/.hyperclaw/hyperclaw.json > skills.apiKeys\n'));
+    console.log(chalk.gray('  ï¿½ Env: HACKERONE_*, BUGCROWD_*, SYNACK_*, or CUSTOM_ID_API_KEY\n'));
+    console.log(chalk.gray('  ï¿½ Tools: built-in tools read them automatically for research.\n'));
 
     const { wantServiceKeys } = await inquirer.prompt([{
       type: 'confirm',
@@ -804,10 +804,10 @@ export class HyperClawWizard {
   }
 
   private async configureHyperClawBot(gatewayConfig: GatewayConfig | null): Promise<{ token?: string; allowedUsers?: string[] } | undefined> {
-    console.log(chalk.hex('#06b6d4')('\n  ?? HyperClaw Bot — Remote control via Telegram\n'));
+    console.log(chalk.hex('#06b6d4')('\n  ?? HyperClaw Bot ï¿½ Remote control via Telegram\n'));
     const trans = getTranscriptionProviders();
     if (trans.length > 0) {
-      console.log(chalk.gray('  ?? Voice notes: ' + trans.map(p => `${p.displayName}`).join(', ') + ' — if you have their API key, voice messages will be transcribed to text.'));
+      console.log(chalk.gray('  ?? Voice notes: ' + trans.map(p => `${p.displayName}`).join(', ') + ' ï¿½ if you have their API key, voice messages will be transcribed to text.'));
       console.log();
     }
 
@@ -844,12 +844,12 @@ export class HyperClawWizard {
       enabled: true,
       createdAt: new Date().toISOString()
     });
-    console.log(chalk.green('  ?  HyperClaw Bot configured — Start: hyperclaw bot start'));
+    console.log(chalk.green('  ?  HyperClaw Bot configured ï¿½ Start: hyperclaw bot start'));
     return { token: token.trim() };
   }
 
   private async configureTalkMode(): Promise<{ apiKey?: string; voiceId?: string; modelId?: string } | undefined> {
-    console.log(chalk.hex('#06b6d4')('\n  ???  Talk Mode — ElevenLabs TTS\n'));
+    console.log(chalk.hex('#06b6d4')('\n  ???  Talk Mode ï¿½ ElevenLabs TTS\n'));
 
     const { wantTalkMode } = await inquirer.prompt([{
       type: 'confirm',
@@ -924,7 +924,7 @@ export class HyperClawWizard {
       }
     ]);
 
-    // Wake-up message — first thing the agent says when it comes online
+    // Wake-up message ï¿½ first thing the agent says when it comes online
     console.log(chalk.gray('\n  This is the greeting sent to your channels when the agent starts.\n'));
     const { wakeUpMessage } = await inquirer.prompt([{
       type: 'input',
@@ -944,7 +944,7 @@ export class HyperClawWizard {
       console.log(chalk.gray('  Tip: describe role, restrictions, tone, specific knowledge, etc.\n'));
       const r = await inquirer.prompt([{
         type: 'editor', name: 'systemPrompt',
-        message: 'System prompt (opens editor — save & close to continue):'
+        message: 'System prompt (opens editor ï¿½ save & close to continue):'
       }]);
       systemPrompt = r.systemPrompt?.trim() || '';
     }
@@ -953,8 +953,8 @@ export class HyperClawWizard {
       'Always respond in the user\'s preferred language',
       'Never reveal the gateway auth token or API keys',
       'Confirm before destructive or irreversible actions',
-      'Respect user privacy — never share conversation data',
-      'All subagents inherit these rules — cannot be overridden'
+      'Respect user privacy ï¿½ never share conversation data',
+      'All subagents inherit these rules ï¿½ cannot be overridden'
     ];
 
     const { addRules } = await inquirer.prompt([{
@@ -994,7 +994,7 @@ export class HyperClawWizard {
     }]);
 
     if (!wantSkills) {
-      console.log(chalk.gray('  ? Skipped — enable later: hyperclaw hooks enable <name>\n'));
+      console.log(chalk.gray('  ? Skipped ï¿½ enable later: hyperclaw hooks enable <name>\n'));
       return { hooks: [], heartbeat: false };
     }
 
@@ -1028,7 +1028,7 @@ export class HyperClawWizard {
       const { HookLoader } = await import('../hooks/loader');
       const loader = new HookLoader();
       for (const h of selectedHooks) loader.enable(h);
-    } catch { /* ignore — hooks can be enabled later */ }
+    } catch { /* ignore ï¿½ hooks can be enabled later */ }
 
     if (selectedHooks.length > 0) {
       console.log(chalk.green(`  ? Enabled: ${selectedHooks.join(', ')}\n`));
@@ -1047,9 +1047,9 @@ export class HyperClawWizard {
       name: 'level',
       message: 'PC access level:',
       choices: [
-        { name: `Full        ${chalk.gray('(bash, file read/write, screenshots — recommended for power users)')}`, value: 'full' },
+        { name: `Full        ${chalk.gray('(bash, file read/write, screenshots ï¿½ recommended for power users)')}`, value: 'full' },
         { name: `Sandboxed   ${chalk.gray('(read files, limited shell, no destructive writes)')}`, value: 'sandboxed' },
-        { name: `Read-only   ${chalk.gray('(read files only — safest)')}`, value: 'read-only' },
+        { name: `Read-only   ${chalk.gray('(read files only ï¿½ safest)')}`, value: 'read-only' },
       ],
       default: 'full'
     }]);
@@ -1120,7 +1120,7 @@ export class HyperClawWizard {
       }
       if (selectedSkills.length > 0) console.log();
     } catch {
-      console.log(chalk.yellow(`  ? Skill Hub unavailable — install later: hyperclaw hub\n`));
+      console.log(chalk.yellow(`  ? Skill Hub unavailable ï¿½ install later: hyperclaw hub\n`));
     }
   }
 
@@ -1178,16 +1178,16 @@ export class HyperClawWizard {
       console.log(chalk.green(`  ? Developer key created`));
       console.log(chalk.gray(`  ID:  ${id}`));
       console.log(chalk.yellow(`  Key: ${key}`));
-      console.log(chalk.gray(`  Store securely — shown once. Use: Authorization: Bearer <key>\n`));
+      console.log(chalk.gray(`  Store securely ï¿½ shown once. Use: Authorization: Bearer <key>\n`));
     } catch {
-      console.log(chalk.yellow(`  ? Could not create key — run: hyperclaw developer-key create\n`));
+      console.log(chalk.yellow(`  ? Could not create key ï¿½ run: hyperclaw developer-key create\n`));
     }
   }
 
   // -- Voice Call Config ---------------------------------------------------------
   private async configureVoiceCall(): Promise<void> {
     console.log(chalk.hex('#06b6d4')('\n  ???  Voice Call\n'));
-    console.log(chalk.gray('  Terminal voice call mode — speaks directly to the gateway.\n'));
+    console.log(chalk.gray('  Terminal voice call mode ï¿½ speaks directly to the gateway.\n'));
 
     const { wantVoiceCall } = await inquirer.prompt([{
       type: 'confirm', name: 'wantVoiceCall',
@@ -1253,8 +1253,8 @@ export class HyperClawWizard {
       type: 'list', name: 'platform',
       message: '  Platform:',
       choices: [
-        { name: `Fly.io   ${chalk.gray('(recommended — fast global edge)')}`, value: 'fly' },
-        { name: `Render   ${chalk.gray('(free tier available — GitHub integration)')}`, value: 'render' },
+        { name: `Fly.io   ${chalk.gray('(recommended ï¿½ fast global edge)')}`, value: 'fly' },
+        { name: `Render   ${chalk.gray('(free tier available ï¿½ GitHub integration)')}`, value: 'render' },
       ]
     }]);
 
@@ -1335,7 +1335,7 @@ export class HyperClawWizard {
         }, targetDir);
         console.log(chalk.green(`  ? Workspace files initialized in ${targetDir}\n`));
       } catch {
-        console.log(chalk.yellow(`  ? Could not initialize workspace — run: hyperclaw workspace init\n`));
+        console.log(chalk.yellow(`  ? Could not initialize workspace ï¿½ run: hyperclaw workspace init\n`));
       }
     }
   }
@@ -1388,7 +1388,7 @@ export class HyperClawWizard {
         await saveCronTasks();
         console.log(chalk.green(`  ? ${tasksToAdd.length} task(s) scheduled\n`));
       } catch {
-        console.log(chalk.yellow(`  ? Could not save tasks — run: hyperclaw cron add\n`));
+        console.log(chalk.yellow(`  ? Could not save tasks ï¿½ run: hyperclaw cron add\n`));
       }
     }
   }
@@ -1445,7 +1445,7 @@ export class HyperClawWizard {
       }
       console.log(chalk.green(`  ? Auto-reply rule added\n`));
     } catch {
-      console.log(chalk.yellow(`  ? Could not save rule — run: hyperclaw auto-reply list\n`));
+      console.log(chalk.yellow(`  ? Could not save rule ï¿½ run: hyperclaw auto-reply list\n`));
     }
   }
 
@@ -1490,9 +1490,9 @@ export class HyperClawWizard {
         }]);
         addMore = more;
       }
-      console.log(chalk.green(`  ? Webhook(s) registered — route: POST /webhook/<id>\n`));
+      console.log(chalk.green(`  ? Webhook(s) registered ï¿½ route: POST /webhook/<id>\n`));
     } catch {
-      console.log(chalk.yellow(`  ? Could not save webhooks — run: hyperclaw webhooks list\n`));
+      console.log(chalk.yellow(`  ? Could not save webhooks ï¿½ run: hyperclaw webhooks list\n`));
     }
   }
 
@@ -1556,7 +1556,7 @@ export class HyperClawWizard {
         });
         console.log(chalk.green(`  ? ${provider} connected\n`));
       } catch {
-        console.log(chalk.yellow(`  ? ${provider} OAuth failed — run later: hyperclaw auth oauth ${provider}\n`));
+        console.log(chalk.yellow(`  ? ${provider} OAuth failed ï¿½ run later: hyperclaw auth oauth ${provider}\n`));
       }
     }
   }
@@ -1635,9 +1635,9 @@ export class HyperClawWizard {
       name: 'channel',
       message: 'Update channel:',
       choices: [
-        { name: `Stable  ${chalk.gray('(recommended — tested releases)')}`, value: 'stable' },
-        { name: `Beta    ${chalk.gray('(early access — new features, may have bugs)')}`, value: 'beta' },
-        { name: `Dev     ${chalk.gray('(bleeding edge — for contributors)')}`, value: 'dev' },
+        { name: `Stable  ${chalk.gray('(recommended ï¿½ tested releases)')}`, value: 'stable' },
+        { name: `Beta    ${chalk.gray('(early access ï¿½ new features, may have bugs)')}`, value: 'beta' },
+        { name: `Dev     ${chalk.gray('(bleeding edge ï¿½ for contributors)')}`, value: 'dev' },
       ],
       default: 'stable'
     }]);
@@ -1752,7 +1752,7 @@ export class HyperClawWizard {
         });
         healthResults.gateway = reachable ? 'reachable' : 'unreachable';
         if (reachable) console.log(chalk.green(`  ?  Gateway reachable at port ${port}`));
-        else console.log(chalk.yellow(`  ?  Gateway not yet reachable at port ${port} — it may still be starting`));
+        else console.log(chalk.yellow(`  ?  Gateway not yet reachable at port ${port} ï¿½ it may still be starting`));
       } catch { healthResults.gateway = 'error'; }
     }
 
@@ -1796,17 +1796,17 @@ export class HyperClawWizard {
     const hasHyperClawBot = !!data.hyperclawbotConfig?.token;
 
     const cmdLines = [
-      chalk.gray('  hyperclaw dashboard       — TUI dashboard'),
-      chalk.gray('  hyperclaw hub             — Skill hub'),
-      chalk.gray('  hyperclaw gateway status  — Gateway panel'),
-      chalk.gray('  hyperclaw ') + chalk.red('daemon') + chalk.gray(' status   — Service status'),
-      chalk.gray('  hyperclaw voice           — Voice settings'),
-      chalk.gray('  hyperclaw canvas show     — AI canvas'),
+      chalk.gray('  hyperclaw dashboard       ï¿½ TUI dashboard'),
+      chalk.gray('  hyperclaw hub             ï¿½ Skill hub'),
+      chalk.gray('  hyperclaw gateway status  ï¿½ Gateway panel'),
+      chalk.gray('  hyperclaw ') + chalk.red('daemon') + chalk.gray(' status   ï¿½ Service status'),
+      chalk.gray('  hyperclaw voice           ï¿½ Voice settings'),
+      chalk.gray('  hyperclaw canvas show     ï¿½ AI canvas'),
     ];
-    if (hasHyperClawBot) cmdLines.push(chalk.gray('  hyperclaw bot start        — HyperClawBot remote control'));
-    if (hasEmail) cmdLines.push(chalk.gray('  hyperclaw gmail watch-setup — Gmail Pub/Sub (real-time)'));
-    cmdLines.push(chalk.gray('  hyperclaw nodes             — Mobile nodes (Connect tab)'));
-    cmdLines.push(chalk.gray('  hyperclaw cron list         — Scheduled tasks'));
+    if (hasHyperClawBot) cmdLines.push(chalk.gray('  hyperclaw bot start        ï¿½ HyperClawBot remote control'));
+    if (hasEmail) cmdLines.push(chalk.gray('  hyperclaw gmail watch-setup ï¿½ Gmail Pub/Sub (real-time)'));
+    cmdLines.push(chalk.gray('  hyperclaw nodes             ï¿½ Mobile nodes (Connect tab)'));
+    cmdLines.push(chalk.gray('  hyperclaw cron list         ï¿½ Scheduled tasks'));
 
     const lines = [
       `${chalk.gray('Agent:')}     ${chalk.hex('#06b6d4')(data.identity?.agentName)} (you: ${data.identity?.userName})`,

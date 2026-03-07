@@ -1,4 +1,4 @@
-import chalk from 'chalk';
+ï»¿import chalk from 'chalk';
 import gradient from 'gradient-string';
 import figlet from 'figlet';
 import boxen from 'boxen';
@@ -22,8 +22,8 @@ export class Banner {
     }
 
     const subtitle = daemonMode
-      ? chalk.hex(t.daemonPrimary)('    ?? DAEMON MODE — ALWAYS WATCHING ?\n')
-      : t.muted('    ?? HyperClaw Bot — AI Gateway v5.0.1 ?\n');
+      ? chalk.hex(t.daemonPrimary)('    ?? DAEMON MODE ï¿½ ALWAYS WATCHING ?\n')
+      : t.muted('    ?? HyperClaw Bot ï¿½ AI Gateway v5.0.1 ?\n');
 
     console.log(subtitle);
 
@@ -65,7 +65,7 @@ export class Banner {
     } catch {
       console.log(t.bold('\n  ?? HYPERCLAW\n'));
     }
-    console.log(t.muted('    ?? HyperClaw Bot — AI Gateway • SETUP WIZARD v5.0.1 ?\n'));
+    console.log(t.muted('    ?? HyperClaw Bot ï¿½ AI Gateway ï¿½ SETUP WIZARD v5.0.1 ?\n'));
 
     const boxOpts: any = {
       padding: 1,
@@ -76,7 +76,7 @@ export class Banner {
     if (t.boxBg) boxOpts.backgroundColor = t.boxBg;
 
     const box = boxen(
-      t.a('?') + ' Provider • Channels • Gateway • Identity',
+      t.a('?') + ' Provider ï¿½ Channels ï¿½ Gateway ï¿½ Identity',
       boxOpts
     );
     console.log(box);

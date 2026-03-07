@@ -1,4 +1,4 @@
-import chalk from 'chalk';
+ï»¿import chalk from 'chalk';
 import readline from 'readline';
 import { GatewayManager } from './gateway';
 import { ConfigManager } from './config';
@@ -10,7 +10,7 @@ export class Dashboard {
     await this.drawDashboard();
 
     if (live) {
-      console.log(chalk.hex('#06b6d4')('?? LIVE MODE — Ctrl+C to exit\n'));
+      console.log(chalk.hex('#06b6d4')('?? LIVE MODE ï¿½ Ctrl+C to exit\n'));
       this.startLiveUpdates();
     }
   }
@@ -37,15 +37,15 @@ export class Dashboard {
     const row = (content: string) => {
       const stripped = content.replace(/\x1b\[[0-9;]*m/g, '');
       const pad = Math.max(0, w - stripped.length - 1);
-      return c(`¦ `) + content + ' '.repeat(pad) + c(`¦`);
+      return c(`ï¿½ `) + content + ' '.repeat(pad) + c(`ï¿½`);
     };
 
-    console.log(c(`-${line}¬`));
-    console.log(c(`¦`) + chalk.bold.hex('#06b6d4')(`${'?? HYPERCLAW v5.0.1 — GATEWAY DASHBOARD'.padStart(45).padEnd(w)}`) + c(`¦`));
-    console.log(c(`¦${line}¦`));
-    console.log(row(`${statusDot} Gateway  ${statusText}   ${chalk.gray('¦')}  ws://localhost:${port}   ${chalk.gray('¦')}  Agent: ${c(agent)}`));
-    console.log(row(`${c('?')} Model     ${chalk.gray(model.slice(0, 30))}   ${chalk.gray('¦')}  User: ${c(user)}`));
-    console.log(c(`¦${'-'.repeat(w)}¦`));
+    console.log(c(`-${line}ï¿½`));
+    console.log(c(`ï¿½`) + chalk.bold.hex('#06b6d4')(`${'?? HYPERCLAW v5.0.1 ï¿½ GATEWAY DASHBOARD'.padStart(45).padEnd(w)}`) + c(`ï¿½`));
+    console.log(c(`ï¿½${line}ï¿½`));
+    console.log(row(`${statusDot} Gateway  ${statusText}   ${chalk.gray('ï¿½')}  ws://localhost:${port}   ${chalk.gray('ï¿½')}  Agent: ${c(agent)}`));
+    console.log(row(`${c('?')} Model     ${chalk.gray(model.slice(0, 30))}   ${chalk.gray('ï¿½')}  User: ${c(user)}`));
+    console.log(c(`ï¿½${'-'.repeat(w)}ï¿½`));
     console.log(row(chalk.bold('ACTIVE CHANNELS')));
 
     const chList = (channels || 'cli').split(', ');
@@ -54,7 +54,7 @@ export class Dashboard {
       console.log(row(group));
     }
 
-    console.log(c(`¦${'-'.repeat(w)}¦`));
+    console.log(c(`ï¿½${'-'.repeat(w)}ï¿½`));
     console.log(row(chalk.bold('INSTALLED SKILLS')));
 
     if (installed.length === 0) {
@@ -66,13 +66,13 @@ export class Dashboard {
       }
     }
 
-    console.log(c(`¦${'-'.repeat(w)}¦`));
+    console.log(c(`ï¿½${'-'.repeat(w)}ï¿½`));
     console.log(row(chalk.bold('RECENT ACTIVITY')));
     const now = new Date().toLocaleTimeString();
     console.log(row(`  [${now}] Gateway heartbeat: ${c('OK')}`));
-    console.log(row(`  [${now}] AGENTS.md loaded — rules active`));
+    console.log(row(`  [${now}] AGENTS.md loaded ï¿½ rules active`));
     console.log(row(`  [${now}] Channels monitoring...`));
-    console.log(c(`¦${'-'.repeat(w)}¦`));
+    console.log(c(`ï¿½${'-'.repeat(w)}ï¿½`));
     console.log(row(chalk.gray('Commands: [d] ') + chalk.red('?? daemon') + chalk.gray('  [h] hub  [g] gateway  [m] memory  [q] quit')));
     console.log(c(`L${line}-\n`));
   }

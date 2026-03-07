@@ -1,17 +1,17 @@
-# HyperClaw macOS Menu Bar App
+ï»¿# HyperClaw macOS Menu Bar App
 
-Production Electron menu bar app for macOS. Single desktop choice — use this, not `macos-menubar` (Tauri skeleton, deprecated).
+Production Electron menu bar app for macOS. Single desktop choice ï¿½ use this, not `macos-menubar` (Tauri skeleton, deprecated).
 
 ## Features
 
-- **Tray** — Menu bar icon, connection status
-- **Connect / Pair** — Auth UI: gateway URL + token, test connection
-- **Chat** — Persistent conversation (stored locally)
-- **Dashboard** — Opens gateway web dashboard
-- **Devices** — View connected mobile nodes (iOS/Android)
-- **Voice PTT** — Push-to-talk, sends to chat
-- **Settings** — Gateway URL, auth token, launch at login, notifications
-- **Shell commands** — hyperclaw status, hyperclaw doctor
+- **Tray** ï¿½ Menu bar icon, connection status
+- **Connect / Pair** ï¿½ Auth UI: gateway URL + token, test connection
+- **Chat** ï¿½ Persistent conversation (stored locally)
+- **Dashboard** ï¿½ Opens gateway web dashboard
+- **Devices** ï¿½ View connected mobile nodes (iOS/Android)
+- **Voice PTT** ï¿½ Push-to-talk, sends to chat
+- **Settings** ï¿½ Gateway URL, auth token, launch at login, notifications
+- **Shell commands** ï¿½ hyperclaw status, hyperclaw doctor
 
 ## Run
 

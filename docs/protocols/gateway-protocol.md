@@ -1,4 +1,4 @@
-# Gateway Protocol — HyperClaw
+﻿# Gateway Protocol — HyperClaw
 
 The Gateway WebSocket is the control plane for HyperClaw. All clients (CLI, web UI, macOS app, iOS/Android nodes) connect over WebSocket.
 

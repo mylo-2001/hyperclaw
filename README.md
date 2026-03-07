@@ -1,4 +1,4 @@
-<div align="center">
+﻿<div align="center">
   <img src="assets/icon.png" width="140" alt="HyperClaw">
   <h1>🦅 HyperClaw</h1>
   <p><strong>Your personal AI assistant — running on your hardware, talking on your channels.</strong></p>

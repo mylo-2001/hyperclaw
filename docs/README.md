@@ -1,4 +1,4 @@
-# HyperClaw Documentation
+﻿# HyperClaw Documentation
 
 For a curated index of every page, see [Docs Hubs](docs-hubs.md).
 

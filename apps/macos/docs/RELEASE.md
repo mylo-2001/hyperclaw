@@ -1,11 +1,11 @@
-# macOS App Release & Auto-Update
+ï»¿# macOS App Release & Auto-Update
 
 ## Release Checklist (OpenClaw-level hardening)
 
 ### Pre-release
 
-- [ ] Run `npm run macos:test` — unit tests pass
-- [ ] Run `npm run macos:build` — build succeeds locally
+- [ ] Run `npm run macos:test` ï¿½ unit tests pass
+- [ ] Run `npm run macos:build` ï¿½ build succeeds locally
 - [ ] Verify Connect tab: gateway URL, auth token, pairing
 - [ ] Verify Chat tab: send message, receive response, session restore
 - [ ] Verify Devices tab: shows paired nodes (if any)
@@ -35,7 +35,7 @@ The app uses `electron-updater` with GitHub provider. When packaged:
 
 For distribution outside the Mac App Store:
 
-1. **Apple Developer Account** – required
+1. **Apple Developer Account** ï¿½ required
 2. **Certificates**: `Developer ID Application`
 3. **Export before build**:
    ```bash
