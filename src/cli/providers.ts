@@ -166,7 +166,7 @@ export const PROVIDERS: Provider[] = [
     authLabel: 'Google AI API Key',
     authHint: 'aistudio.google.com/app/apikey',
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
-    supportsTranscription: true,  // Gemini multimodal audio
+    supportsTranscription: true,  // Voice transcription uses native generateContent endpoint, not OpenAI-compat baseUrl
     models: [
       { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro (preview)', contextK: 1000, reasoning: true, flagship: true },
       { id: 'gemini-3-pro-image-preview', name: 'Gemini 3 Pro Image (preview)', contextK: 1000, vision: true },
