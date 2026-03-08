@@ -1694,9 +1694,10 @@ export class HyperClawWizard {
 
     const finalSkills = skillsPatch.apiKeys || skillsPatch.vtApiKey ? skillsPatch : (current?.skills || { installed: [] });
 
+    const pkgVersion = await fs.readJson(path.join(__dirname, '../package.json')).then((p: any) => p.version).catch(() => '5.1.1');
     await this.config.save({
       ...current,
-      version: '5.1.0',
+      version: pkgVersion,
       workspaceName: data.workspaceName,
       provider: data.providerConfig,
       providers: data.providers || (data.providerConfig ? [data.providerConfig] : []),
@@ -1798,7 +1799,7 @@ export class HyperClawWizard {
     if (options.jsonOutput) {
       const result = {
         ok: true,
-        version: '5.1.0',
+        version: pkgVersion,
         provider: data.providerConfig?.providerId,
         model: data.providerConfig?.modelId,
         gateway: data.gatewayConfig ? {
