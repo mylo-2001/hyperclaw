@@ -184,18 +184,35 @@ export async function runChat(opts: {
           rawModel = newModelArg;
           engineOpts.model = rawModel.startsWith('ollama/') ? rawModel.slice(7) : rawModel;
           console.log(chalk.green(`\n  ✔ Model switched to: ${chalk.bold(rawModel)}\n`));
+        } else if (providerMeta?.models?.length) {
+          // Arrow-key selection via inquirer
+          rl.pause();
+          try {
+            const inquirer = (await import('inquirer')).default;
+            const defaultIdx = Math.max(0, providerMeta.models.findIndex((m: any) => m.id === rawModel));
+            const { selected } = await inquirer.prompt([{
+              type: 'list',
+              name: 'selected',
+              message: chalk.cyan('Select model') + chalk.gray(' (↑↓ arrows, Enter to confirm):'),
+              choices: providerMeta.models.map((m: any) => ({
+                name: `${m.id}  ${chalk.gray(m.name)}`,
+                value: m.id,
+                short: m.id,
+              })),
+              default: defaultIdx,
+              prefix: '  ',
+            }]);
+            rawModel = selected;
+            engineOpts.model = rawModel.startsWith('ollama/') ? rawModel.slice(7) : rawModel;
+            console.log(chalk.green(`\n  ✔ Model switched to: ${chalk.bold(rawModel)}\n`));
+          } catch {
+            console.log(chalk.gray('\n  Use: /model <model-id>\n'));
+          } finally {
+            rl.resume();
+          }
         } else {
           console.log(chalk.gray(`\n  Current model: ${chalk.bold(rawModel)}`));
-          if (providerMeta?.models?.length) {
-            console.log(chalk.gray(`  Provider: ${providerMeta.displayName}\n`));
-            for (const m of providerMeta.models) {
-              const cur = m.id === rawModel;
-              console.log(`  ${cur ? chalk.cyan('▶') : chalk.gray('•')} ${cur ? chalk.bold.cyan(m.id) : m.id}  ${chalk.gray(m.name)}`);
-            }
-            console.log(chalk.gray('\n  Example: /model gemini-2.0-flash\n'));
-          } else {
-            console.log(chalk.gray('\n  Example: /model gemini-2.0-flash\n'));
-          }
+          console.log(chalk.gray('  Use: /model <model-id>\n'));
         }
         prompt(); return;
       }

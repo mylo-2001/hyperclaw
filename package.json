@@ -1,6 +1,6 @@
 {
   "name": "hyperclaw",
-  "version": "5.1.8",
+  "version": "5.1.9",
   "description": "⚡ HyperClaw — AI Gateway Platform. The Lobster Evolution 🦅",
   "main": "dist/run-main.js",
   "bin": {
