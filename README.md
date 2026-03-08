@@ -176,6 +176,41 @@
   <img src="assets/screenshot-help.png" width="700" alt="HyperClaw --help output showing all commands">
 </div>
 
+---
+
+### System status (`hyperclaw status`)
+
+<div align="center">
+  <img src="assets/screenshot-status.png" width="700" alt="HyperClaw status output">
+</div>
+
+---
+
+### Health check (`hyperclaw health`)
+
+<div align="center">
+  <img src="assets/screenshot-health.png" width="700" alt="HyperClaw health check output">
+</div>
+
+---
+
+### Security tools (`hyperclaw security`)
+
+<div align="center">
+  <img src="assets/screenshot-security.png" width="700" alt="HyperClaw security tools">
+</div>
+
+---
+
+### OSINT / Ethical Hacking mode (`hyperclaw osint`)
+
+<div align="center">
+  <img src="assets/screenshot-osint.png" width="700" alt="HyperClaw OSINT mode with recon, bugbounty, pentest workflows">
+</div>
+
+> Passive recon, bug bounty, pentest, digital footprint — all from your terminal.  
+> For authorized security research only.
+
 <div align="right"><a href="#top">▲ Back to top</a></div>
 
 ---
