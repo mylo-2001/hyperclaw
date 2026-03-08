@@ -1,9 +1,10 @@
-<a name="top">
+<a name="top"></a>
+
 # Security Policy
 
 <div align="center">
 
-[🏠 Main README](../README.md) &nbsp;•&nbsp; [📚 Docs](docs/README.md)
+[🏠 Main README](README.md) &nbsp;•&nbsp; [📚 Docs](docs/README.md)
 
 </div>
 
@@ -155,7 +156,7 @@ See [`docs/security.md`](./docs/security.md) for:
 
 <div align="center">
 
-[🏠 Main README](../README.md) &nbsp;•&nbsp; [📚 Docs](docs/README.md)
+[🏠 Main README](README.md) &nbsp;•&nbsp; [📚 Docs](docs/README.md)
 
 </div>
 <div align="right"><a href="#top">▲ Back to top</a></div>

@@ -1,4 +1,5 @@
-<a name="top">
+<a name="top"></a>
+
 # Contributing to HyperClaw
 
 <div align="center">
