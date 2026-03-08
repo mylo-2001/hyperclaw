@@ -26,6 +26,7 @@
   },
   "scripts": {
     "build": "tsdown --config tsdown.config.mjs",
+    "postbuild": "node scripts/fix-init-paths.mjs",
     "build:tsc": "tsc --outDir dist",
     "start": "node dist/run-main.js",
     "dev": "ts-node src/cli/run-main.ts",
