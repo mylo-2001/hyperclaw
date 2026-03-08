@@ -76,8 +76,8 @@ export const PROVIDERS: Provider[] = [
     baseUrl: 'https://ai-gateway.vercel.sh/v1',
     models: [
       { id: 'openai/gpt-4o', name: 'GPT-4o (via Vercel)', contextK: 128, flagship: true },
-      { id: 'anthropic/claude-sonnet-4-5', name: 'Claude Sonnet (via Vercel)', contextK: 200 },
-      { id: 'google/gemini-2.0-flash', name: 'Gemini 2.0 Flash (via Vercel)', contextK: 1000, fast: true },
+      { id: 'anthropic/claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet (via Vercel)', contextK: 200 },
+      { id: 'google/gemini-2.0-flash-001', name: 'Gemini 2.0 Flash (via Vercel)', contextK: 1000, fast: true },
     ]
   },
   {
@@ -100,20 +100,29 @@ export const PROVIDERS: Provider[] = [
     baseUrl: 'https://openrouter.ai/api/v1',
     supportsTranscription: true,  // routes to OpenAI/Google
     models: [
+      // Auto-routing
       { id: 'openrouter/auto', name: 'Auto (best available)', contextK: 200, flagship: true },
-      { id: 'anthropic/claude-opus-4-6', name: 'Claude Opus 4.6', contextK: 200, reasoning: true },
-      { id: 'anthropic/claude-sonnet-4-6', name: 'Claude Sonnet 4.6', contextK: 200 },
-      { id: 'openai/gpt-4.1', name: 'GPT-4.1', contextK: 1000, vision: true },
+      // Anthropic — verified OpenRouter slugs
+      { id: 'anthropic/claude-opus-4-5', name: 'Claude Opus 4.5', contextK: 200, reasoning: true },
+      { id: 'anthropic/claude-sonnet-4-5', name: 'Claude Sonnet 4.5', contextK: 200 },
+      { id: 'anthropic/claude-3-7-sonnet', name: 'Claude 3.7 Sonnet', contextK: 200, reasoning: true },
+      { id: 'anthropic/claude-3-5-haiku', name: 'Claude 3.5 Haiku', contextK: 200, fast: true },
+      // OpenAI — verified slugs
       { id: 'openai/gpt-4o', name: 'GPT-4o', contextK: 128, vision: true },
-      { id: 'openai/o4-mini', name: 'o4-mini (reasoning)', contextK: 200, reasoning: true, fast: true },
-      { id: 'openai/o3', name: 'o3 (reasoning)', contextK: 200, reasoning: true },
-      { id: 'google/gemini-2.5-pro-preview-03-25', name: 'Gemini 2.5 Pro', contextK: 1000, reasoning: true },
-      { id: 'google/gemini-2.0-flash', name: 'Gemini 2.0 Flash', contextK: 1000, fast: true },
-      { id: 'x-ai/grok-3-beta', name: 'Grok 3', contextK: 131, reasoning: true },
+      { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini', contextK: 128, fast: true },
+      { id: 'openai/o3-mini', name: 'o3-mini (reasoning)', contextK: 200, reasoning: true, fast: true },
+      // Google — verified slugs
+      { id: 'google/gemini-2.5-pro-preview', name: 'Gemini 2.5 Pro', contextK: 1000, reasoning: true },
+      { id: 'google/gemini-2.0-flash-001', name: 'Gemini 2.0 Flash', contextK: 1000, fast: true },
+      // xAI — verified slug
+      { id: 'x-ai/grok-3', name: 'Grok 3', contextK: 131, reasoning: true },
+      // DeepSeek — verified slug
       { id: 'deepseek/deepseek-r1', name: 'DeepSeek R1', contextK: 64, reasoning: true },
+      { id: 'deepseek/deepseek-chat-v3-0324', name: 'DeepSeek V3', contextK: 64 },
+      // Meta Llama — verified slug
       { id: 'meta-llama/llama-3.3-70b-instruct', name: 'Llama 3.3 70B', contextK: 128 },
-      { id: 'qwen/qwen-2.5-72b-instruct', name: 'Qwen 2.5 72B', contextK: 128 },
-      { id: 'mistralai/mistral-large', name: 'Mistral Large', contextK: 128 },
+      // Mistral — verified slug
+      { id: 'mistralai/mistral-large-2411', name: 'Mistral Large', contextK: 128 },
     ]
   },
   {
@@ -289,7 +298,7 @@ export const PROVIDERS: Provider[] = [
     authHint: 'github.com/settings/tokens',
     models: [
       { id: 'gpt-4o', name: 'GPT-4o (Copilot)', contextK: 128, flagship: true },
-      { id: 'claude-sonnet-4-5', name: 'Claude Sonnet (Copilot)', contextK: 200 },
+      { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet (Copilot)', contextK: 200 },
     ]
   },
   {
@@ -359,7 +368,7 @@ export const PROVIDERS: Provider[] = [
     authType: 'api_key',
     authLabel: 'Cohere API Key',
     authHint: 'dashboard.cohere.com/api-keys',
-    baseUrl: 'https://api.cohere.com/compatibility/v1',
+    baseUrl: 'https://api.cohere.ai/compatibility/v1',
     models: [
       { id: 'command-a-03-2025', name: 'Command A (Mar 2025)', contextK: 256, flagship: true },
       { id: 'command-a-vision-07-2025', name: 'Command A Vision (Jul 2025)', contextK: 256, vision: true },
