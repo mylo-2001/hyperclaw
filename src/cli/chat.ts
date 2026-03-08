@@ -179,7 +179,7 @@ export async function runChat(opts: {
       if (text === '/help') { printHelp(); prompt(); return; }
       if (text === '/skills') { await printSkills(); prompt(); return; }
       if (text === '/model' || text.startsWith('/model ')) {
-        const newModelArg = text.slice(7).trim();
+        const newModelArg = text.slice(7).trim().replace(/^<|>$/g, '');
         if (newModelArg) {
           rawModel = newModelArg;
           engineOpts.model = rawModel.startsWith('ollama/') ? rawModel.slice(7) : rawModel;
@@ -192,9 +192,9 @@ export async function runChat(opts: {
               const cur = m.id === rawModel;
               console.log(`  ${cur ? chalk.cyan('▶') : chalk.gray('•')} ${cur ? chalk.bold.cyan(m.id) : m.id}  ${chalk.gray(m.name)}`);
             }
-            console.log(chalk.gray('\n  Switch: /model <model-id>\n'));
+            console.log(chalk.gray('\n  Example: /model gemini-2.0-flash\n'));
           } else {
-            console.log(chalk.gray('  Switch: /model <model-id>\n'));
+            console.log(chalk.gray('\n  Example: /model gemini-2.0-flash\n'));
           }
         }
         prompt(); return;
