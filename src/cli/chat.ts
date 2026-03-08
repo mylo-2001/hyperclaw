@@ -20,7 +20,7 @@ function printHeader(model: string, sessionId: string): void {
   console.log(chalk.gray(`  Model: ${model}  ·  Session: ${sessionId}`));
   console.log(DIVIDER);
   console.log(chalk.gray('  Type your message and press Enter.'));
-  console.log(chalk.gray('  Commands: /exit  /clear  /model  /skills  /help'));
+  console.log(chalk.gray('  Commands: /exit  /clear  /model [id]  /skills  /help'));
   console.log(DIVIDER);
   console.log();
 }
@@ -30,7 +30,8 @@ function printHelp(): void {
   console.log(chalk.bold('  Commands:'));
   console.log(`  ${chalk.cyan('/exit')}    — quit the chat`);
   console.log(`  ${chalk.cyan('/clear')}   — clear conversation history`);
-  console.log(`  ${chalk.cyan('/model')}   — show current model`);
+  console.log(`  ${chalk.cyan('/model')}        — show current model & available models`);
+  console.log(`  ${chalk.cyan('/model <id>')}   — switch to a different model`);
   console.log(`  ${chalk.cyan('/skills')}  — list installed skills + how to add more`);
   console.log(`  ${chalk.cyan('/help')}    — show this help`);
   console.log();
@@ -97,7 +98,7 @@ export async function runChat(opts: {
   const provider: 'anthropic' | 'openrouter' | 'custom' = isAnthropicVariant ? 'anthropic'
     : (cfg?.provider?.providerId === 'custom' || isLocal || CUSTOM_IDS.has(cfg?.provider?.providerId ?? '')) ? 'custom' : 'openrouter';
 
-  const rawModel = opts.model || cfg?.provider?.modelId || 'claude-sonnet-4-5';
+  let rawModel = opts.model || cfg?.provider?.modelId || 'claude-sonnet-4-5';
   const model = rawModel.startsWith('ollama/') ? rawModel.slice(7) : rawModel;
   const resolvedBaseUrl = cfg?.provider?.baseUrl || providerMeta?.baseUrl || (isLocal ? 'http://localhost:11434/v1' : undefined);
 
@@ -177,8 +178,25 @@ export async function runChat(opts: {
       }
       if (text === '/help') { printHelp(); prompt(); return; }
       if (text === '/skills') { await printSkills(); prompt(); return; }
-      if (text === '/model') {
-        console.log(chalk.gray(`\n  Model: ${rawModel}\n`));
+      if (text === '/model' || text.startsWith('/model ')) {
+        const newModelArg = text.slice(7).trim();
+        if (newModelArg) {
+          rawModel = newModelArg;
+          engineOpts.model = rawModel.startsWith('ollama/') ? rawModel.slice(7) : rawModel;
+          console.log(chalk.green(`\n  ✔ Model switched to: ${chalk.bold(rawModel)}\n`));
+        } else {
+          console.log(chalk.gray(`\n  Current model: ${chalk.bold(rawModel)}`));
+          if (providerMeta?.models?.length) {
+            console.log(chalk.gray(`  Provider: ${providerMeta.displayName}\n`));
+            for (const m of providerMeta.models) {
+              const cur = m.id === rawModel;
+              console.log(`  ${cur ? chalk.cyan('▶') : chalk.gray('•')} ${cur ? chalk.bold.cyan(m.id) : m.id}  ${chalk.gray(m.name)}`);
+            }
+            console.log(chalk.gray('\n  Switch: /model <model-id>\n'));
+          } else {
+            console.log(chalk.gray('  Switch: /model <model-id>\n'));
+          }
+        }
         prompt(); return;
       }
       if (text === '/clear') {

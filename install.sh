@@ -41,7 +41,7 @@ echo "🔗 Installing globally..."
 npm install -g .
 
 echo ""
-echo "✅ HyperClaw v5.1.6 installed!"
+echo "✅ HyperClaw v5.1.7 installed!"
 echo ""
 echo "  Start setup:   hyperclaw onboard --install-daemon"
 echo "  Quick start:   hyperclaw quickstart"
