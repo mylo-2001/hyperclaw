@@ -1,3 +1,4 @@
+<a name="top"></a>
 <div align="center">
   <img src="assets/icon.png" width="140" alt="HyperClaw">
   <h1>🦅 HyperClaw</h1>
@@ -34,6 +35,26 @@
 
 ---
 
+## 📋 Table of Contents
+
+| | |
+|---|---|
+| [Why HyperClaw?](#why-hyperclaw) | [Use cases](#use-cases) |
+| [🚀 Get started in 60 seconds](#-get-started-in-60-seconds) | [▶️ Running your bot](#️-running-your-bot) |
+| [Channels](#channels) | [Architecture](#architecture) |
+| [AI Models](#ai-models) | [Configuration](#configuration) |
+| [Security defaults](#security-defaults) | [Features](#features) |
+| [Apps (optional)](#apps-optional) | [Integrations (Skills & Tools)](#integrations-skills--tools) |
+| [Agent-to-Agent](#agent-to-agent-sessions-tools) | [Terminal chat](#terminal-chat-hyperclaw-chat) |
+| [Chat commands](#chat-commands) | [SkillHub](#skillhub) |
+| [HyperClaw Bot commands](#hyperclaw-bot-commands) | [From source](#from-source) |
+| [Docker](#docker) | [Monorepo structure](#monorepo-structure) |
+| [Documentation](#documentation) | [Contributing](#contributing) |
+| [Community](#community) | [License](#license) |
+
+<div align="right"><a href="#top">▲ Back to top</a></div>
+---
+
 ## Why HyperClaw?
 
 | Feature | HyperClaw | Cloud assistants | Self-hosted alternatives |
@@ -51,6 +72,7 @@
 | One-command wizard (`hyperclaw onboard`) | ✅ | — | ❌ |
 | OSINT / Ethical hacking mode (`hyperclaw osint`) | ✅ | ❌ | ❌ |
 
+<div align="right"><a href="#top">▲ Back to top</a></div>
 ---
 
 ## Use cases
@@ -66,6 +88,7 @@
 
 > HyperClaw runs **locally on your machine** — your data, your keys, your control.
 
+<div align="right"><a href="#top">▲ Back to top</a></div>
 ---
 
 ## 🚀 Get started in 60 seconds
@@ -305,6 +328,7 @@ brew install --cask iterm2
 
 </details>
 
+<div align="right"><a href="#top">▲ Back to top</a></div>
 ---
 
 ## Channels
@@ -350,6 +374,7 @@ Add a channel:
 hyperclaw channels add telegram
 ```
 
+<div align="right"><a href="#top">▲ Back to top</a></div>
 ---
 
 ## Architecture
@@ -374,6 +399,7 @@ Google Chat / Matrix / IRC / Mattermost / Teams / Nostr / WebChat
   OpenAI…)
 ```
 
+<div align="right"><a href="#top">▲ Back to top</a></div>
 ---
 
 ## AI Models
@@ -401,6 +427,7 @@ HyperClaw supports 20+ providers. Pick one in the wizard or set `provider.provid
 | **LM Studio** | `lmstudio` | Local models — enable local server |
 | **Custom** | `custom` | Any OpenAI-compatible `/chat/completions` |
 
+<div align="right"><a href="#top">▲ Back to top</a></div>
 ---
 
 ## Configuration
@@ -475,6 +502,7 @@ Isolate DM sessions per channel/peer (useful when multiple people share one gate
 }
 ```
 
+<div align="right"><a href="#top">▲ Back to top</a></div>
 ---
 
 ## Security defaults
@@ -499,6 +527,7 @@ hyperclaw security audit --json    # machine-readable output
 
 Full guide: [docs/security.md](docs/security.md)
 
+<div align="right"><a href="#top">▲ Back to top</a></div>
 ---
 
 ## Features
@@ -520,6 +549,7 @@ Full guide: [docs/security.md](docs/security.md)
 - **Docker** — sandboxed agent execution, browser tools with Puppeteer
 - **Tailscale** — Serve/Funnel for remote access without port forwarding
 
+<div align="right"><a href="#top">▲ Back to top</a></div>
 ---
 
 ## Apps (optional)
@@ -545,6 +575,7 @@ The Gateway alone delivers a great experience. Apps add extra features:
 - Camera, screen capture, device commands
 - Notifications, contacts, calendar, photos
 
+<div align="right"><a href="#top">▲ Back to top</a></div>
 ---
 
 ## Development channels
@@ -563,6 +594,7 @@ hyperclaw update --channel dev      # moving head of main
 | `beta` | `beta` | Prerelease — new features, may have rough edges |
 | `dev` | `dev` | Latest main branch (when published) |
 
+<div align="right"><a href="#top">▲ Back to top</a></div>
 ---
 
 ## Integrations (Skills & Tools)
@@ -678,6 +710,7 @@ OP_SERVICE_ACCOUNT_TOKEN=ops_xxxx
 
 All keys are stored locally in `~/.hyperclaw/.env` — never sent anywhere except the respective service.
 
+<div align="right"><a href="#top">▲ Back to top</a></div>
 ---
 
 ## Agent-to-Agent (sessions tools)
@@ -695,6 +728,7 @@ Example — ask the agent:
 "List all connected sessions and send a briefing to the first one"
 ```
 
+<div align="right"><a href="#top">▲ Back to top</a></div>
 ---
 
 ## Terminal chat (`hyperclaw chat`)
@@ -720,6 +754,7 @@ hyperclaw chat --model claude-opus-4-6  # override model
 
 Responses stream token-by-token as they are generated. The full conversation history is kept for the entire session (true multi-turn context).
 
+<div align="right"><a href="#top">▲ Back to top</a></div>
 ---
 
 ## Chat commands
@@ -818,6 +853,7 @@ The agent can create fully custom skills on demand:
 
 Skills are saved to `~/.hyperclaw/workspace/skills/{id}/` and loaded on the next message.
 
+<div align="right"><a href="#top">▲ Back to top</a></div>
 ---
 
 ## HyperClaw Bot commands
@@ -857,6 +893,7 @@ node dist/run-main.js onboard
 npm run gateway:watch
 ```
 
+<div align="right"><a href="#top">▲ Back to top</a></div>
 ---
 
 ## Docker
@@ -889,6 +926,7 @@ docker compose --profile full up -d
 
 See [`docker-compose.yml`](docker-compose.yml) and [`env.example`](env.example) for all options.
 
+<div align="right"><a href="#top">▲ Back to top</a></div>
 ---
 
 ## Monorepo structure
@@ -927,6 +965,7 @@ hyperclaw/
 └── docs/                   # Full documentation
 ```
 
+<div align="right"><a href="#top">▲ Back to top</a></div>
 ---
 
 ## Documentation
@@ -978,6 +1017,7 @@ hyperclaw/
 | Troubleshooting | [docs/troubleshooting.md](docs/troubleshooting.md) |
 | Contributing | [docs/contributing.md](docs/contributing.md) |
 
+<div align="right"><a href="#top">▲ Back to top</a></div>
 ---
 
 ## Contributing
@@ -987,6 +1027,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines. AI/vibe-coded PRs welcome
 Found a bug? [Open an issue](https://github.com/mylo-2001/hyperclaw/issues/new/choose).  
 Found a vulnerability? Email [securityhyperclaw.ai@gmail.com](mailto:securityhyperclaw.ai@gmail.com) — we respond within 48 h.
 
+<div align="right"><a href="#top">▲ Back to top</a></div>
 ---
 
 ## Community
@@ -1007,6 +1048,7 @@ Found a vulnerability? Email [securityhyperclaw.ai@gmail.com](mailto:securityhyp
 
 </div>
 
+<div align="right"><a href="#top">▲ Back to top</a></div>
 ---
 
 ## License
