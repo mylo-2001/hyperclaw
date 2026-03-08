@@ -661,6 +661,101 @@ export function getBuiltinTools(): Tool[] {
       }
     },
     {
+      name: 'set_api_key',
+      description: 'Save an API key to the HyperClaw config. Use this when the user provides an API key for a provider (google, anthropic, openai, openrouter, xai, etc.) or a service (spotify, github, weather, etc.). Provider keys update provider.apiKey; service keys go into skills.apiKeys. Always confirm with the user before saving.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          key: { type: 'string', description: 'Key name, e.g. "google", "GOOGLE_AI_API_KEY", "spotify", "WEATHER_API_KEY"' },
+          value: { type: 'string', description: 'The API key / token value' }
+        },
+        required: ['key', 'value']
+      },
+      handler: async (input) => {
+        const key = String(input.key || '').trim();
+        const value = String(input.value || '').trim();
+        if (!key || !value) return 'Both key and value are required.';
+
+        const cfgPath = path.join(HC_DIR, 'hyperclaw.json');
+        const cfg = await fs.readJson(cfgPath).catch(() => ({}));
+
+        const PROVIDER_KEYS = new Set([
+          'GOOGLE_AI_API_KEY', 'ANTHROPIC_API_KEY', 'OPENROUTER_API_KEY',
+          'OPENAI_API_KEY', 'XAI_API_KEY',
+          'google', 'anthropic', 'openrouter', 'openai', 'xai',
+          'groq', 'mistral', 'deepseek', 'perplexity', 'minimax', 'moonshot', 'qwen',
+        ]);
+
+        let saved: string;
+        if (PROVIDER_KEYS.has(key) || key === cfg?.provider?.providerId) {
+          cfg.provider = { ...(cfg.provider || {}), apiKey: value };
+          saved = 'provider API key (provider.apiKey)';
+        } else {
+          cfg.skills = cfg.skills || { installed: [] };
+          cfg.skills.apiKeys = { ...(cfg.skills.apiKeys || {}), [key]: value };
+          saved = `service key "${key}" (skills.apiKeys)`;
+        }
+
+        await fs.ensureDir(HC_DIR);
+        await fs.writeJson(cfgPath, cfg, { spaces: 2 });
+        return `✔ Saved ${saved}. Restart the chat with "hyperclaw chat" to use the new key.`;
+      }
+    },
+    {
+      name: 'update_identity',
+      description: 'Update the agent\'s identity: system prompt, name, personality, language, or rules. Use when the user says things like "from now on your name is X", "add this rule", "change your personality to Y", "update your system prompt". Changes are saved to config and take full effect on next chat session.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          systemPrompt: { type: 'string', description: 'Replace the full system prompt with this text' },
+          agentName: { type: 'string', description: 'New agent name' },
+          personality: { type: 'string', description: 'New personality description' },
+          language: { type: 'string', description: 'Language code or name, e.g. "el", "en", "Greek"' },
+          appendRule: { type: 'string', description: 'Append a new rule to the existing rules list' },
+          userName: { type: 'string', description: 'User\'s preferred name' }
+        }
+      },
+      handler: async (input) => {
+        const cfgPath = path.join(HC_DIR, 'hyperclaw.json');
+        const cfg = await fs.readJson(cfgPath).catch(() => ({}));
+        const identity = cfg.identity || {};
+        const updated: string[] = [];
+
+        if (input.systemPrompt) {
+          identity.systemPrompt = String(input.systemPrompt).trim();
+          updated.push('systemPrompt');
+        }
+        if (input.agentName) {
+          identity.agentName = String(input.agentName).trim();
+          updated.push('agentName');
+        }
+        if (input.personality) {
+          identity.personality = String(input.personality).trim();
+          updated.push('personality');
+        }
+        if (input.language) {
+          identity.language = String(input.language).trim();
+          updated.push('language');
+        }
+        if (input.userName) {
+          identity.userName = String(input.userName).trim();
+          updated.push('userName');
+        }
+        if (input.appendRule) {
+          const rule = String(input.appendRule).trim();
+          identity.rules = identity.rules ? `${identity.rules}\n- ${rule}` : `- ${rule}`;
+          updated.push('rules');
+        }
+
+        if (updated.length === 0) return 'Nothing to update — provide at least one field.';
+
+        cfg.identity = identity;
+        await fs.ensureDir(HC_DIR);
+        await fs.writeJson(cfgPath, cfg, { spaces: 2 });
+        return `✔ Identity updated: ${updated.join(', ')}. Restart the chat ("hyperclaw chat") for full effect.`;
+      }
+    },
+    {
       name: 'run_command',
       description: 'Run a safe shell command (read-only: ls, cat, echo, date, whoami, pwd)',
       input_schema: {

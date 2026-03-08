@@ -115,6 +115,7 @@ export const PROVIDERS: Provider[] = [
     authType: 'api_key',
     authLabel: 'OpenAI API Key',
     authHint: 'platform.openai.com/api-keys',
+    baseUrl: 'https://api.openai.com/v1',
     supportsTranscription: true,  // Whisper API
     models: [
       { id: 'gpt-4o', name: 'GPT-4o', contextK: 128, vision: true, flagship: true },
@@ -129,6 +130,7 @@ export const PROVIDERS: Provider[] = [
     authType: 'api_key',
     authLabel: 'Google AI API Key',
     authHint: 'aistudio.google.com/app/apikey',
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
     supportsTranscription: true,  // Gemini multimodal audio
     models: [
       { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', contextK: 1000, reasoning: true, flagship: true },
@@ -142,6 +144,7 @@ export const PROVIDERS: Provider[] = [
     authType: 'api_key',
     authLabel: 'xAI API Key',
     authHint: 'console.x.ai',
+    baseUrl: 'https://api.x.ai/v1',
     models: [
       { id: 'grok-3', name: 'Grok 3', contextK: 131, reasoning: true, flagship: true },
       { id: 'grok-3-mini', name: 'Grok 3 Mini', contextK: 131, fast: true },
@@ -153,6 +156,7 @@ export const PROVIDERS: Provider[] = [
     authType: 'api_key',
     authLabel: 'MiniMax API Key',
     authHint: 'platform.minimaxi.com',
+    baseUrl: 'https://api.minimaxi.chat/v1',
     models: [
       { id: 'MiniMax-Text-01', name: 'MiniMax Text-01', contextK: 1000, flagship: true },
       { id: 'abab6.5s-chat', name: 'ABAB 6.5S', contextK: 245 },
@@ -164,6 +168,7 @@ export const PROVIDERS: Provider[] = [
     authType: 'api_key',
     authLabel: 'Moonshot API Key',
     authHint: 'platform.moonshot.cn',
+    baseUrl: 'https://api.moonshot.cn/v1',
     models: [
       { id: 'moonshot-v1-128k', name: 'Moonshot v1 128K', contextK: 128, flagship: true },
       { id: 'moonshot-v1-8k', name: 'Moonshot v1 8K', contextK: 8, fast: true },
@@ -175,6 +180,7 @@ export const PROVIDERS: Provider[] = [
     authType: 'api_key',
     authLabel: 'DashScope API Key',
     authHint: 'dashscope.aliyuncs.com',
+    baseUrl: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
     models: [
       { id: 'qwen-max', name: 'Qwen Max', contextK: 32, flagship: true },
       { id: 'qwen-plus', name: 'Qwen Plus', contextK: 128 },
