@@ -679,13 +679,43 @@ cfgCmd.command('show')
   });
 
 cfgCmd.command('set-key <KEY=value>')
-  .description('Set an API key or config value')
+  .description('Set provider API key or config value.\n  Examples:\n    hyperclaw config set-key GOOGLE_AI_API_KEY=AIza...\n    hyperclaw config set-key anthropic=sk-ant-...\n    hyperclaw config set-key OPENROUTER_API_KEY=sk-or-...')
   .action(async (kv) => {
-    const [key, ...rest] = kv.split('=');
-    const value = rest.join('=');
-    const store = new AuthStore();
-    store.setProviderKey(key, value);
-    console.log(chalk.hex('#06b6d4')(`\n  ✔  Set ${key}\n`));
+    const eqIdx = kv.indexOf('=');
+    if (eqIdx === -1) {
+      console.log(chalk.red('\n  Usage: hyperclaw config set-key KEY=value\n'));
+      console.log(chalk.gray('  Example: hyperclaw config set-key GOOGLE_AI_API_KEY=AIza...\n'));
+      process.exit(1);
+    }
+    const key = kv.slice(0, eqIdx).trim();
+    const value = kv.slice(eqIdx + 1).trim();
+    if (!value) {
+      console.log(chalk.red('\n  Value cannot be empty.\n'));
+      process.exit(1);
+    }
+
+    // Known provider key names (env-style and provider-id-style)
+    const PROVIDER_KEY_NAMES = new Set([
+      'GOOGLE_AI_API_KEY', 'ANTHROPIC_API_KEY', 'OPENROUTER_API_KEY',
+      'OPENAI_API_KEY', 'XAI_API_KEY',
+      'google', 'anthropic', 'openrouter', 'openai', 'xai',
+    ]);
+
+    const config = new ConfigManager();
+    const cfg = await config.load();
+
+    if (PROVIDER_KEY_NAMES.has(key) || key === cfg?.provider?.providerId) {
+      // Save directly to provider.apiKey in config.json — where resolveProviderApiKey reads it
+      const next = { ...cfg, provider: { ...(cfg?.provider || {}), apiKey: value } };
+      await config.save(next);
+      console.log(chalk.hex('#06b6d4')(`\n  ✔  Provider API key saved to config.\n`));
+      console.log(chalk.gray('  Run: hyperclaw chat  — to use the updated key.\n'));
+    } else {
+      // Fallback: save to AuthStore for other/unknown keys
+      const store = new AuthStore();
+      store.setProviderKey(key, value);
+      console.log(chalk.hex('#06b6d4')(`\n  ✔  Set ${key}\n`));
+    }
     process.exit(0);
   });
 
