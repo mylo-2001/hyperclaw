@@ -104,6 +104,17 @@
 
 ---
 
+### Daemon mode (`hyperclaw daemon start`)
+
+<div align="center">
+  <img src="assets/screenshot-daemon-mode.png" width="700" alt="HyperClaw daemon mode — ALWAYS WATCHING">
+</div>
+
+> Red `🩸 DAEMON MODE - ALWAYS WATCHING 🩸` banner activates when running with full PC access.  
+> After starting, open `http://127.0.0.1:18789/chat` in your browser to chat with the agent.
+
+---
+
 ### Setup wizard — start (`hyperclaw onboard`)
 
 <div align="center">
