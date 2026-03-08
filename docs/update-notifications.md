@@ -7,7 +7,7 @@ HyperClaw automatically checks for newer versions on npm and notifies you at sta
 When a newer version is available, this appears right after any command:
 
 ```
-  ⬆  Update available: 5.0.5 → 5.0.5
+  ⬆  Update available: 5.0.6 → 5.0.6
      npm install -g hyperclaw@latest
 ```
 

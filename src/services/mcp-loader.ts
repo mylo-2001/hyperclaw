@@ -52,7 +52,7 @@ export async function loadMCPTools(): Promise<Tool[]> {
 
   for (const srv of servers) {
     try {
-      const client = new Client({ name: 'hyperclaw', version: '5.0.5' });
+      const client = new Client({ name: 'hyperclaw', version: '5.0.6' });
 
       if (srv.url) {
         const transport = new StreamableHTTPClientTransport(new URL(srv.url));

@@ -1,6 +1,6 @@
 {
   "name": "@hyperclaw/extension-signal",
-  "version": "5.0.5",
+  "version": "5.0.6",
   "description": "HyperClaw extension: Signal channel via signal-cli HTTP daemon",
   "main": "index.ts",
   "license": "MIT",
