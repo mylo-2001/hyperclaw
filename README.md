@@ -96,14 +96,85 @@
 
 ## Screenshots
 
+### Main banner (`hyperclaw`)
+
+<div align="center">
+  <img src="assets/screenshot-banner.png" width="700" alt="HyperClaw main banner with quick actions">
+</div>
+
+---
+
+### Setup wizard — start (`hyperclaw onboard`)
+
+<div align="center">
+  <img src="assets/screenshot-onboard-start.png" width="700" alt="HyperClaw onboard wizard start">
+</div>
+
+---
+
+### Setup wizard — AI providers
+
+<div align="center">
+  <img src="assets/screenshot-onboard-providers.png" width="700" alt="HyperClaw onboard AI provider selection">
+</div>
+
+---
+
+### Setup wizard — API key step
+
+<div align="center">
+  <img src="assets/screenshot-onboard-apikey.png" width="700" alt="HyperClaw onboard API key entry">
+</div>
+
+---
+
+### Daemon install mode (`hyperclaw onboard --install-daemon`)
+
+<div align="center">
+  <img src="assets/screenshot-onboard-daemon.png" width="700" alt="HyperClaw daemon install mode">
+</div>
+
+---
+
+### Security notice
+
+<div align="center">
+  <img src="assets/screenshot-security-notice.png" width="700" alt="HyperClaw security notice screen">
+</div>
+
+---
+
+### Theme selection
+
+<div align="center">
+  <img src="assets/screenshot-theme-select.png" width="700" alt="HyperClaw color theme selector">
+</div>
+
+---
+
 ### Gateway Dashboard (`hyperclaw dashboard`)
 
 <div align="center">
   <img src="assets/screenshot-dashboard.png" width="700" alt="HyperClaw Gateway Dashboard TUI">
 </div>
 
-> The live dashboard shows gateway status, active channels, installed skills, and real-time logs.  
-> Press `[d]` for daemon control, `[h]` for the skill hub, `[g]` to open the gateway, `[m]` for memory, `[q]` to quit.
+> Live status, active channels, installed skills, and logs. Press `[d]` daemon · `[h]` hub · `[g]` gateway · `[m]` memory · `[q]` quit.
+
+---
+
+### Terminal chat (`hyperclaw chat`)
+
+<div align="center">
+  <img src="assets/screenshot-chat.png" width="700" alt="HyperClaw terminal chat interface">
+</div>
+
+---
+
+### All commands (`hyperclaw --help`)
+
+<div align="center">
+  <img src="assets/screenshot-help.png" width="700" alt="HyperClaw --help output showing all commands">
+</div>
 
 <div align="right"><a href="#top">▲ Back to top</a></div>
 
