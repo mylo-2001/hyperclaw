@@ -40,9 +40,10 @@
 | | |
 |---|---|
 | [Why HyperClaw?](#why-hyperclaw) | [Use cases](#use-cases) |
-| [🚀 Get started in 60 seconds](#-get-started-in-60-seconds) | [▶️ Running your bot](#️-running-your-bot) |
-| [Channels](#channels) | [Architecture](#architecture) |
-| [AI Models](#ai-models) | [Configuration](#configuration) |
+| [Screenshots](#screenshots) | [🚀 Get started in 60 seconds](#-get-started-in-60-seconds) |
+| [▶️ Running your bot](#️-running-your-bot) | [Channels](#channels) |
+| [Architecture](#architecture) | [AI Models](#ai-models) |
+| [Channels](#channels) | [Configuration](#configuration) |
 | [Security defaults](#security-defaults) | [Features](#features) |
 | [Apps (optional)](#apps-optional) | [Integrations (Skills & Tools)](#integrations-skills--tools) |
 | [Agent-to-Agent](#agent-to-agent-sessions-tools) | [Terminal chat](#terminal-chat-hyperclaw-chat) |
@@ -50,6 +51,7 @@
 | [HyperClaw Bot commands](#hyperclaw-bot-commands) | [From source](#from-source) |
 | [Docker](#docker) | [Monorepo structure](#monorepo-structure) |
 | [Documentation](#documentation) | [Contributing](#contributing) |
+| [Roadmap](#roadmap) | [Changelog](#changelog) |
 | [Community](#community) | [License](#license) |
 
 <div align="right"><a href="#top">▲ Back to top</a></div>
@@ -89,6 +91,22 @@
 > HyperClaw runs **locally on your machine** — your data, your keys, your control.
 
 <div align="right"><a href="#top">▲ Back to top</a></div>
+
+---
+
+## Screenshots
+
+### Gateway Dashboard (`hyperclaw dashboard`)
+
+<div align="center">
+  <img src="assets/screenshot-dashboard.png" width="700" alt="HyperClaw Gateway Dashboard TUI">
+</div>
+
+> The live dashboard shows gateway status, active channels, installed skills, and real-time logs.  
+> Press `[d]` for daemon control, `[h]` for the skill hub, `[g]` to open the gateway, `[m]` for memory, `[q]` to quit.
+
+<div align="right"><a href="#top">▲ Back to top</a></div>
+
 ---
 
 ## 🚀 Get started in 60 seconds
@@ -1018,6 +1036,48 @@ hyperclaw/
 | Contributing | [docs/contributing.md](docs/contributing.md) |
 
 <div align="right"><a href="#top">▲ Back to top</a></div>
+
+---
+
+## Roadmap
+
+> See [ROADMAP.md](ROADMAP.md) for the full plan.
+
+| Status | Feature |
+|--------|---------|
+| ✅ Done | 28+ messaging channels |
+| ✅ Done | Config hot-reload |
+| ✅ Done | MCP (Model Context Protocol) |
+| ✅ Done | OSINT / Ethical hacking mode |
+| ✅ Done | Docker sandboxing |
+| ✅ Done | TUI dashboard |
+| ✅ Done | macOS / iOS / Android companion apps |
+| 🔄 In progress | Web UI (browser-based dashboard) |
+| 🔄 In progress | Skill marketplace (HyperClaw Hub) |
+| 📅 Planned | Voice-first mode (always-on mic) |
+| 📅 Planned | Multi-agent collaboration |
+| 📅 Planned | Fine-tuned HyperClaw model |
+| 📅 Planned | One-click cloud deploy (Railway / Render) |
+
+<div align="right"><a href="#top">▲ Back to top</a></div>
+
+---
+
+## Changelog
+
+> Full history in [CHANGELOG.md](CHANGELOG.md).
+
+| Version | Highlights |
+|---------|-----------|
+| **v5.2.1** | Fix postinstall BOM, clean package-lock, nav links in all docs |
+| **v5.2.0** | MCP custom servers, OSINT mode, Tlon/Urbit integration |
+| **v5.1.0** | Config hot-reload, trustedProxies, session.dmScope, Google Chat guide |
+| **v5.0.7** | Groq model IDs fix, Cohere/HuggingFace baseUrl corrections |
+| **v5.0.0** | Major rewrite — monorepo, tsdown bundler, 20+ AI providers |
+| **v4.0.0** | Initial public release |
+
+<div align="right"><a href="#top">▲ Back to top</a></div>
+
 ---
 
 ## Contributing
@@ -1037,6 +1097,22 @@ Found a vulnerability? Email [securityhyperclaw.ai@gmail.com](mailto:securityhyp
 | 💬 **Discussions** | [GitHub Discussions](https://github.com/mylo-2001/hyperclaw/discussions) — questions, ideas, show & tell |
 | 🐛 **Bug reports** | [GitHub Issues](https://github.com/mylo-2001/hyperclaw/issues) — templates for bugs & features |
 | 🔒 **Security** | [SECURITY.md](SECURITY.md) — responsible disclosure |
+
+### Contributors
+
+<a href="https://github.com/mylo-2001/hyperclaw/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=mylo-2001/hyperclaw" alt="Contributors" />
+</a>
+
+### Star History
+
+<a href="https://star-history.com/#mylo-2001/hyperclaw&Date">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=mylo-2001/hyperclaw&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=mylo-2001/hyperclaw&type=Date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=mylo-2001/hyperclaw&type=Date" />
+  </picture>
+</a>
 
 ---
 
