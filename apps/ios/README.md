@@ -1,4 +1,14 @@
+<a name="top">
 # HyperClaw iOS App
+
+<div align="center">
+
+[🏠 Main README](../../README.md) &nbsp;•&nbsp; [📚 Docs](docs/README.md)
+
+</div>
+
+---
+
 
 Native SwiftUI app for HyperClaw. **Status: Available** — paired iOS node with chat, voice, canvas, token auth, and session restore.
 
@@ -68,3 +78,12 @@ Receives: Any JSON with a `"content"` string field is shown as an assistant mess
 ## Release
 
 See [docs/RELEASE.md](docs/RELEASE.md) for the release checklist and signing flow.
+
+---
+
+<div align="center">
+
+[🏠 Main README](../../README.md) &nbsp;•&nbsp; [📚 Docs](docs/README.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

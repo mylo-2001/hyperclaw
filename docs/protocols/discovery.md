@@ -1,4 +1,14 @@
+<a name="top">
 # Discovery — HyperClaw
+
+<div align="center">
+
+[🏠 Main README](../../../README.md) &nbsp;•&nbsp; [📚 Docs Index](../docs/README.md)
+
+</div>
+
+---
+
 
 How clients discover the HyperClaw Gateway.
 
@@ -57,3 +67,12 @@ Recommended client behavior:
 - [Tailscale](../tailscale.md)
 - [macOS Remote Control](../macos-remote-control.md)
 - [Mobile Nodes](../mobile-nodes.md)
+
+---
+
+<div align="center">
+
+[🏠 Main README](../../../README.md) &nbsp;•&nbsp; [📚 Docs Index](../docs/README.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

@@ -1,4 +1,14 @@
+<a name="top">
 # Gateway API — HyperClaw
+
+<div align="center">
+
+[🏠 Main README](../../README.md) &nbsp;•&nbsp; [📚 Docs Index](../docs/README.md)
+
+</div>
+
+---
+
 
 REST and WebSocket API for the HyperClaw Gateway. Default port: `18789`.
 
@@ -121,3 +131,12 @@ See [Gateway Protocol](../protocols/gateway-protocol.md) for the WebSocket contr
 - [Gateway Protocol](../protocols/gateway-protocol.md)
 - [Connect Tab / Mobile Nodes](../protocols/connect-tab-protocol.md)
 - [Architecture](../architecture.md)
+
+---
+
+<div align="center">
+
+[🏠 Main README](../../README.md) &nbsp;•&nbsp; [📚 Docs Index](../docs/README.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

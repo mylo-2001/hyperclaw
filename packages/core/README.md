@@ -1,4 +1,14 @@
+<a name="top">
 # @hyperclaw/core
+
+<div align="center">
+
+[🏠 Main README](../../README.md) &nbsp;•&nbsp; [📚 Docs](docs/README.md)
+
+</div>
+
+---
+
 
 AI agent engine, inference, session store, memory — public API boundary.
 
@@ -28,3 +38,12 @@ import { runAgentEngine } from 'hyperclaw/core';
 - **Memory**: `readMemory`, `appendMemory`, `extractFactsLocally`, `AutoMemory`
 - **Skills**: `loadSkills`, `buildSkillsContext`, `getSkillCapabilities`
 - **Paths**: `getHyperClawDir`, `getConfigPath`, `getEnvFilePath` (from @hyperclaw/shared)
+
+---
+
+<div align="center">
+
+[🏠 Main README](../../README.md) &nbsp;•&nbsp; [📚 Docs](docs/README.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

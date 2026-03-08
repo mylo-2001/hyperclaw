@@ -1,4 +1,14 @@
+<a name="top">
 # iOS App Release Checklist
+
+<div align="center">
+
+[🏠 Main README](../../../README.md) &nbsp;•&nbsp; [📚 Docs](docs/README.md)
+
+</div>
+
+---
+
 
 Native iOS node release checklist for HyperClaw.
 
@@ -23,3 +33,12 @@ Native iOS node release checklist for HyperClaw.
 
 - The app stores gateway URL, auth token, agent name, and last session locally.
 - Pairing works against a protected gateway when the shared auth token is set.
+
+---
+
+<div align="center">
+
+[🏠 Main README](../../../README.md) &nbsp;•&nbsp; [📚 Docs](docs/README.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

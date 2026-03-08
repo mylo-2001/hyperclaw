@@ -1,4 +1,14 @@
+<a name="top">
 # HyperClaw Android App
+
+<div align="center">
+
+[🏠 Main README](../../README.md) &nbsp;•&nbsp; [📚 Docs](docs/README.md)
+
+</div>
+
+---
+
 
 Native Android app for HyperClaw with Connect, Chat, Voice, and Canvas tabs. **Status: Available** — production build.
 
@@ -22,3 +32,12 @@ Native Android app for HyperClaw with Connect, Chat, Voice, and Canvas tabs. **S
 ## Release
 
 See [docs/RELEASE.md](docs/RELEASE.md) for the Android release checklist and signing notes.
+
+---
+
+<div align="center">
+
+[🏠 Main README](../../README.md) &nbsp;•&nbsp; [📚 Docs](docs/README.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

@@ -1,4 +1,14 @@
+<a name="top">
 # HyperClaw macOS Menu Bar App
+
+<div align="center">
+
+[🏠 Main README](../../README.md) &nbsp;•&nbsp; [📚 Docs](docs/README.md)
+
+</div>
+
+---
+
 
 Production Electron menu bar app for macOS. Single desktop choice � use this, not `macos-menubar` (Tauri skeleton, deprecated).
 
@@ -29,3 +39,12 @@ cd apps/macos && npm run build
 ## Auto-update
 
 Uses GitHub Releases. Tag a version (`git tag v5.0.1 && git push origin v5.0.1`) to trigger `.github/workflows/macos-release.yml`. The packaged app checks for updates on startup. See [docs/RELEASE.md](docs/RELEASE.md).
+
+---
+
+<div align="center">
+
+[🏠 Main README](../../README.md) &nbsp;•&nbsp; [📚 Docs](docs/README.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

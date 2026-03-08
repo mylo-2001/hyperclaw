@@ -1,4 +1,14 @@
+<a name="top">
 # Security Policy
+
+<div align="center">
+
+[🏠 Main README](../README.md) &nbsp;•&nbsp; [📚 Docs](docs/README.md)
+
+</div>
+
+---
+
 
 ## Supported Versions
 
@@ -140,3 +150,12 @@ See [`docs/security.md`](./docs/security.md) for:
 - Credential storage map
 - detect-secrets CI scanning
 - Researcher preflight checklist
+
+---
+
+<div align="center">
+
+[🏠 Main README](../README.md) &nbsp;•&nbsp; [📚 Docs](docs/README.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

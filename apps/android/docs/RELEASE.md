@@ -1,4 +1,14 @@
+<a name="top">
 # Android App Release Checklist
+
+<div align="center">
+
+[🏠 Main README](../../../README.md) &nbsp;•&nbsp; [📚 Docs](docs/README.md)
+
+</div>
+
+---
+
 
 Native Android node release checklist for HyperClaw.
 
@@ -31,3 +41,12 @@ cd apps/android
 
 - The app already advertises mobile-node capabilities to the gateway.
 - `ConnectionService` can be used for a persistent foreground connection when needed.
+
+---
+
+<div align="center">
+
+[🏠 Main README](../../../README.md) &nbsp;•&nbsp; [📚 Docs](docs/README.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

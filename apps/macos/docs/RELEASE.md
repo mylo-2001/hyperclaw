@@ -1,4 +1,14 @@
+<a name="top">
 # macOS App Release & Auto-Update
+
+<div align="center">
+
+[🏠 Main README](../../../README.md) &nbsp;•&nbsp; [📚 Docs](docs/README.md)
+
+</div>
+
+---
+
 
 ## Release Checklist (OpenClaw-level hardening)
 
@@ -61,3 +71,12 @@ cd /path/to/hyperclaw
 hyperclaw gateway start
 # Then set Connect URL to ws://localhost:18789
 ```
+
+---
+
+<div align="center">
+
+[🏠 Main README](../../../README.md) &nbsp;•&nbsp; [📚 Docs](docs/README.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

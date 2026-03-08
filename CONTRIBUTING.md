@@ -1,4 +1,14 @@
+<a name="top">
 # Contributing to HyperClaw
+
+<div align="center">
+
+[🏠 Main README](README.md) &nbsp;•&nbsp; [📚 Docs](docs/README.md)
+
+</div>
+
+---
+
 
 Thanks for your interest! 🦅
 
@@ -72,3 +82,12 @@ extensions/      — Channel and feature extensions
 ## Security Issues
 
 See `SECURITY.md` — please report via email, not GitHub issues.
+
+---
+
+<div align="center">
+
+[🏠 Main README](README.md) &nbsp;•&nbsp; [📚 Docs](docs/README.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>
