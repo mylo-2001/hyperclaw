@@ -2079,10 +2079,181 @@ export class HyperClawWizard {
   private async testConnections(configs: Record<string, any>): Promise<void> {
     for (const [channelId, cfg] of Object.entries(configs)) {
       const ch = CHANNELS.find(c => c.id === channelId);
-      if (!ch || !cfg?.token) continue;
-      const s = ora(`Testing ${ch.name}...`).start();
-      await new Promise(r => setTimeout(r, 900 + Math.random() * 600));
-      s.succeed(`${ch.emoji} ${ch.name} connected`);
+      if (!ch) continue;
+
+      // Channels that can't/don't need a live test
+      const skipIds = ['whatsapp-baileys', 'voice-call', 'web', 'imessage-native', 'irc', 'signal', 'tlon'];
+      if (skipIds.includes(channelId)) {
+        console.log(chalk.gray(`  ${ch.emoji} ${ch.name} — skipped (requires runtime setup)`));
+        continue;
+      }
+
+      if (!cfg?.token) {
+        console.log(chalk.gray(`  ${ch.emoji} ${ch.name} — skipped (no token)`));
+        continue;
+      }
+
+      const s = ora(`  Testing ${ch.emoji} ${ch.name}...`).start();
+
+      try {
+        const ok = await this.validateChannelToken(channelId, cfg);
+        if (ok) {
+          s.succeed(chalk.green(`${ch.emoji} ${ch.name} — token valid`));
+        } else {
+          s.fail(chalk.red(`${ch.emoji} ${ch.name} — invalid token or wrong credentials`));
+          console.log(chalk.gray(`    Run hyperclaw channels add ${channelId} to reconfigure.`));
+        }
+      } catch (e: any) {
+        s.warn(chalk.yellow(`${ch.emoji} ${ch.name} — could not verify (${e.message?.slice(0, 60) ?? 'timeout'})`));
+      }
+    }
+  }
+
+  private async validateChannelToken(channelId: string, cfg: Record<string, any>): Promise<boolean> {
+    const token: string = cfg.token ?? '';
+    const timeout = 8000;
+
+    const fetchWithTimeout = async (url: string, init?: RequestInit): Promise<Response> => {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), timeout);
+      try {
+        return await fetch(url, { ...init, signal: ctrl.signal });
+      } finally {
+        clearTimeout(t);
+      }
+    };
+
+    switch (channelId) {
+
+      case 'telegram': {
+        const r = await fetchWithTimeout(`https://api.telegram.org/bot${token}/getMe`);
+        const j: any = await r.json();
+        return j?.ok === true;
+      }
+
+      case 'discord': {
+        const r = await fetchWithTimeout('https://discord.com/api/v10/users/@me', {
+          headers: { Authorization: `Bot ${token}` }
+        });
+        const j: any = await r.json();
+        return !!j?.id;
+      }
+
+      case 'slack': {
+        const r = await fetchWithTimeout('https://slack.com/api/auth.test', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+        });
+        const j: any = await r.json();
+        return j?.ok === true;
+      }
+
+      case 'matrix': {
+        const homeserver = (cfg.homeserver ?? '').replace(/\/$/, '');
+        if (!homeserver) return false;
+        const r = await fetchWithTimeout(`${homeserver}/_matrix/client/v3/account/whoami`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const j: any = await r.json();
+        return !!j?.user_id;
+      }
+
+      case 'line': {
+        const r = await fetchWithTimeout('https://api.line.me/v2/bot/info', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const j: any = await r.json();
+        return !!j?.userId;
+      }
+
+      case 'viber': {
+        const r = await fetchWithTimeout('https://chatapi.viber.com/pa/get_account_info', {
+          method: 'POST',
+          headers: { 'X-Viber-Auth-Token': token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const j: any = await r.json();
+        return j?.status === 0;
+      }
+
+      case 'mattermost': {
+        const serverUrl = (cfg.serverUrl ?? '').replace(/\/$/, '');
+        if (!serverUrl) return false;
+        const r = await fetchWithTimeout(`${serverUrl}/api/v4/users/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const j: any = await r.json();
+        return !!j?.id;
+      }
+
+      case 'messenger':
+      case 'instagram':
+      case 'whatsapp': {
+        const r = await fetchWithTimeout(`https://graph.facebook.com/me?access_token=${token}`);
+        const j: any = await r.json();
+        return !!j?.id;
+      }
+
+      case 'feishu': {
+        const appSecret = cfg.appSecret ?? '';
+        const r = await fetchWithTimeout('https://open.feishu.cn/open-apis/auth/v3/app_access_token/internal', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ app_id: token, app_secret: appSecret })
+        });
+        const j: any = await r.json();
+        return j?.code === 0;
+      }
+
+      case 'googlechat': {
+        // token is a webhook URL — validate format only
+        return /^https:\/\/chat\.googleapis\.com\/v1\/spaces\/.+\/messages/.test(token);
+      }
+
+      case 'nostr': {
+        // validate hex private key (64 chars) or nsec bech32
+        return /^[0-9a-f]{64}$/.test(token) || token.startsWith('nsec');
+      }
+
+      case 'email': {
+        const user: string = cfg.user ?? '';
+        const imapHost: string = cfg.imapHost ?? '';
+        const smtpHost: string = cfg.smtpHost ?? '';
+        return /^[^@]+@[^@]+\.[^@]+$/.test(user) && imapHost.length > 3 && smtpHost.length > 3 && token.length > 3;
+      }
+
+      case 'nextcloud': {
+        const serverUrl = (cfg.serverUrl ?? '').replace(/\/$/, '');
+        const username: string = cfg.username ?? '';
+        if (!serverUrl || !username) return false;
+        const creds = Buffer.from(`${username}:${token}`).toString('base64');
+        const r = await fetchWithTimeout(`${serverUrl}/ocs/v1.php/cloud/user?format=json`, {
+          headers: { Authorization: `Basic ${creds}`, 'OCS-APIREQUEST': 'true' }
+        });
+        const j: any = await r.json();
+        return j?.ocs?.meta?.status === 'ok';
+      }
+
+      case 'twitter': {
+        // Twitter OAuth is complex — just validate non-empty fields
+        return token.length > 0 && (cfg.apiKeySecret ?? '').length > 0 &&
+               (cfg.accessToken ?? '').length > 0 && (cfg.accessTokenSecret ?? '').length > 0;
+      }
+
+      case 'msteams': {
+        return token.length > 8 && (cfg.appPassword ?? '').length > 3;
+      }
+
+      case 'zalo': {
+        return token.length > 0 && (cfg.secretKey ?? '').length > 0;
+      }
+
+      case 'imessage': {
+        return token.length > 3;
+      }
+
+      default:
+        return token.length > 0;
     }
   }
 

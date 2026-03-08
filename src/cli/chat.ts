@@ -147,6 +147,9 @@ export async function runChat(opts: {
     process.exit(0);
   });
 
+  await new Promise<void>((resolve) => {
+  rl.on('close', resolve);
+
   const prompt = () => {
     rl.question(chalk.bold.green('  You › '), async (input) => {
       const text = input.trim();
@@ -232,4 +235,5 @@ export async function runChat(opts: {
   };
 
   prompt();
+  }); // end new Promise
 }

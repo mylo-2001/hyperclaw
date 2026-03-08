@@ -148,6 +148,7 @@ export async function streamLog(): Promise<void> {
         console.log(chalk.gray('  ' + line));
       }
     });
+    await new Promise(() => {}); // keep alive until Ctrl+C
   } else {
     // Fallback: re-exec `tail -f`
     const { spawn } = await import('child_process');

@@ -831,7 +831,7 @@ program.command('voice-call')
         ask();
       });
     };
-    ask();
+    await new Promise<void>((resolve) => { rl.on('close', resolve); ask(); });
   });
 
 program.command('voice')
@@ -855,7 +855,9 @@ program.command('dashboard')
   .option('-l, --live', 'Live mode with real-time updates')
   .action(async (opts) => {
     await (new Dashboard()).launch(opts.live);
-    if (!opts.live) process.exit(0);
+    if (!opts.live) { process.exit(0); return; }
+    // live mode: keep alive until Ctrl+C
+    await new Promise<void>(() => {});
   });
 
 // ─── STATUS ──────────────────────────────────────────────────────────────────
