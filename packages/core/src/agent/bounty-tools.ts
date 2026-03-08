@@ -1,4 +1,4 @@
-﻿/**
+/**
  * src/agent/bounty-tools.ts
  * Service API tools — HackerOne, Bugcrowd, Synack + generic tools for any service with an API key.
  * Keys from skills.apiKeys or env (HACKERONE_*, BUGCROWD_*, CUSTOM_SERVICE_API_KEY, etc).

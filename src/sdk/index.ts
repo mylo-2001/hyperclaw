@@ -1,6 +1,6 @@
-﻿/**
+/**
  * src/sdk/index.ts
- * HyperClaw Plugin SDK � public API for building extensions and skills.
+ * HyperClaw Plugin SDK - public API for building extensions and skills.
  * Export this as @hyperclaw/sdk for plugin developers.
  *
  * Matches OpenClaw's plugin SDK pattern with full TypeScript DTS exports.

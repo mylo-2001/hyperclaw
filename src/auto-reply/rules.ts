@@ -10,9 +10,9 @@
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
+import { getHyperClawDir } from '../infra/paths';
 
-const RULES_FILE = path.join(os.homedir(), '.hyperclaw', 'auto-reply-rules.json');
+const getRulesFile = () => path.join(getHyperClawDir(), 'auto-reply-rules.json');
 
 export type RuleConditionType =
   | 'contains'      // message contains text (case-insensitive)
@@ -99,13 +99,14 @@ export class AutoReplyEngine {
   private rules: AutoReplyRule[] = [];
 
   async load(): Promise<void> {
-    try { this.rules = await fs.readJson(RULES_FILE); }
+    try { this.rules = await fs.readJson(getRulesFile()); }
     catch { this.rules = []; }
   }
 
   async save(): Promise<void> {
-    await fs.ensureDir(path.dirname(RULES_FILE));
-    await fs.writeJson(RULES_FILE, this.rules, { spaces: 2 });
+    const f = getRulesFile();
+    await fs.ensureDir(path.dirname(f));
+    await fs.writeJson(f, this.rules, { spaces: 2 });
   }
 
   async evaluate(msg: IncomingMessageContext): Promise<AutoReplyAction | null> {

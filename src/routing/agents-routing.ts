@@ -24,6 +24,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
 import inquirer from 'inquirer';
+import { getConfigPath, getHyperClawDir } from '../infra/paths';
 import { computeSessionKey, SessionContext } from './session-key';
 
 // ---------------------------------------------------------------------------
@@ -126,16 +127,19 @@ export interface RouteResult {
 }
 
 // ---------------------------------------------------------------------------
-// AgentRouter
+// AgentRouter — uses hyperclaw.json as canonical store (same as runtime binding-resolver).
+// Migrates from routing.json and agent-bindings.json on first load.
 // ---------------------------------------------------------------------------
 
-const STATE_FILE = path.join(os.homedir(), '.hyperclaw', 'routing.json');
-const DEFAULT_AGENT: AgentDef = {
-  id: 'main',
-  name: 'main',
-  workspace: path.join(os.homedir(), '.hyperclaw', 'workspace'),
-  default: true
-};
+function defaultAgent(): AgentDef {
+  const hcDir = getHyperClawDir();
+  return {
+    id: 'main',
+    name: 'main',
+    workspace: path.join(hcDir, 'workspace'),
+    default: true
+  };
+}
 
 export class AgentRouter {
   private config: RoutingConfig;
@@ -145,26 +149,94 @@ export class AgentRouter {
   }
 
   private _loadConfig(): RoutingConfig {
+    const cfgPath = getConfigPath();
+    const hcDir = getHyperClawDir();
+    const routingFile = path.join(hcDir, 'routing.json');
+    const legacyBindingsFile = path.join(hcDir, 'agent-bindings.json');
+
+    let fromMain = false;
     try {
-      return fs.readJsonSync(STATE_FILE) as RoutingConfig;
-    } catch {
-      return {
-        agents: { list: [DEFAULT_AGENT] },
-        bindings: [],
-        session: { dmScope: 'main' }
-      };
-    }
+      const mainCfg = fs.readJsonSync(cfgPath) as any;
+      const bindings = mainCfg?.bindings;
+      const agentsList = mainCfg?.agents?.list;
+      if (Array.isArray(bindings) || Array.isArray(agentsList)) {
+        fromMain = true;
+        return {
+          agents: { list: agentsList && agentsList.length > 0 ? agentsList : [defaultAgent()] },
+          bindings: Array.isArray(bindings) ? bindings : [],
+          session: mainCfg?.session || { dmScope: 'main' },
+          broadcast: mainCfg?.broadcast,
+          channels: mainCfg?.channels
+        } as RoutingConfig;
+      }
+    } catch { /* hyperclaw.json missing or invalid */ }
+
+    // Migrate from legacy routing.json
+    try {
+      const legacy = fs.readJsonSync(routingFile) as RoutingConfig;
+      if (legacy?.bindings?.length || legacy?.agents?.list?.length) {
+        return this._migrateToMain(legacy, cfgPath);
+      }
+    } catch { /* routing.json missing */ }
+
+    // Migrate from agent-bindings.json (onboarding fallback format)
+    try {
+      const arr = fs.readJsonSync(legacyBindingsFile) as Array<{ channelId: string; agentName: string; modelId?: string }>;
+      if (Array.isArray(arr) && arr.length > 0) {
+        const bindings: AgentBinding[] = arr.map(b => ({
+          match: { channel: b.channelId },
+          agentId: b.agentName,
+          createdAt: new Date().toISOString()
+        }));
+        const migrated: RoutingConfig = {
+          agents: { list: [defaultAgent()] },
+          bindings,
+          session: { dmScope: 'main' }
+        };
+        return this._migrateToMain(migrated, cfgPath);
+      }
+    } catch { /* agent-bindings.json missing */ }
+
+    return {
+      agents: { list: [defaultAgent()] },
+      bindings: [] as AgentBinding[],
+      session: { dmScope: 'main' }
+    };
   }
 
-  private _saveConfig(): void {
-    fs.ensureDirSync(path.dirname(STATE_FILE));
-    fs.writeJsonSync(STATE_FILE, this.config, { spaces: 2 });
+  private _migrateToMain(legacy: RoutingConfig, cfgPath: string): RoutingConfig {
+    try {
+      let current: any = {};
+      if (fs.existsSync(cfgPath)) current = fs.readJsonSync(cfgPath);
+      const next = {
+        ...current,
+        bindings: (legacy.bindings ?? []) as any[],
+        agents: { ...current?.agents, list: legacy.agents?.list ?? [defaultAgent()] },
+        ...(legacy.broadcast ? { broadcast: legacy.broadcast } : {}),
+        ...(legacy.session ? { session: legacy.session } : {})
+      };
+      fs.ensureDirSync(path.dirname(cfgPath));
+      fs.writeJsonSync(cfgPath, next, { spaces: 2 });
+    } catch (e) { console.warn('[agents-routing] Migration write failed:', (e as Error).message); }
+    return legacy;
+  }
+
+  private async _saveConfig(): Promise<void> {
+    const { ConfigStore } = await import('../cli/config');
+    const store = new ConfigStore();
+    const current = await store.load() as any;
+    await store.patch({
+      bindings: (this.config.bindings ?? []) as any,
+      agents: { ...current?.agents, list: this.config.agents?.list ?? [defaultAgent()] },
+      ...(this.config.broadcast ? { broadcast: this.config.broadcast } : {}),
+      ...(this.config.session ? { session: this.config.session as any } : {})
+    });
   }
 
   // ---- Main routing entry point -------------------------------------------
 
   route(msg: InboundMessageContext): RouteResult {
-    const agents = this.config.agents?.list ?? [DEFAULT_AGENT];
+    const agents = this.config.agents?.list ?? [defaultAgent()];
     const bindings = this.config.bindings ?? [];
 
     // ── 1. Check broadcast groups ─────────────────────────────────────────
@@ -196,7 +268,7 @@ export class AgentRouter {
     bindings: AgentBinding[],
     agents: AgentDef[]
   ): { agentDef: AgentDef; matchedBy: string } {
-    const find = (id: string) => agents.find(a => a.id === id) ?? DEFAULT_AGENT;
+    const find = (id: string) => agents.find(a => a.id === id) ?? defaultAgent();
 
     for (const b of bindings) {
       if (!this._matchesFilter(msg, b.match)) continue;
@@ -204,8 +276,8 @@ export class AgentRouter {
     }
 
     // Fallback: default agent
-    const defaultAgent = agents.find(a => a.default) ?? agents[0] ?? DEFAULT_AGENT;
-    return { agentDef: defaultAgent, matchedBy: 'default' };
+    const def = agents.find(a => a.default) ?? agents[0] ?? defaultAgent();
+    return { agentDef: def, matchedBy: 'default' };
   }
 
   private _matchesFilter(msg: InboundMessageContext, match: BindingMatch): boolean {
@@ -408,7 +480,7 @@ export class AgentRouter {
 
     if (!this.config.bindings) this.config.bindings = [];
     this.config.bindings.unshift({ match, agentId, createdAt: new Date().toISOString() });
-    this._saveConfig();
+    await this._saveConfig();
     console.log(chalk.green(`\n  ✔  Binding added: ${channel}/${matchType} → ${agentId}\n`));
   }
 
@@ -436,13 +508,13 @@ export class AgentRouter {
       bindings.splice(idx, 1);
     }
     this.config.bindings = bindings;
-    this._saveConfig();
+    await this._saveConfig();
     console.log(chalk.green(`\n  ✔  Removed ${toRemove.length} binding(s)\n`));
   }
 
   // ---- Expose config for gateway use -------------------------------------
 
   getConfig(): RoutingConfig { return this.config; }
-  getAgents(): AgentDef[] { return this.config.agents?.list ?? [DEFAULT_AGENT]; }
+  getAgents(): AgentDef[] { return this.config.agents?.list ?? [defaultAgent()]; }
   getBindings(): AgentBinding[] { return this.config.bindings ?? []; }
 }

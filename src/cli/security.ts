@@ -18,8 +18,12 @@ export interface ScanResult {
 }
 
 // ── OpenClaw-style risk acknowledgment screen ─────────────────────────────────
+// L-3: Only show once per process to avoid double-show in quickstart path
+let _securityDisclaimerShown = false;
 
 export async function showSecurityDisclaimer(): Promise<boolean> {
+  if (_securityDisclaimerShown) return true;
+  _securityDisclaimerShown = true;
   console.clear();
   console.log(chalk.bgRed.white.bold('\n  ⚠️  SECURITY NOTICE — READ CAREFULLY  ⚠️ \n'));
   console.log(chalk.white.bold('  A bad prompt can trick it into doing unsafe things\n'));

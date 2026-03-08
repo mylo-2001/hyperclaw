@@ -1,6 +1,6 @@
-﻿/**
+/**
  * src/skills/clawhub.ts
- * ClawHub skill registry integration � search and install skills from the public registry.
+ * ClawHub skill registry integration - search and install skills from the public registry.
  * Compatible with HyperClaw Skill Hub (clawhub.com).
  */
 

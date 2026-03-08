@@ -67,11 +67,9 @@ export async function runDoctor(fix = false, opts: DoctorOpts = {}): Promise<voi
   const credentialsDir = path.join(configDir, 'credentials');
   const pairingFile = path.join(credentialsDir, 'discord-pairing.json');
 
+  // C-3: Use only hyperclaw.json (getConfigPath) — legacy config.json fallback removed.
   let cfg: any = null;
   try { cfg = await fs.readJson(configFile); } catch {}
-  if (!cfg) {
-    try { cfg = await fs.readJson(path.join(configDir, 'config.json')); } catch {}
-  }
 
   const issues: DoctorIssue[] = [];
 
@@ -98,14 +96,16 @@ export async function runDoctor(fix = false, opts: DoctorOpts = {}): Promise<voi
         const crypto = await import('crypto');
         cfg.gateway = cfg.gateway || {};
         cfg.gateway.authToken = crypto.randomBytes(32).toString('hex');
-        fs.writeJsonSync(configFile, cfg, { spaces: 2 });
+        const tmp = configFile + '.tmp';
+        fs.writeJsonSync(tmp, cfg, { spaces: 2 });
+        fs.renameSync(tmp, configFile);
         console.log(chalk.green('  ✔  Generated and saved gateway auth token'));
       }
     });
 
     // ── DM POLICIES ────────────────────────────────────────────────────────
     const channels = cfg.gateway?.enabledChannels || cfg.channels || [];
-    const channelConfigs = cfg.channelConfigs || cfg.channels || {};
+    const channelConfigs = (typeof cfg.channelConfigs === 'object' && !Array.isArray(cfg.channelConfigs)) ? cfg.channelConfigs : {};
     const chList = Array.isArray(channels) ? channels : Object.keys(channelConfigs);
 
     for (const ch of chList) {
@@ -144,11 +144,15 @@ export async function runDoctor(fix = false, opts: DoctorOpts = {}): Promise<voi
                     const merged = { ...existing, allowFrom: ids };
                     if (typeof existing.dmPolicy === 'object') merged.dmPolicy = { ...existing.dmPolicy, allowFrom: ids };
                     cfg.channelConfigs[ch] = merged;
-                    await fs.writeJson(configFile, cfg, { spaces: 2 });
+                    const tmp = configFile + '.tmp';
+                    await fs.writeJson(tmp, cfg, { spaces: 2 });
+                    await fs.rename(tmp, configFile);
                     console.log(chalk.green(`  ✔  Restored ${ids.length} user(s) from allowFrom store`));
                   }
                 }
-              } catch {}
+              } catch (e) {
+                if (process.env.DEBUG) console.error('[doctor] restore allowFrom:', (e as Error)?.message);
+              }
             }
           });
         }

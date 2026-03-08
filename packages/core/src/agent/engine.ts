@@ -15,6 +15,14 @@ export interface AgentEngineOptions {
   source?: string;
   elevated?: boolean;
   transcript?: Array<{ role: string; content: string }>;
+  /** Pre-computed session key (from channel runner / session-keys). Used for transcript restore and persistence. */
+  sessionKey?: string;
+  /** Resolved agent ID (from binding resolution). Passed for logging/observability. */
+  agentId?: string;
+  /** Load persisted transcript by session key. Required for session continuity when sessionKey is provided. */
+  getTranscript?: (key: string) => Promise<Array<{ role: string; content: string }> | null>;
+  /** Append a turn to the session store. Key is sessionKey or sessionId. Source used when creating new state. */
+  appendTranscript?: (key: string, role: string, content: string, source?: string) => void;
   onToken?: (token: string) => void;
   onDone?: (text: string) => void;
   onThinking?: (thought: string) => void;
@@ -123,7 +131,12 @@ export async function resolveTools(opts: {
     const { getSkillInvokeTools } = await import('./skill-runtime');
     const loaded = await loadSkills();
     skillInvokeTools = getSkillInvokeTools(loaded);
-  } catch {}
+  } catch (e) {
+    // M13: Log skill load failure so agent tools aren't silently empty
+    if (typeof process !== 'undefined' && process.env?.DEBUG) {
+      console.error('[engine] loadSkills failed:', (e as Error)?.message ?? e);
+    }
+  }
 
   let allTools: Tool[] = [
     ...getBuiltinTools(),
@@ -181,7 +194,30 @@ export async function runAgentEngine(
   const registryBaseUrl = providerMeta?.baseUrl;
 
   const sid = opts.sessionId;
-  if (sid && opts.appendTranscript) opts.appendTranscript(sid, 'user', message);
+  const sessionKey = opts.sessionKey;
+  const effectiveKey = sessionKey || sid;
+  // Fail fast: if gateway passes sessionKey but engine cannot consume it
+  if (sessionKey && !opts.getTranscript && !opts.appendTranscript) {
+    console.warn('[engine] sessionKey provided but getTranscript/appendTranscript missing — session continuity disabled');
+  }
+
+  // Restore transcript by sessionKey for channel/REST traffic; use sessionKey as persistence key
+  type InfMsg = { role: 'user' | 'assistant' | 'tool'; content: string };
+  let messagesForInference: InfMsg[] = [{ role: 'user', content: message }];
+  if (effectiveKey && opts.getTranscript) {
+    try {
+      const restored = await opts.getTranscript(effectiveKey);
+      if (restored && restored.length > 0) {
+        const valid = restored.filter(t => (t.role === 'user' || t.role === 'assistant') && typeof t.content === 'string') as InfMsg[];
+        messagesForInference = [...valid, { role: 'user' as const, content: message }];
+      }
+    } catch (e) {
+      console.warn('[engine] Failed to restore transcript for', effectiveKey, (e as Error).message);
+    }
+  }
+  if (effectiveKey && opts.appendTranscript) {
+    opts.appendTranscript(effectiveKey, 'user', message, opts.source);
+  }
 
   // Build context
   let context = await loadWorkspaceContext(opts.workspace);
@@ -233,10 +269,10 @@ export async function runAgentEngine(
         ? { thinking: { budget_tokens: thinkingBudget } } : {})
     };
     const engine = new InferenceEngine(engineOpts);
-    const result = await engine.run([{ role: 'user', content: message }]);
+    const result = await engine.run(messagesForInference);
     const text = result.text || '(empty)';
 
-    if (sid && opts.appendTranscript) opts.appendTranscript(sid, 'assistant', text);
+    if (effectiveKey && opts.appendTranscript) opts.appendTranscript(effectiveKey, 'assistant', text, opts.source);
 
     // Auto memory extraction
     try {

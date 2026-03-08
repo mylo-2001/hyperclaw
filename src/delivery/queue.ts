@@ -7,7 +7,7 @@
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
+import { getHyperClawDir } from '../infra/paths';
 
 export type DeliveryStatus = 'pending' | 'delivering' | 'delivered' | 'failed' | 'dead';
 
@@ -42,7 +42,7 @@ export class DeliveryQueue {
   private processing = false;
 
   constructor() {
-    this.queueFile = path.join(os.homedir(), '.hyperclaw', 'delivery-queue.json');
+    this.queueFile = path.join(getHyperClawDir(), 'delivery-queue.json');
     this.load();
   }
 

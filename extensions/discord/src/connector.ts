@@ -1,4 +1,4 @@
-﻿/**
+/**
  * extensions/discord/src/connector.ts
  * REAL Discord connector — Discord Gateway WebSocket API v10.
  * No SDK. Uses native wss:// with heartbeat, identify, reconnect.

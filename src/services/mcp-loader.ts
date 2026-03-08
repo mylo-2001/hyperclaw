@@ -1,6 +1,6 @@
 /**
  * src/services/mcp-loader.ts
- * MCP (Model Context Protocol) client � load tools from external MCP servers.
+ * MCP (Model Context Protocol) client - load tools from external MCP servers.
  * Config: mcp.servers: [{ name, command, args? }] or [{ name, url }]
  *
  * Requires: npm install @modelcontextprotocol/sdk
@@ -8,10 +8,8 @@
 
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
 import type { Tool } from '../../packages/core/src/agent/inference';
-
-const HC_DIR = path.join(os.homedir(), '.hyperclaw');
+import { getHyperClawDir, getConfigPath } from '../infra/paths';
 
 export interface MCPServerConfig {
   name: string;
@@ -22,7 +20,7 @@ export interface MCPServerConfig {
 
 async function getMCPConfig(): Promise<MCPServerConfig[]> {
   try {
-    const cfg = await fs.readJson(path.join(HC_DIR, 'hyperclaw.json'));
+    const cfg = await fs.readJson(getConfigPath());
     const servers = (cfg.mcp?.servers ?? []) as MCPServerConfig[];
     return Array.isArray(servers) ? servers : [];
   } catch {
@@ -52,7 +50,7 @@ export async function loadMCPTools(): Promise<Tool[]> {
 
   for (const srv of servers) {
     try {
-      const client = new Client({ name: 'hyperclaw', version: '5.2.0' });
+      const client = new Client({ name: 'hyperclaw', version: '5.2.1' });
 
       if (srv.url) {
         const transport = new StreamableHTTPClientTransport(new URL(srv.url));

@@ -1,4 +1,4 @@
-﻿# macOS App Release & Auto-Update
+# macOS App Release & Auto-Update
 
 ## Release Checklist (OpenClaw-level hardening)
 

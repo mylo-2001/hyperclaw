@@ -1,4 +1,4 @@
-﻿import chalk from 'chalk';
+import chalk from 'chalk';
 import os from 'os';
 
 export type ChannelStatus = 'configured' | 'recommended' | 'available' | 'unavailable';

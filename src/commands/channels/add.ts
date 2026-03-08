@@ -15,6 +15,7 @@ import net from 'net';
 import http from 'http';
 import { CHANNELS, getChannel } from '../../channels/registry';
 import { configureDMPolicy } from '../../infra/security';
+import { getConfigPath, getHyperClawDir } from '../../infra/paths';
 
 export async function channelsAdd(channelId?: string): Promise<void> {
   console.log(chalk.bold.cyan('\n  📱 Add Channel\n'));
@@ -90,22 +91,24 @@ export async function channelsAdd(channelId?: string): Promise<void> {
     allowFrom = dmResult.allowFrom ?? [];
   }
 
-  // Test connection
-  const spinner = ora(`Testing ${ch.name} connection...`).start();
-  await new Promise(r => setTimeout(r, 1200));
-  spinner.succeed(`${ch.emoji} ${ch.name} connected`);
+  // M-3: Save first; token validation happens in testConnections after wizard save.
+  const spinner = ora(`Saving ${ch.name} configuration...`).start();
 
-  // Save to config
-  const configFile = path.join(os.homedir(), '.hyperclaw', 'config.json');
+  // Save to config (C-3: use hyperclaw.json via getConfigPath, not config.json)
+  const configFile = getConfigPath();
   let cfg: any = {};
   try { cfg = fs.readJsonSync(configFile); } catch {}
 
-  cfg.channels = [...new Set([...(cfg.channels || []), id])];
+  cfg.gateway = cfg.gateway || { port: 18789, bind: '127.0.0.1', authToken: '', runtime: 'node', enabledChannels: [], hooks: true };
+  const channels = cfg.gateway.enabledChannels || [];
+  if (!channels.includes(id!)) channels.push(id!);
+  cfg.gateway.enabledChannels = channels;
   cfg.channelConfigs = cfg.channelConfigs || {};
   cfg.channelConfigs[id!] = { token, ...extra, dmPolicy, allowFrom };
 
-  fs.ensureDirSync(path.dirname(configFile));
+  fs.ensureDirSync(getHyperClawDir());
   fs.writeJsonSync(configFile, cfg, { spaces: 2 });
+  spinner.succeed(`${ch.emoji} ${ch.name} saved`);
 
   console.log(chalk.green(`\n  ✔  ${ch.name} added successfully!`));
 
@@ -119,7 +122,7 @@ export async function channelsAdd(channelId?: string): Promise<void> {
 
 export async function channelsList(): Promise<void> {
   const configured = await getConfiguredChannels();
-  const configFile = path.join(os.homedir(), '.hyperclaw', 'config.json');
+  const configFile = getConfigPath();
   let cfg: any = {};
   try { cfg = fs.readJsonSync(configFile); } catch {}
 
@@ -140,11 +143,12 @@ export async function channelsList(): Promise<void> {
 }
 
 export async function channelsRemove(channelId: string): Promise<void> {
-  const configFile = path.join(os.homedir(), '.hyperclaw', 'config.json');
+  const configFile = getConfigPath();
   let cfg: any = {};
   try { cfg = fs.readJsonSync(configFile); } catch {}
 
-  cfg.channels = (cfg.channels || []).filter((c: string) => c !== channelId);
+  cfg.gateway = cfg.gateway || { port: 18789, bind: '127.0.0.1', authToken: '', runtime: 'node', enabledChannels: [], hooks: true };
+  cfg.gateway.enabledChannels = (cfg.gateway.enabledChannels || []).filter((c: string) => c !== channelId);
   delete (cfg.channelConfigs || {})[channelId];
   fs.writeJsonSync(configFile, cfg, { spaces: 2 });
 
@@ -153,8 +157,8 @@ export async function channelsRemove(channelId: string): Promise<void> {
 
 async function getConfiguredChannels(): Promise<string[]> {
   try {
-    const cfg = fs.readJsonSync(path.join(os.homedir(), '.hyperclaw', 'config.json'));
-    return cfg.channels || [];
+    const cfg = fs.readJsonSync(getConfigPath());
+    return cfg.gateway?.enabledChannels || cfg.channels || [];
   } catch {
     return [];
   }
@@ -259,10 +263,10 @@ async function probeChannel(channelId: string, channelCfg: any): Promise<{ statu
  * --probe attempts a real connectivity check for each.
  */
 export async function channelsStatus(opts: { probe?: boolean } = {}): Promise<void> {
-  const configFile = path.join(os.homedir(), '.hyperclaw', 'config.json');
+  const configFile = getConfigPath();
   let cfg: any = {};
   try { cfg = fs.readJsonSync(configFile); } catch {}
-  const configured: string[] = cfg.channels || [];
+  const configured: string[] = cfg.gateway?.enabledChannels || cfg.channels || [];
 
   console.log(chalk.bold.cyan('\n  📡 CHANNEL STATUS\n'));
 

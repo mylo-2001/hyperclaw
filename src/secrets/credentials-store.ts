@@ -7,8 +7,8 @@
 
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
 import chalk from 'chalk';
+import { getHyperClawDir } from '../infra/paths';
 
 export interface ProviderCredential {
   providerId: string;
@@ -25,7 +25,8 @@ export class CredentialsStore {
   private credsDir: string;
 
   constructor(baseDir?: string) {
-    this.credsDir = path.join(baseDir || path.join(os.homedir(), '.hyperclaw'), 'credentials');
+    const base = baseDir ?? getHyperClawDir();
+    this.credsDir = path.join(base, 'credentials');
   }
 
   private filePath(providerId: string): string {
@@ -36,7 +37,8 @@ export class CredentialsStore {
 
   async set(providerId: string, creds: Omit<ProviderCredential, 'providerId' | 'updatedAt'>): Promise<void> {
     await fs.ensureDir(this.credsDir);
-    // Protect credentials directory itself
+    // Protect credentials directory itself.
+    // M-4: chmod is a no-op on Windows — rely on NTFS ACLs / user profile isolation there.
     await fs.chmod(this.credsDir, 0o700);
 
     const record: ProviderCredential = {
@@ -47,6 +49,7 @@ export class CredentialsStore {
 
     const fpath = this.filePath(providerId);
     await fs.writeJson(fpath, record, { spaces: 2 });
+    // M-4: chmod 0o600 is advisory on Windows; NTFS inherits parent dir ACLs.
     await fs.chmod(fpath, 0o600);
   }
 
@@ -54,9 +57,9 @@ export class CredentialsStore {
     const fpath = this.filePath(providerId);
     if (!(await fs.pathExists(fpath))) return null;
 
-    // Validate permissions
+    // Validate permissions. M-4: On Windows, chmod is a no-op; rely on NTFS ACLs and user profile isolation.
     const stat = await fs.stat(fpath);
-    if ((stat.mode & 0o077) !== 0) {
+    if (process.platform !== 'win32' && (stat.mode & 0o077) !== 0) {
       console.log(chalk.yellow(`  ⚠  Unsafe permissions on credentials/${providerId}.json — fixing...`));
       await fs.chmod(fpath, 0o600);
     }
@@ -84,8 +87,8 @@ export class CredentialsStore {
 
     if (providers.length === 0) {
       console.log(chalk.gray('  No credentials stored.\n'));
-      console.log(chalk.gray('  Add with: hyperclaw auth add <service_id>   (for any API key)\n'));
-    console.log(chalk.gray('  Or:       hyperclaw secrets set KEY=value   (for .env vars)\n'));
+      console.log(chalk.gray('  Add with: hyperclaw auth add <service_id>  (for any API key)\n'));
+      console.log(chalk.gray('  Or:       hyperclaw secrets set KEY=value  (for .env vars)\n'));
       return;
     }
 
@@ -94,9 +97,7 @@ export class CredentialsStore {
       const hasKey = !!(cred?.apiKey);
       const hasRefresh = !!(cred?.refreshToken);
       const expiry = cred?.expiresAt
-        ? new Date(cred.expiresAt) > new Date()
-          ? chalk.green('valid')
-          : chalk.red('expired')
+        ? (new Date(cred.expiresAt) > new Date() ? chalk.green('valid') : chalk.red('expired'))
         : chalk.gray('no expiry');
 
       console.log(`  ${chalk.green('●')} ${chalk.white(p.padEnd(20))} ${hasKey ? chalk.cyan('api_key') : ''}${hasRefresh ? chalk.yellow(' refresh_token') : ''} ${expiry}`);

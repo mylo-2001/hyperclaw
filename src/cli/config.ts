@@ -4,10 +4,9 @@
  * HyperClaw live config plane (not just read — also writes & notifies gateway).
  */
 import fs from 'fs-extra';
-import path from 'path';
 import chalk from 'chalk';
 import { getHyperClawDir, getConfigPath } from '../infra/paths';
-import { resolveChannelToken } from '../infra/env-resolve';
+import { resolveChannelToken, getProviderCredentialAsync } from '../infra/env-resolve';
 
 const getHC_DIR = () => getHyperClawDir();
 const getCFG_FILE = () => getConfigPath();
@@ -372,10 +371,22 @@ export interface HyperClawConfig {
 
 export class ConfigStore {
 
+  /** Load raw config from disk (no hydration). Use for persistence to avoid writing resolved secrets back. */
+  async loadRaw(): Promise<HyperClawConfig> {
+    try {
+      return (await fs.readJson(getCFG_FILE())) as HyperClawConfig;
+    } catch (e: any) {
+      if (e?.code === 'ENOENT') return {};
+      console.error('[config] Failed to load config:', e?.message ?? String(e));
+      throw e; // H5: Don't return {} on parse error — callers get explicit failure
+    }
+  }
+
+  /** Load config with env/credentials hydration for runtime use. Do NOT pass the result to save — use patch/save with explicit values only. */
   async load(): Promise<HyperClawConfig> {
     try {
-      const cfg = await fs.readJson(getCFG_FILE());
-      // Apply env fallbacks for channel tokens
+      const cfg = await fs.readJson(getCFG_FILE()) as HyperClawConfig;
+      // Apply env fallbacks for channel tokens (in-memory only; never persisted)
       if (cfg.channelConfigs) {
         for (const [chId, ch] of Object.entries(cfg.channelConfigs as Record<string, any>)) {
           const tok = resolveChannelToken(chId, ch?.token || ch?.botToken);
@@ -383,19 +394,34 @@ export class ConfigStore {
           if (tok && !ch?.botToken) (ch as any).botToken = tok;
         }
       }
+      // H-2: Hydrate provider.apiKey from CredentialsStore/AuthStore when missing (in-memory only)
+      if (cfg.provider && !cfg.provider.apiKey) {
+        const key = await getProviderCredentialAsync(cfg);
+        if (key) (cfg.provider as any).apiKey = key;
+      }
       return cfg;
-    } catch { return {}; }
+    } catch (e: any) {
+      if (e?.code === 'ENOENT') return {};
+      console.error('[config] Failed to load config:', e?.message ?? String(e));
+      throw e; // H5: Don't return {} on parse error — callers get explicit failure
+    }
   }
 
   async save(cfg: HyperClawConfig): Promise<void> {
+    // H-8: Atomic write — write to temp file then rename so a crash mid-write
+    // never leaves a partially-written (corrupt) hyperclaw.json behind.
+    const target = getCFG_FILE();
+    const tmp = target + '.tmp';
     await fs.ensureDir(getHC_DIR());
-    await fs.writeJson(getCFG_FILE(), cfg, { spaces: 2 });
-    await fs.chmod(getCFG_FILE(), 0o600);
+    await fs.writeJson(tmp, cfg, { spaces: 2 });
+    await fs.chmod(tmp, 0o600);
+    await fs.rename(tmp, target);
   }
 
+  /** Merge patch into raw config and save. Uses loadRaw() so hydrated secrets from env/store are never written back. */
   async patch(patch: Partial<HyperClawConfig>): Promise<void> {
-    const current = await this.load();
-    await this.save(deepMerge(current, patch) as HyperClawConfig);
+    const raw = await this.loadRaw();
+    await this.save(deepMerge(raw, patch) as HyperClawConfig);
   }
 
   // ── Provider ─────────────────────────────────────────────────────────────────
@@ -423,10 +449,13 @@ export class ConfigStore {
 
   async enableChannel(channelId: string, channelConfig?: any): Promise<void> {
     const cfg = await this.load();
-    const channels = cfg.gateway?.enabledChannels || [];
+    // C-6: Use safe defaults instead of non-null assertion — cfg.gateway may be
+    // undefined on a fresh install (before `hyperclaw init` completes).
+    const gwBase = cfg.gateway ?? { port: 18789, bind: '127.0.0.1', authToken: '', runtime: 'node' as const, enabledChannels: [], hooks: true, tailscaleExposure: 'off' as const };
+    const channels = gwBase.enabledChannels ?? [];
     if (!channels.includes(channelId)) channels.push(channelId);
     const patch: Partial<HyperClawConfig> = {
-      gateway: { ...cfg.gateway!, enabledChannels: channels }
+      gateway: { ...gwBase, enabledChannels: channels }
     };
     if (channelConfig) {
       patch.channelConfigs = { ...cfg.channelConfigs, [channelId]: channelConfig };
@@ -437,8 +466,9 @@ export class ConfigStore {
 
   async disableChannel(channelId: string): Promise<void> {
     const cfg = await this.load();
-    const channels = (cfg.gateway?.enabledChannels || []).filter(c => c !== channelId);
-    await this.patch({ gateway: { ...cfg.gateway!, enabledChannels: channels } });
+    const gwBase = cfg.gateway ?? { port: 18789, bind: '127.0.0.1', authToken: '', runtime: 'node' as const, enabledChannels: [], hooks: true, tailscaleExposure: 'off' as const };
+    const channels = (gwBase.enabledChannels ?? []).filter(c => c !== channelId);
+    await this.patch({ gateway: { ...gwBase, enabledChannels: channels } });
     console.log(chalk.green(`  ✅ Channel disabled: ${channelId}`));
   }
 
@@ -446,18 +476,21 @@ export class ConfigStore {
 
   async setGatewayPort(port: number): Promise<void> {
     const cfg = await this.load();
-    await this.patch({ gateway: { ...cfg.gateway!, port } });
+    const gwBase = cfg.gateway ?? { port: 18789, bind: '127.0.0.1', authToken: '', runtime: 'node' as const, enabledChannels: [], hooks: true, tailscaleExposure: 'off' as const };
+    await this.patch({ gateway: { ...gwBase, port } });
   }
 
   async setGatewayBind(bind: string): Promise<void> {
     const cfg = await this.load();
-    await this.patch({ gateway: { ...cfg.gateway!, bind } });
+    const gwBase = cfg.gateway ?? { port: 18789, bind: '127.0.0.1', authToken: '', runtime: 'node' as const, enabledChannels: [], hooks: true, tailscaleExposure: 'off' as const };
+    await this.patch({ gateway: { ...gwBase, bind } });
   }
 
   async generateToken(): Promise<string> {
     const token = require('crypto').randomBytes(32).toString('base64url');
     const cfg = await this.load();
-    await this.patch({ gateway: { ...cfg.gateway!, authToken: token } });
+    const gwBase = cfg.gateway ?? { port: 18789, bind: '127.0.0.1', authToken: '', runtime: 'node' as const, enabledChannels: [], hooks: true, tailscaleExposure: 'off' as const };
+    await this.patch({ gateway: { ...gwBase, authToken: token } });
     return token;
   }
 
@@ -495,13 +528,17 @@ export class ConfigStore {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+// H-9: deepMerge intentionally REPLACES arrays (no concat) so that callers can
+// clear a list by passing []. Keys with value `undefined` are skipped so partial
+// patch objects never accidentally nullify existing fields.
 function deepMerge(base: any, patch: any): any {
   const result = { ...base };
   for (const key of Object.keys(patch || {})) {
+    if (patch[key] === undefined) continue; // skip — do not erase existing value
     if (patch[key] !== null && typeof patch[key] === 'object' && !Array.isArray(patch[key])) {
       result[key] = deepMerge(base[key] || {}, patch[key]);
     } else {
-      result[key] = patch[key];
+      result[key] = patch[key]; // scalars and arrays are replaced, not merged
     }
   }
   return result;
@@ -509,8 +546,22 @@ function deepMerge(base: any, patch: any): any {
 
 function scrubSecrets(cfg: HyperClawConfig): any {
   const s = JSON.parse(JSON.stringify(cfg));
+  // Single-provider key
   if (s.provider?.apiKey) s.provider.apiKey = '●●●●●●●●';
-  if (s.gateway?.authToken) s.gateway.authToken = s.gateway.authToken ? '●●●●●●●●' : '(none)';
+  // M-6: Multi-provider array keys (providers[].apiKey and providers[].apiKeys[])
+  if (Array.isArray(s.providers)) {
+    for (const p of s.providers) {
+      if (p.apiKey) p.apiKey = '●●●●●●●●';
+      if (Array.isArray(p.apiKeys)) p.apiKeys = p.apiKeys.map(() => '●●●●●●●●');
+    }
+  }
+  // Gateway auth token + remote credentials
+  if (s.gateway?.authToken) s.gateway.authToken = '●●●●●●●●';
+  if (s.gateway?.remote?.token) s.gateway.remote.token = '●●●●●●●●';
+  if (s.gateway?.remote?.password) s.gateway.remote.password = '●●●●●●●●';
+  // Voice/talk mode API key
+  if (s.talkMode?.apiKey) s.talkMode.apiKey = '●●●●●●●●';
+  // Service/skill API keys
   if (s.skills?.apiKeys) {
     const keys = Object.keys(s.skills.apiKeys);
     s.skills.apiKeys = Object.fromEntries(keys.map(k => [k, '●●●●●●●●']));

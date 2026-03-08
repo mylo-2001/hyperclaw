@@ -14,11 +14,10 @@ import ora from 'ora';
 import inquirer from 'inquirer';
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
+import { getHyperClawDir, getConfigPath } from '../infra/paths';
 
-const HC_DIR = path.join(os.homedir(), '.hyperclaw');
-const CONFIG_FILE = path.join(HC_DIR, 'hyperclaw.json');
-const OSINT_PROFILE_FILE = path.join(HC_DIR, 'osint-profile.json');
+const getConfigFile = () => getConfigPath();
+const getOsintProfileFile = () => path.join(getHyperClawDir(), 'osint-profile.json');
 
 export type OsintMode = 'recon' | 'bugbounty' | 'pentest' | 'footprint' | 'custom';
 
@@ -104,7 +103,7 @@ export async function osintSetup(options: {
   // Show current profile
   if (options.show) {
     try {
-      const profile: OsintProfile = await fs.readJson(OSINT_PROFILE_FILE);
+      const profile: OsintProfile = await fs.readJson(getOsintProfileFile());
       console.log(chalk.cyan.bold('  Current OSINT Profile:\n'));
       console.log(`  Mode:    ${chalk.yellow(profile.mode)}`);
       console.log(`  Target:  ${chalk.white(profile.target || '(not set)')}`);
@@ -121,7 +120,7 @@ export async function osintSetup(options: {
 
   // Reset profile
   if (options.reset) {
-    await fs.remove(OSINT_PROFILE_FILE);
+    await fs.remove(getOsintProfileFile());
     console.log(chalk.green('  ✔  OSINT profile cleared.\n'));
     return;
   }
@@ -209,12 +208,12 @@ export async function osintSetup(options: {
     systemPromptOverride: systemPrompt
   };
 
-  await fs.ensureDir(HC_DIR);
-  await fs.writeJson(OSINT_PROFILE_FILE, profile, { spaces: 2 });
+  await fs.ensureDir(getHyperClawDir());
+  await fs.writeJson(getOsintProfileFile(), profile, { spaces: 2 });
 
   // Patch hyperclaw.json with OSINT settings
   let config: Record<string, unknown> = {};
-  try { config = await fs.readJson(CONFIG_FILE); } catch {}
+  try { config = await fs.readJson(getConfigFile()); } catch {}
 
   // Patch agent.systemPrompt and skills
   if (!config.agent) config.agent = {};
@@ -224,11 +223,11 @@ export async function osintSetup(options: {
   if (target) agent.osintTarget = `${targetType}: ${target}`;
 
   // Register MCP servers that aren't already registered
-  const mcpFile = path.join(HC_DIR, 'mcp-servers.json');
+  const mcpFile = path.join(getHyperClawDir(), 'mcp-servers.json');
   let mcpServersJson: Array<{ id: string; name: string; transport: string; command: string; enabled: boolean; addedAt: string }> = [];
   try { mcpServersJson = await fs.readJson(mcpFile); } catch {}
 
-  const extensionsDir = path.join(path.dirname(CONFIG_FILE), '..', '..');
+  const extensionsDir = path.join(path.dirname(getConfigFile()), '..', '..');
   // We register with node path so it works without global install
   const serverDefs: Record<string, { command: string; label: string }> = {
     'mcp-filesystem': { command: `node ${path.join(process.cwd(), 'extensions/mcp-filesystem/server.mjs')}`, label: 'Filesystem (OSINT)' },
@@ -255,7 +254,7 @@ export async function osintSetup(options: {
 
   await fs.ensureDir(path.dirname(mcpFile));
   await fs.writeJson(mcpFile, mcpServersJson, { spaces: 2 });
-  await fs.writeJson(CONFIG_FILE, config, { spaces: 2 });
+  await fs.writeJson(getConfigFile(), config, { spaces: 2 });
 
   spinner.succeed('OSINT configuration applied');
 

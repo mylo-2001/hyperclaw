@@ -8,8 +8,8 @@
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
 import inquirer from 'inquirer';
+import { getHyperClawDir, getConfigPath } from '../infra/paths';
 
 export interface AuthProfile {
   id: string;
@@ -24,7 +24,7 @@ export interface AuthProfile {
   createdAt: string;
 }
 
-const PROFILES_FILE = path.join(os.homedir(), '.hyperclaw', 'auth-profiles.json');
+const getProfilesFile = () => path.join(getHyperClawDir(), 'auth-profiles.json');
 
 export class AuthProfileManager {
   private profiles: AuthProfile[] = [];
@@ -35,15 +35,16 @@ export class AuthProfileManager {
 
   private load(): void {
     try {
-      this.profiles = fs.readJsonSync(PROFILES_FILE);
+      this.profiles = fs.readJsonSync(getProfilesFile());
     } catch {
       this.profiles = [];
     }
   }
 
   private save(): void {
-    fs.ensureDirSync(path.dirname(PROFILES_FILE));
-    fs.writeJsonSync(PROFILES_FILE, this.profiles, { spaces: 2 });
+    const f = getProfilesFile();
+    fs.ensureDirSync(path.dirname(f));
+    fs.writeJsonSync(f, this.profiles, { spaces: 2 });
   }
 
   list(): void {
@@ -72,7 +73,7 @@ export class AuthProfileManager {
 
     // Load current config for defaults
     let cfg: any = {};
-    try { cfg = fs.readJsonSync(path.join(os.homedir(), '.hyperclaw', 'hyperclaw.json')); } catch {}
+    try { cfg = fs.readJsonSync(getConfigPath()); } catch {}
 
     const answers = await inquirer.prompt([
       {

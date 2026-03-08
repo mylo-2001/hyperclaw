@@ -90,7 +90,7 @@ The wizard walks you through: AI provider → model → channels → skills. Don
 # Step 1 — Start the daemon (runs in the background, bot becomes active on Telegram/Discord/etc.)
 hyperclaw daemon start
 
-# Step 2 — Open the TUI dashboard to see live status, channels, logs
+# Step 2 — Open the Dashboard to see live status, channels, logs
 hyperclaw dashboard
 
 # Step 3 — Or chat directly from your terminal (no Telegram needed)
@@ -111,7 +111,7 @@ hyperclaw daemon start
    └─────────────┴──────────────┘
 ```
 
-> **The daemon must be running** for the Telegram/Discord/WhatsApp bot to answer messages and for the TUI dashboard to show "ONLINE".  
+> **The daemon must be running** for the Telegram/Discord/WhatsApp bot to answer messages and for the Dashboard to show "Running".  
 > On **Windows** the daemon runs via Task Scheduler (no WSL, no admin).  
 > On **Linux/macOS** with `--install-daemon` it uses systemd / launchd.
 
@@ -134,7 +134,7 @@ hyperclaw dashboard
 | Start Telegram/Discord bot (background) | `hyperclaw daemon start`   |
 | Stop the bot                            | `hyperclaw daemon stop`    |
 | Check if running                        | `hyperclaw daemon status`  |
-| Open TUI dashboard                      | `hyperclaw dashboard`      |
+| Open Dashboard (terminal)               | `hyperclaw dashboard`      |
 | Chat from terminal (no Telegram needed) | `hyperclaw chat`           |
 | Run in foreground (no daemon)           | `hyperclaw start`          |
 | Health check                            | `hyperclaw doctor`         |

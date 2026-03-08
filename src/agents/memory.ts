@@ -1,8 +1,8 @@
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
 import chalk from 'chalk';
 import ora from 'ora';
+import { getHyperClawDir } from '../infra/paths';
 
 export interface AgentIdentity {
   agentName: string;
@@ -19,7 +19,7 @@ export class MemoryManager {
   private logFile: string;
 
   constructor(workspaceDir?: string) {
-    this.baseDir = workspaceDir || path.join(os.homedir(), '.hyperclaw');
+    this.baseDir = workspaceDir || getHyperClawDir();
     this.agentsFile = path.join(this.baseDir, 'AGENTS.md');
     this.memoryFile = path.join(this.baseDir, 'MEMORY.md');
     this.logFile = path.join(this.baseDir, 'logs', `${new Date().toISOString().split('T')[0]}.md`);

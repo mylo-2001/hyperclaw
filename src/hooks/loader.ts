@@ -6,7 +6,7 @@
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
+import { getHyperClawDir } from '../infra/paths';
 
 export interface HookDef {
   id: string;
@@ -127,7 +127,7 @@ export class HookLoader {
   private state: Record<string, { enabled: boolean }> = {};
 
   constructor() {
-    this.stateFile = path.join(os.homedir(), '.hyperclaw', 'hooks-state.json');
+    this.stateFile = path.join(getHyperClawDir(), 'hooks-state.json');
     this.loadState();
   }
 
@@ -257,7 +257,8 @@ export class HookLoader {
         const tasks = await loadCronTasks();
         let port = 18789;
         try {
-          const cfg = await fs.readJson(path.join(os.homedir(), '.hyperclaw', 'hyperclaw.json'));
+          const { getConfigPath } = await import('../infra/paths');
+          const cfg = await fs.readJson(getConfigPath());
           port = cfg?.gateway?.port ?? 18789;
         } catch { /* ignore */ }
         for (const task of tasks) {
@@ -281,7 +282,8 @@ export class HookLoader {
         const newFacts = payload?.newFacts as string[] | undefined;
         if (turnCount > 0 && sessionId) {
           const entry = `\n- ${new Date().toISOString().slice(0, 10)}: Session ${sessionId} closed after ${turnCount} turns\n`;
-          await fs.appendFile(path.join(os.homedir(), '.hyperclaw', 'MEMORY.md'), entry);
+          const { getHyperClawDir } = await import('../infra/paths');
+          await fs.appendFile(path.join(getHyperClawDir(), 'MEMORY.md'), entry);
         }
         try {
           const { onSessionEnd } = await import('../services/memory-integration');
@@ -289,7 +291,8 @@ export class HookLoader {
         } catch { /* ignore */ }
       },
       'command-logger': async () => {
-        const logDir = path.join(os.homedir(), '.hyperclaw', 'logs');
+        const { getHyperClawDir } = await import('../infra/paths');
+        const logDir = path.join(getHyperClawDir(), 'logs');
         const logFile = path.join(logDir, `commands-${new Date().toISOString().slice(0, 10)}.log`);
         await fs.ensureDir(logDir);
         const msg = String(payload?.message ?? '').slice(0, 100);
@@ -299,17 +302,19 @@ export class HookLoader {
       },
       'dm-guard': async () => {
         if (payload?.channel) {
-          const auditDir = path.join(os.homedir(), '.hyperclaw', 'logs');
+          const { getHyperClawDir } = await import('../infra/paths');
+          const auditDir = path.join(getHyperClawDir(), 'logs');
           await fs.ensureDir(auditDir);
           const line = `[${new Date().toISOString()}] message:received channel=${payload.channel}\n`;
           await fs.appendFile(path.join(auditDir, 'dm-guard.log'), line);
         }
       },
       'gateway-health': async () => {
-        const hcDir = path.join(os.homedir(), '.hyperclaw');
+        const { getHyperClawDir, getConfigPath } = await import('../infra/paths');
+        const hcDir = getHyperClawDir();
         let port = 18789;
         try {
-          const cfg = await fs.readJson(path.join(hcDir, 'hyperclaw.json'));
+          const cfg = await fs.readJson(getConfigPath());
           if (cfg?.gateway?.port) port = cfg.gateway.port;
         } catch {}
         const logDir = path.join(hcDir, 'logs');
@@ -335,7 +340,8 @@ export class HookLoader {
         }
       },
       'auto-backup': async () => {
-        const hcDir = path.join(os.homedir(), '.hyperclaw');
+        const { getHyperClawDir, getConfigPath } = await import('../infra/paths');
+        const hcDir = getHyperClawDir();
         const backupDir = path.join(hcDir, 'backups');
         await fs.ensureDir(backupDir);
         const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
@@ -353,7 +359,8 @@ export class HookLoader {
           const text = await runMorningBriefing();
           await persistBriefing(text);
         } catch (e: any) {
-          const logDir = path.join(os.homedir(), '.hyperclaw', 'logs');
+          const { getHyperClawDir } = await import('../infra/paths');
+        const logDir = path.join(getHyperClawDir(), 'logs');
           await fs.ensureDir(logDir);
           await fs.appendFile(path.join(logDir, 'heartbeat-errors.log'), `[${new Date().toISOString()}] ${e.message}\n`);
         }
@@ -362,7 +369,8 @@ export class HookLoader {
         const path = await import('path');
         const os = await import('os');
         const fs = await import('fs-extra');
-        const watchFile = path.join(os.homedir(), '.hyperclaw', 'website-watches.json');
+        const { getHyperClawDir } = await import('../infra/paths');
+        const watchFile = path.join(getHyperClawDir(), 'website-watches.json');
         if (!(await fs.pathExists(watchFile))) return;
         const watches = await fs.readJson(watchFile).catch(() => ({}));
         const crypto = await import('crypto');

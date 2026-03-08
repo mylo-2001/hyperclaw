@@ -12,10 +12,8 @@ import https from 'https';
 import http from 'http';
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
 import { EventEmitter } from 'events';
-
-const HC_DIR = path.join(os.homedir(), '.hyperclaw');
+import { getHyperClawDir, getConfigPath } from '@hyperclaw/shared';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -538,8 +536,9 @@ export function getBuiltinTools(): Tool[] {
       handler: async (input) => {
         const name = String(input.file || '').trim();
         if (!name.endsWith('.md') || /[\\/]/.test(name)) return `Invalid filename: must be a .md file in workspace (e.g. MEMORY.md, EPIXEIRISI.md).`;
-        const fpath = path.join(HC_DIR, path.basename(name));
-        if (path.resolve(fpath).indexOf(path.resolve(HC_DIR)) !== 0) return `Invalid path.`;
+        const hcDir = getHyperClawDir();
+        const fpath = path.join(hcDir, path.basename(name));
+        if (path.resolve(fpath).indexOf(path.resolve(hcDir)) !== 0) return `Invalid path.`;
         if (await fs.pathExists(fpath)) return fs.readFile(fpath, 'utf8');
         return `${name} not found. Create it with create_memory_file.`;
       }
@@ -557,7 +556,7 @@ export function getBuiltinTools(): Tool[] {
       },
       handler: async (input) => {
         const content = input.content as string;
-        const fpath = path.join(HC_DIR, 'MEMORY.md');
+        const fpath = path.join(getHyperClawDir(), 'MEMORY.md');
         const entry = `\n- ${new Date().toISOString().slice(0, 10)}: ${content}\n`;
         await fs.appendFile(fpath, entry);
         const { addFact } = await import('../../../../src/services/knowledge-graph');
@@ -583,8 +582,9 @@ export function getBuiltinTools(): Tool[] {
         if (!/^[a-zA-Z0-9_-]+\.md$/.test(name)) return 'Invalid filename: use only letters, numbers, underscore, hyphen, and .md extension (e.g. EPIXEIRISI.md).';
         const content = String(input.content || '').trim();
         if (!content) return 'Content is required.';
-        await fs.ensureDir(HC_DIR);
-        const fpath = path.join(HC_DIR, name);
+        const hcDir = getHyperClawDir();
+        await fs.ensureDir(hcDir);
+        const fpath = path.join(hcDir, name);
         const today = new Date().toISOString().slice(0, 10);
         if (input.append === 'true' && (await fs.pathExists(fpath))) {
           const entry = `\n- ${today}: ${content}\n`;
@@ -690,7 +690,7 @@ export function getBuiltinTools(): Tool[] {
         const value = String(input.value || '').trim();
         if (!key || !value) return 'Both key and value are required.';
 
-        const cfgPath = path.join(HC_DIR, 'hyperclaw.json');
+        const cfgPath = getConfigPath();
         const cfg = await fs.readJson(cfgPath).catch(() => ({}));
 
         const PROVIDER_KEYS = new Set([
@@ -710,8 +710,10 @@ export function getBuiltinTools(): Tool[] {
           saved = `service key "${key}" (skills.apiKeys)`;
         }
 
-        await fs.ensureDir(HC_DIR);
-        await fs.writeJson(cfgPath, cfg, { spaces: 2 });
+        await fs.ensureDir(path.dirname(cfgPath));
+        const tmp = cfgPath + '.tmp';
+        await fs.writeJson(tmp, cfg, { spaces: 2 });
+        await fs.rename(tmp, cfgPath);
         return `✔ Saved ${saved}. Restart the chat with "hyperclaw chat" to use the new key.`;
       }
     },
@@ -730,7 +732,7 @@ export function getBuiltinTools(): Tool[] {
         }
       },
       handler: async (input) => {
-        const cfgPath = path.join(HC_DIR, 'hyperclaw.json');
+        const cfgPath = getConfigPath();
         const cfg = await fs.readJson(cfgPath).catch(() => ({}));
         const identity = cfg.identity || {};
         const updated: string[] = [];
@@ -764,8 +766,10 @@ export function getBuiltinTools(): Tool[] {
         if (updated.length === 0) return 'Nothing to update — provide at least one field.';
 
         cfg.identity = identity;
-        await fs.ensureDir(HC_DIR);
-        await fs.writeJson(cfgPath, cfg, { spaces: 2 });
+        await fs.ensureDir(path.dirname(cfgPath));
+        const tmp = cfgPath + '.tmp';
+        await fs.writeJson(tmp, cfg, { spaces: 2 });
+        await fs.rename(tmp, cfgPath);
         return `✔ Identity updated: ${updated.join(', ')}. Restart the chat ("hyperclaw chat") for full effect.`;
       }
     },
@@ -1008,7 +1012,7 @@ export function getBuiltinTools(): Tool[] {
         const prompt = input.prompt as string;
         const size = (input.size as string) || '1024x1024';
         const prov = (input.provider as string) || 'dalle';
-        const openaiKey = process.env.OPENAI_API_KEY || (await fs.readJson(path.join(HC_DIR, 'hyperclaw.json')).catch(() => ({}))).provider?.apiKey;
+        const openaiKey = process.env.OPENAI_API_KEY || (await fs.readJson(getConfigPath()).catch(() => ({}))).provider?.apiKey;
         if (prov === 'dalle') {
           if (!openaiKey) return 'OPENAI_API_KEY not set. Configure an OpenAI API key.';
           return new Promise((resolve) => {

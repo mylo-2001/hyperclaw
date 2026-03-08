@@ -24,7 +24,17 @@ const queryClient = new QueryClient({
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 
-const api = axios.create({ baseURL: 'http://localhost:18789', timeout: 30000 });
+// L-3: Allow build-time override via VITE_GATEWAY_URL
+const DEFAULT_GATEWAY_URL = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_GATEWAY_URL) || 'http://localhost:18789';
+
+// H-5: Create a mutable axios instance so SettingsPage can update the baseURL
+// at runtime without a page reload.
+const api = axios.create({ baseURL: DEFAULT_GATEWAY_URL, timeout: 30000 });
+
+/** Update the shared axios instance to point at a different gateway URL. */
+function setApiBaseUrl(url: string): void {
+  api.defaults.baseURL = url.replace(/\/$/, '');
+}
 
 type Page = 'chat' | 'dashboard' | 'canvas' | 'hub' | 'memory' | 'settings';
 
@@ -444,7 +454,17 @@ function PlaceholderPage({ title, icon, desc, cmd }: { title: string; icon: stri
 
 function SettingsPage() {
   const { data: status } = useGatewayStatus();
-  const [gatewayUrl, setGatewayUrl] = useState('http://localhost:18789');
+  const qc = useQueryClient();
+  const [gatewayUrl, setGatewayUrl] = useState(DEFAULT_GATEWAY_URL);
+  const [applied, setApplied] = useState(false);
+
+  // H-5: Apply the new URL to the shared axios instance and re-probe immediately.
+  const applyUrl = useCallback(() => {
+    setApiBaseUrl(gatewayUrl);
+    qc.invalidateQueries();
+    setApplied(true);
+    setTimeout(() => setApplied(false), 1500);
+  }, [gatewayUrl, qc]);
 
   return (
     <div className="p-6 space-y-4 overflow-y-auto">
@@ -456,11 +476,22 @@ function SettingsPage() {
         <div className="text-xs text-gray-500 uppercase tracking-wider">Gateway Connection</div>
         <div>
           <label className="text-xs text-gray-400 mb-1 block">Gateway URL</label>
-          <input
-            value={gatewayUrl}
-            onChange={e => setGatewayUrl(e.target.value)}
-            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-700"
-          />
+          <div className="flex gap-2">
+            <input
+              value={gatewayUrl}
+              onChange={e => setGatewayUrl(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && applyUrl()}
+              className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-700"
+            />
+            <button
+              onClick={applyUrl}
+              className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                applied ? 'bg-green-700 text-white' : 'bg-red-800 hover:bg-red-700 text-white'
+              }`}
+            >
+              {applied ? '✓' : 'Apply'}
+            </button>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${status ? 'bg-green-400 animate-pulse' : 'bg-red-500'}`} />

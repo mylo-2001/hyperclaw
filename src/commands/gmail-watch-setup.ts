@@ -6,15 +6,13 @@
 
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
-import { getConfigPath } from '../infra/paths';
-
-const HC_DIR = path.join(os.homedir(), '.hyperclaw');
+import { getHyperClawDir } from '../infra/paths';
 
 async function getGmailAccessToken(): Promise<string> {
+  const hcDir = getHyperClawDir();
   const paths = [
-    path.join(HC_DIR, 'oauth-google-gmail.json'),
-    path.join(HC_DIR, 'oauth-google.json')
+    path.join(hcDir, 'oauth-google-gmail.json'),
+    path.join(hcDir, 'oauth-google.json')
   ];
   for (const p of paths) {
     if (!(await fs.pathExists(p))) continue;

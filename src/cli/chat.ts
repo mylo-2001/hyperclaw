@@ -30,8 +30,8 @@ function printHelp(): void {
   console.log(chalk.bold('  Commands:'));
   console.log(`  ${chalk.cyan('/exit')}    — quit the chat`);
   console.log(`  ${chalk.cyan('/clear')}   — clear conversation history`);
-  console.log(`  ${chalk.cyan('/model')}        — show current model & available models`);
-  console.log(`  ${chalk.cyan('/model <id>')}   — switch to a different model`);
+  console.log(`  ${chalk.cyan('/model')}           — show current model`);
+  console.log(`  ${chalk.cyan('/model <id>')}      — switch model (e.g. /model claude-sonnet-4-5)`);
   console.log(`  ${chalk.cyan('/skills')}  — list installed skills + how to add more`);
   console.log(`  ${chalk.cyan('/help')}    — show this help`);
   console.log();
@@ -54,8 +54,10 @@ async function printSkills(): Promise<void> {
         if (s.capabilities) console.log(chalk.gray(`    ${s.capabilities}`));
       }
     }
-  } catch {
+  } catch (e: any) {
     console.log(chalk.gray('  Could not load skills list.'));
+    console.log(chalk.gray(`  ${(e?.message || String(e)).slice(0, 80)}`));
+    console.log(chalk.gray('  Run: hyperclaw doctor  or  hyperclaw hub  to check setup.'));
   }
   console.log();
   console.log(chalk.bold('  How to add a skill:'));
@@ -79,7 +81,8 @@ export async function runChat(opts: {
   // Load config
   const cfg = await fs.readJson(getConfigPath()).catch(() => null);
   if (!cfg) {
-    console.log(chalk.red('\n  No configuration found. Run: hyperclaw onboard\n'));
+    console.log(chalk.red('\n  No configuration found.\n'));
+    console.log(chalk.gray('  Chat works without the gateway. Run: hyperclaw onboard\n'));
     return;
   }
 
@@ -87,7 +90,8 @@ export async function runChat(opts: {
   const apiKey = await getProviderCredentialAsync(cfg).catch(() => null);
   const isLocal = ['local', 'ollama', 'lmstudio'].includes(cfg?.provider?.providerId ?? '');
   if (!apiKey && !isLocal) {
-    console.log(chalk.red('\n  No API key configured. Run: hyperclaw config set-key\n'));
+    console.log(chalk.red('\n  No API key configured.\n'));
+    console.log(chalk.gray('  Chat uses your AI provider directly (no gateway needed). Run: hyperclaw config set-key\n'));
     return;
   }
 
@@ -206,7 +210,7 @@ export async function runChat(opts: {
             engineOpts.model = rawModel.startsWith('ollama/') ? rawModel.slice(7) : rawModel;
             console.log(chalk.green(`\n  ✔ Model switched to: ${chalk.bold(rawModel)}\n`));
           } catch {
-            console.log(chalk.gray('\n  Use: /model <model-id>\n'));
+            console.log(chalk.gray('\n  Selection failed. Use: /model <model-id>  (e.g. claude-sonnet-4-5)\n'));
           } finally {
             rl.resume();
           }
@@ -255,9 +259,9 @@ export async function runChat(opts: {
         // If no tokens were streamed (non-streaming provider), print now
         if (!prefixPrinted) {
           process.stdout.write(chalk.bold.blue('\n  Agent › '));
-          process.stdout.write(responseText || chalk.gray('(empty)'));
+          process.stdout.write(responseText || chalk.gray('(empty — try rephrasing or check model/tools)'));
         } else if (!responseText) {
-          process.stdout.write(chalk.gray('(empty)'));
+          process.stdout.write(chalk.gray('(empty — try rephrasing or check model/tools)'));
         }
         console.log('\n');
 
@@ -266,8 +270,18 @@ export async function runChat(opts: {
         }
       } catch (e: any) {
         spinner.stop();
-        responseText = `Error: ${e.message}`;
-        console.log(chalk.red(`\n  Error: ${e.message}\n`));
+        const msg = e?.message || String(e);
+        responseText = `Error: ${msg}`;
+        console.log(chalk.red(`\n  Error: ${msg}\n`));
+        const hint = (() => {
+          if (/401|unauthorized|invalid.*key|authentication/i.test(msg)) return 'Check API key: hyperclaw config set-key';
+          if (/429|rate.?limit|quota/i.test(msg)) return 'Rate limited. Wait a moment and retry.';
+          if (/500|503|service.?unavailable/i.test(msg)) return 'Provider temporarily down. Try again later.';
+          if (/network|ECONNREFUSED|ETIMEDOUT|fetch failed/i.test(msg)) return 'Network error. Check connection and base URL.';
+          if (/model|not found|invalid model/i.test(msg)) return 'Try: /model <id> to switch model.';
+          return 'Run: hyperclaw doctor  for setup checks.';
+        })();
+        console.log(chalk.gray(`  ${hint}\n`));
       }
 
       // Add assistant response to transcript for next turn

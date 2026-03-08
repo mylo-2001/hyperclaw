@@ -5,10 +5,8 @@
 
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
 import http from 'http';
-
-const HC_DIR = path.join(os.homedir(), '.hyperclaw');
+import { getConfigPath } from '../infra/paths';
 
 export interface HeartbeatConfig {
   morningBriefing?: { enabled?: boolean; cron?: string };
@@ -16,7 +14,7 @@ export interface HeartbeatConfig {
 
 async function getConfig(): Promise<HeartbeatConfig> {
   try {
-    const cfg = await fs.readJson(path.join(HC_DIR, 'hyperclaw.json'));
+    const cfg = await fs.readJson(getConfigPath());
     return (cfg.heartbeat ?? {}) as HeartbeatConfig;
   } catch {
     return {};
@@ -25,7 +23,7 @@ async function getConfig(): Promise<HeartbeatConfig> {
 
 async function getGatewayConfig(): Promise<{ port: number; authToken?: string }> {
   try {
-    const cfg = await fs.readJson(path.join(HC_DIR, 'hyperclaw.json'));
+    const cfg = await fs.readJson(getConfigPath());
     const authToken = cfg?.gateway?.authToken || process.env.HYPERCLAW_GATEWAY_TOKEN || '';
     return {
       port: cfg?.gateway?.port ?? 18789,

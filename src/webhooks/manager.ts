@@ -8,10 +8,10 @@
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
 import crypto from 'crypto';
+import { getHyperClawDir } from '../infra/paths';
 
-const WEBHOOKS_FILE = path.join(os.homedir(), '.hyperclaw', 'webhooks.json');
+const getWebhooksFile = () => path.join(getHyperClawDir(), 'webhooks.json');
 
 export type WebhookFormat = 'raw' | 'json' | 'github' | 'stripe' | 'linear' | 'notion' | 'custom';
 
@@ -44,13 +44,14 @@ export class WebhookManager {
   private webhooks: Webhook[] = [];
 
   async load(): Promise<void> {
-    try { this.webhooks = await fs.readJson(WEBHOOKS_FILE); }
+    try { this.webhooks = await fs.readJson(getWebhooksFile()); }
     catch { this.webhooks = []; }
   }
 
   async save(): Promise<void> {
-    await fs.ensureDir(path.dirname(WEBHOOKS_FILE));
-    await fs.writeJson(WEBHOOKS_FILE, this.webhooks, { spaces: 2 });
+    const f = getWebhooksFile();
+    await fs.ensureDir(path.dirname(f));
+    await fs.writeJson(f, this.webhooks, { spaces: 2 });
   }
 
   async add(opts: {

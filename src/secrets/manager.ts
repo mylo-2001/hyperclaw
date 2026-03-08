@@ -43,6 +43,10 @@ function mask(val: string): string {
   return val.slice(0, 4) + '***' + val.slice(-3);
 }
 
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export class SecretsManager {
   private envFile: string;
   private shellRcFiles: string[];
@@ -52,11 +56,17 @@ export class SecretsManager {
     const hcDir = getHyperClawDir();
     this.envFile = getEnvFilePath();
     const home = os.homedir();
-    this.shellRcFiles = [
-      path.join(home, '.bashrc'),
-      path.join(home, '.zshrc'),
-      path.join(home, '.profile'),
-    ];
+    const isWin = process.platform === 'win32';
+    this.shellRcFiles = isWin
+      ? [
+          path.join(home, 'Documents', 'WindowsPowerShell', 'Microsoft.PowerShell_profile.ps1'),
+          path.join(home, '.powershell_profile.ps1'),
+        ]
+      : [
+          path.join(home, '.bashrc'),
+          path.join(home, '.zshrc'),
+          path.join(home, '.profile'),
+        ];
     this.creds = new CredentialsStore(hcDir);
   }
 
@@ -127,15 +137,27 @@ export class SecretsManager {
     const key = keyValue.slice(0, eqIdx).trim();
     const value = keyValue.slice(eqIdx + 1).trim();
 
-    // Append to .env file
+    // H-1: Replace existing entry instead of appending — prevents unbounded growth
+    // and ensures audit/reload always see the latest value, not the first duplicate.
     await fs.ensureDir(path.dirname(this.envFile));
-    await fs.appendFile(this.envFile, `${key}=${value}\n`);
+    let content = (await fs.pathExists(this.envFile))
+      ? await fs.readFile(this.envFile, 'utf8')
+      : '';
+    const lineRe = new RegExp(`^${escapeRegex(key)}=.*$`, 'm');
+    if (lineRe.test(content)) {
+      content = content.replace(lineRe, `${key}=${value}`);
+    } else {
+      content = content.endsWith('\n') || content === ''
+        ? content + `${key}=${value}\n`
+        : content + `\n${key}=${value}\n`;
+    }
+    await fs.writeFile(this.envFile, content, 'utf8');
     await fs.chmod(this.envFile, 0o600);
 
     console.log(chalk.green(`\n  ✔  Secret set: ${key}=${mask(value)}`));
     console.log(chalk.gray(`     Stored in: ${this.envFile}`));
     console.log(chalk.gray('     Run: hyperclaw secrets apply   to write to shell config'));
-    console.log(chalk.gray('     Run: hyperclaw secrets reload  to inject into running gateway\n'));
+    console.log(chalk.gray('     Restart gateway to use:        hyperclaw daemon restart\n'));
   }
 
   async apply(): Promise<void> {
@@ -150,17 +172,40 @@ export class SecretsManager {
     const lines = envContent.split('\n').filter(l => l.includes('=') && !l.startsWith('#'));
 
     for (const rcFile of this.shellRcFiles) {
-      if (await fs.pathExists(rcFile)) {
-        let rc = await fs.readFile(rcFile, 'utf8');
+      await fs.ensureDir(path.dirname(rcFile));
+      const exists = await fs.pathExists(rcFile);
+      if (exists || rcFile.endsWith('.ps1')) {
+        // M-5: Back up the RC file before modifying it (if it exists).
+        if (exists) {
+          const backup = rcFile + '.hyperclaw.bak';
+          await fs.copy(rcFile, backup, { overwrite: true });
+        }
+        let rc = exists ? await fs.readFile(rcFile, 'utf8') : '';
 
         const marker = '# === HyperClaw secrets — auto-managed, do not edit manually ===';
         const markerEnd = '# === end HyperClaw secrets ===';
 
-        // Remove old block if present
-        const blockRe = new RegExp(`${marker}[\\s\\S]*?${markerEnd}\n?`, 'g');
+        // Remove old block if present (escape special regex chars in markers).
+        const blockRe = new RegExp(
+          `${escapeRegex(marker)}[\\s\\S]*?${escapeRegex(markerEnd)}\n?`,
+          'g'
+        );
         rc = rc.replace(blockRe, '');
 
-        const exportLines = lines.map(l => `export ${l}`).join('\n');
+        const isWin = process.platform === 'win32' && rcFile.endsWith('.ps1');
+        const exportLines = isWin
+          ? lines.map(l => {
+              const eq = l.indexOf('=');
+              if (eq <= 0) return '';
+              const k = l.slice(0, eq).trim();
+              let v = l.slice(eq + 1).trim();
+              if (v.includes('\n') || v.includes('\r')) {
+                console.log(chalk.yellow(`  ⚠  Secret ${k} contains newlines — may need manual edit in ${path.basename(rcFile)}`));
+              }
+              v = v.replace(/\\/g, '\\\\').replace(/"/g, '`"').replace(/\$/g, '`$');
+              return `$env:${k} = "${v}"`;
+            }).join('\n')
+          : lines.map(l => `export ${l}`).join('\n');
         const block = `\n${marker}\n${exportLines}\n${markerEnd}\n`;
         rc = rc + block;
 
@@ -170,7 +215,10 @@ export class SecretsManager {
     }
 
     spinner.succeed(`Secrets applied to shell config (${lines.length} variables)`);
-    console.log(chalk.gray('  Reload your shell or run: source ~/.bashrc\n'));
+    const reloadHint = process.platform === 'win32'
+      ? chalk.gray('  Open a new PowerShell window to load the profile.\n')
+      : chalk.gray('  Reload your shell or run: source ~/.bashrc\n');
+    console.log(reloadHint);
   }
 
   async reload(): Promise<void> {
@@ -182,13 +230,20 @@ export class SecretsManager {
         .split('\n')
         .filter(l => l.includes('=') && !l.startsWith('#'));
 
+      let injected = 0;
       for (const line of lines) {
         const [k, ...rest] = line.split('=');
-        process.env[k.trim()] = rest.join('=').trim();
+        const key = k.trim();
+        // M-1: Never overwrite a key that already exists in the environment
+        // (system env / Docker secrets / CI injection takes precedence over .env file).
+        if (key && !(key in process.env)) {
+          process.env[key] = rest.join('=').trim();
+          injected++;
+        }
       }
 
-      spinner.succeed(`Reloaded ${lines.length} secrets into environment`);
-      console.log(chalk.gray('  Gateway will pick these up on next request\n'));
+      spinner.succeed(`Reloaded ${injected} secrets into this CLI process (${lines.length - injected} skipped — already set)`);
+      console.log(chalk.gray('  Restart the gateway to pick up changes: hyperclaw daemon restart\n'));
     } else {
       spinner.warn('No .env file found — nothing to reload');
     }
@@ -197,7 +252,9 @@ export class SecretsManager {
   async remove(key: string): Promise<void> {
     if (await fs.pathExists(this.envFile)) {
       let content = await fs.readFile(this.envFile, 'utf8');
-      content = content.replace(new RegExp(`^${key}=.+\n?`, 'gm'), '');
+      // L-2: Escape the key before using it in a regex so special chars don't
+      // accidentally match partial key names (e.g. API_KEY matching EXTRA_API_KEY).
+      content = content.replace(new RegExp(`^${escapeRegex(key)}=.*\n?`, 'gm'), '');
       await fs.writeFile(this.envFile, content, 'utf8');
     }
     console.log(chalk.green(`\n  ✔  Secret removed: ${key}\n`));

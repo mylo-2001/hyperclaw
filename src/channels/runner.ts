@@ -5,15 +5,12 @@
  */
 
 import fs from 'fs-extra';
-import path from 'path';
 import http from 'http';
-import { getHyperClawDir, getConfigPath } from '../infra/paths';
+import { getConfigPath } from '../infra/paths';
 import { chunkForChannel, withRetry } from './delivery';
 import { resolveBroadcast, dispatchBroadcast, extractBroadcastConfig } from '../routing/broadcast';
 import { resolveBinding, extractBindings, extractAgentsList, buildInboundContext } from '../routing/binding-resolver';
 import { buildSessionKey, resolveIdentityLink, extractSessionConfig } from '../routing/session-keys';
-
-const HC_DIR = getHyperClawDir();
 
 export interface ChannelRunnerOpts {
   port: number;
@@ -37,27 +34,27 @@ export interface ChannelRunnerResult {
 }
 
 export async function startChannelRunners(opts: ChannelRunnerOpts): Promise<ChannelRunnerResult> {
+  // C-2: Reset module-level state so repeated calls don't accumulate duplicate connectors.
+  for (const c of connectors) await c.stop().catch(() => {});
+  connectors.length = 0;
+  emailConnectorRef = null;
+  for (const k of Object.keys(webhookConnectors)) delete webhookConnectors[k];
+
   const port = opts.port;
   const baseUrl = `http://${opts.bind || '127.0.0.1'}:${port}`;
   const authToken = opts.authToken || '';
 
+  // C-3/C-4: Read only from the single canonical config file (hyperclaw.json).
+  // The legacy ~/.hyperclaw/config.json secondary read has been removed.
   let cfg: any = {};
-  try { cfg = await fs.readJson(getConfigPath()); } catch {}
-
-  // Merge config.json (channels add writes there)
-  let channelConfigs: Record<string, any> = {};
-  let configChannels: string[] = [];
   try {
-    const configPath = path.join(HC_DIR, 'config.json');
-    if (await fs.pathExists(configPath)) {
-      const c2 = await fs.readJson(configPath);
-      channelConfigs = c2.channelConfigs || {};
-      configChannels = Array.isArray(c2.channels) ? c2.channels : [];
-    }
-  } catch {}
+    cfg = await fs.readJson(getConfigPath());
+  } catch (e: any) {
+    if (e?.code !== 'ENOENT') console.error('[channels] Failed to read config:', e?.message);
+  }
 
-  const enabledIds = (cfg.gateway?.enabledChannels?.length ? cfg.gateway.enabledChannels : configChannels) || [];
-  const ids = Array.isArray(enabledIds) ? enabledIds : [];
+  // C-1: Channel configs live at cfg.channelConfigs, not cfg.channels (which is string[]).
+  const ids: string[] = Array.isArray(cfg.gateway?.enabledChannels) ? cfg.gateway.enabledChannels : [];
   if (ids.length === 0) return { stop: async () => {} };
 
   // Routing config — loaded once at startup
@@ -166,7 +163,8 @@ export async function startChannelRunners(opts: ChannelRunnerOpts): Promise<Chan
   };
 
   for (const id of ids) {
-    const chCfg = cfg.channels?.[id] || channelConfigs[id];
+    // C-1: Use cfg.channelConfigs (Record<string,any>), not cfg.channels (string[]).
+    const chCfg = cfg.channelConfigs?.[id];
     const dmObj = chCfg?.dmPolicy;
     const dmPolicy = (typeof dmObj === 'object' ? dmObj?.policy : dmObj) || 'pairing';
     const allowFrom = chCfg?.allowFrom || (typeof dmObj === 'object' ? dmObj?.allowFrom : []) || [];
@@ -179,14 +177,25 @@ export async function startChannelRunners(opts: ChannelRunnerOpts): Promise<Chan
       const groupActivation = chCfg?.groupActivation === 'always' ? 'always' : 'mention';
       try {
         const { TelegramConnector } = await import('../../extensions/telegram/src/connector');
+        // C-5: Load persistent pairing state so approved users survive gateway restarts.
+        const { PairingStore: TgPairingStore } = await import('./pairing');
+        const tgStore = new TgPairingStore('telegram');
+        const tgPairingBridge = {
+          isApproved: (senderId: string) => tgStore.isApproved(senderId),
+          createRequest: (senderId: string) => tgStore.createRequest(senderId),
+          verify: (code: string, senderId: string) => tgStore.verify(code, senderId)
+        };
         const conn = new TelegramConnector(token, {
           dmPolicy: dmPolicy as any,
           allowFrom: allowFromArr,
           groupAllowFrom,
           groupActivation,
           pendingPairings: {},
-          approvedPairings: []
-        });
+          approvedPairings: [],
+          // C-5: pairingBridge wires DM auth checks to the persistent PairingStore.
+          // Cast needed until TelegramConfig type is updated to include pairingBridge.
+          pairingBridge: tgPairingBridge
+        } as any);
         conn.on('message', (msg: { chatId: number; text: string }) => handleMsg(msg, wrap(conn as any), 'telegram'));
         await conn.connect();
         connectors.push({ stop: async () => { await conn.disconnect(); } });
@@ -282,7 +291,8 @@ export async function startChannelRunners(opts: ChannelRunnerOpts): Promise<Chan
         conn.on('message', (msg: { chatId: string; text: string; threadTs?: string }) => {
           const send = (id: string | number, t: string) => conn.sendMessage(String(id), t, msg.threadTs);
           const typing = conn.sendTyping ? (id: string | number) => conn.sendTyping(String(id)) : undefined;
-          handleMsg({ chatId: msg.chatId, text: msg.text }, { sendMessage: send, sendTyping: typing }, 'slack');
+          // M-3: Pass threadId so buildSessionKey isolates thread sessions correctly.
+          handleMsg({ chatId: msg.chatId, text: msg.text, threadId: msg.threadTs }, { sendMessage: send, sendTyping: typing }, 'slack');
         });
         await conn.connect();
         // HTTP mode webhook (Socket Mode handles its own events)

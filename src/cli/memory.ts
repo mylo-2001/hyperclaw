@@ -9,12 +9,12 @@ import path from 'path';
 import os from 'os';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
+import { getHyperClawDir } from '../infra/paths';
 
-const HC_DIR = path.join(os.homedir(), '.hyperclaw');
-const AGENTS_FILE = path.join(HC_DIR, 'AGENTS.md');
-const MEMORY_FILE = path.join(HC_DIR, 'MEMORY.md');
-const SOUL_FILE = path.join(HC_DIR, 'SOUL.md');
-const LOG_DIR = path.join(HC_DIR, 'logs');
+const getAgentsFile = () => path.join(getHyperClawDir(), 'AGENTS.md');
+const getMemoryFile = () => path.join(getHyperClawDir(), 'MEMORY.md');
+const getSoulFile = () => path.join(getHyperClawDir(), 'SOUL.md');
+const getLogDir = () => path.join(getHyperClawDir(), 'logs');
 
 export interface MemoryData {
   agents: string;
@@ -26,8 +26,8 @@ export class MemoryManager {
 
   // ── Bootstrap workspace files ─────────────────────────────────────────────────
   async init(opts: AgentIdentity | { agentName?: string; userName?: string; language?: string; personality?: string; rules?: string[]; wakeWord?: string } = {}): Promise<void> {
-    await fs.ensureDir(HC_DIR);
-    await fs.ensureDir(LOG_DIR);
+    await fs.ensureDir(getHyperClawDir());
+    await fs.ensureDir(getLogDir());
 
     const agentName = opts.agentName || 'HyperClaw';
     const userName = opts.userName || os.userInfo().username;
@@ -44,8 +44,8 @@ export class MemoryManager {
     const today = new Date().toISOString().slice(0, 10);
 
     // AGENTS.md — global rules for all sessions and subagents
-    if (!(await fs.pathExists(AGENTS_FILE))) {
-      await fs.writeFile(AGENTS_FILE, `# AGENTS.md — Global Rules
+    if (!(await fs.pathExists(getAgentsFile()))) {
+      await fs.writeFile(getAgentsFile(), `# AGENTS.md — Global Rules
 > All sessions and subagents must follow these rules.
 
 ## Identity
@@ -69,8 +69,8 @@ ${rules}
     }
 
     // MEMORY.md — accumulated facts
-    if (!(await fs.pathExists(MEMORY_FILE))) {
-      await fs.writeFile(MEMORY_FILE, `# MEMORY.md — User Context
+    if (!(await fs.pathExists(getMemoryFile()))) {
+      await fs.writeFile(getMemoryFile(), `# MEMORY.md — User Context
 > Automatically updated by HyperClaw after each session.
 
 ## User Profile
@@ -84,8 +84,8 @@ ${rules}
     }
 
     // SOUL.md — agent persona (if not exists)
-    if (!(await fs.pathExists(SOUL_FILE))) {
-      await fs.writeFile(SOUL_FILE, `# SOUL.md — Agent Persona
+    if (!(await fs.pathExists(getSoulFile()))) {
+      await fs.writeFile(getSoulFile(), `# SOUL.md — Agent Persona
 > Who I am and how I behave.
 
 ## Name
@@ -105,7 +105,7 @@ ${(opts as any).wakeWord ? (opts as any).wakeWord : `Wake up, ${agentName}! Your
     }
 
     // Daily log entry
-    const logFile = path.join(LOG_DIR, `${today}.md`);
+    const logFile = path.join(getLogDir(), `${today}.md`);
     if (!(await fs.pathExists(logFile))) {
       await fs.writeFile(logFile, `# Session Log — ${today}\n\n`);
     }
@@ -113,34 +113,34 @@ ${(opts as any).wakeWord ? (opts as any).wakeWord : `Wake up, ${agentName}! Your
 
   // ── Load all memory files ─────────────────────────────────────────────────────
   async load(): Promise<MemoryData | null> {
-    if (!(await fs.pathExists(AGENTS_FILE))) return null;
-    const agents = await fs.readFile(AGENTS_FILE, 'utf8').catch(() => '');
-    const memory = await fs.readFile(MEMORY_FILE, 'utf8').catch(() => '');
-    const soul = await fs.readFile(SOUL_FILE, 'utf8').catch(() => undefined);
+    if (!(await fs.pathExists(getAgentsFile()))) return null;
+    const agents = await fs.readFile(getAgentsFile(), 'utf8').catch(() => '');
+    const memory = await fs.readFile(getMemoryFile(), 'utf8').catch(() => '');
+    const soul = await fs.readFile(getSoulFile(), 'utf8').catch(() => undefined);
     return { agents, memory, soul };
   }
 
   // ── Append a global rule to AGENTS.md ────────────────────────────────────────
   async appendRule(rule: string): Promise<void> {
-    await fs.ensureDir(HC_DIR);
+    await fs.ensureDir(getHyperClawDir());
     const today = new Date().toISOString().slice(0, 10);
     const line = `\n- ${today}: ${rule}\n`;
-    await fs.appendFile(AGENTS_FILE, line);
+    await fs.appendFile(getAgentsFile(), line);
     console.log(chalk.green(`  ✅ Rule added to AGENTS.md: ${rule}`));
   }
 
   // ── Add a fact to MEMORY.md ───────────────────────────────────────────────────
   async addMemory(fact: string): Promise<void> {
-    await fs.ensureDir(HC_DIR);
+    await fs.ensureDir(getHyperClawDir());
     const today = new Date().toISOString().slice(0, 10);
-    await fs.appendFile(MEMORY_FILE, `\n- ${today}: ${fact}\n`);
+    await fs.appendFile(getMemoryFile(), `\n- ${today}: ${fact}\n`);
     console.log(chalk.green(`  ✅ Memory saved: ${fact}`));
   }
 
   // ── Update SOUL.md ────────────────────────────────────────────────────────────
   async updateSoul(content: string): Promise<void> {
-    await fs.ensureDir(HC_DIR);
-    await fs.writeFile(SOUL_FILE, content);
+    await fs.ensureDir(getHyperClawDir());
+    await fs.writeFile(getSoulFile(), content);
     console.log(chalk.green('  ✅ SOUL.md updated'));
   }
 
@@ -192,7 +192,7 @@ ${(opts as any).wakeWord ? (opts as any).wakeWord : `Wake up, ${agentName}! Your
   async getContextForAI(): Promise<string> {
     let context = '';
     for (const [label, file] of [
-      ['SOUL', SOUL_FILE], ['AGENTS', AGENTS_FILE], ['MEMORY', MEMORY_FILE]
+      ['SOUL', getSoulFile()], ['AGENTS', getAgentsFile()], ['MEMORY', getMemoryFile()]
     ]) {
       if (await fs.pathExists(file as string)) {
         const content = await fs.readFile(file as string, 'utf8');
@@ -223,12 +223,12 @@ ${(opts as any).wakeWord ? (opts as any).wakeWord : `Wake up, ${agentName}! Your
     }]);
     if (!confirm) return;
     if (file === 'all') {
-      await fs.remove(AGENTS_FILE);
-      await fs.remove(MEMORY_FILE);
-      await fs.remove(SOUL_FILE);
+      await fs.remove(getAgentsFile());
+      await fs.remove(getMemoryFile());
+      await fs.remove(getSoulFile());
       console.log(chalk.green('  ✅ All memory cleared'));
     } else {
-      await fs.writeFile(MEMORY_FILE, '# MEMORY.md\n\n');
+      await fs.writeFile(getMemoryFile(), '# MEMORY.md\n\n');
       console.log(chalk.green('  ✅ MEMORY.md cleared'));
     }
   }

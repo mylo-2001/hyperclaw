@@ -1,4 +1,4 @@
-﻿# HyperClaw macOS Menu Bar App
+# HyperClaw macOS Menu Bar App
 
 Production Electron menu bar app for macOS. Single desktop choice � use this, not `macos-menubar` (Tauri skeleton, deprecated).
 

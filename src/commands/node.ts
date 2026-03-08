@@ -12,10 +12,10 @@ import chalk from 'chalk';
 import ora from 'ora';
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
 import inquirer from 'inquirer';
+import { getHyperClawDir } from '../infra/paths';
 
-const NODES_FILE = path.join(os.homedir(), '.hyperclaw', 'nodes.json');
+const getNodesFile = () => path.join(getHyperClawDir(), 'nodes.json');
 
 export type NodeType = 'local' | 'remote' | 'android' | 'raspberrypi' | 'docker' | 'vm';
 export type NodeStatus = 'online' | 'offline' | 'unknown' | 'degraded';
@@ -45,13 +45,14 @@ export type NodeCapability =
   | 'always-on';      // runs 24/7
 
 async function loadNodes(): Promise<HyperClawNode[]> {
-  try { return await fs.readJson(NODES_FILE); }
+  try { return await fs.readJson(getNodesFile()); }
   catch { return []; }
 }
 
 async function saveNodes(nodes: HyperClawNode[]): Promise<void> {
-  await fs.ensureDir(path.dirname(NODES_FILE));
-  await fs.writeJson(NODES_FILE, nodes, { spaces: 2 });
+  const nodesFile = getNodesFile();
+  await fs.ensureDir(path.dirname(nodesFile));
+  await fs.writeJson(nodesFile, nodes, { spaces: 2 });
 }
 
 const TYPE_EMOJI: Record<NodeType, string> = {
@@ -67,7 +68,7 @@ const STATUS_COLOR: Record<NodeStatus, (s: string) => string> = {
 
 export async function nodeList(): Promise<void> {
   const nodes = await loadNodes();
-  console.log(chalk.bold.cyan('\n  🖧  HYPERCLAW NODES\n'));
+  console.log(chalk.bold.cyan('\n  📱 HYPERCLAW NODES\n'));
 
   // Always show local node
   console.log(`  ${chalk.green('●')} ${chalk.white('Local (this machine)'.padEnd(22))} ${chalk.cyan('[local]')}  ${chalk.green('online')}`);

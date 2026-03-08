@@ -6,14 +6,12 @@
 
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
 import https from 'https';
-
-const HC_DIR = path.join(os.homedir(), '.hyperclaw');
+import { getConfigPath } from '../infra/paths';
 
 async function getConfig(): Promise<{ providerId?: string; apiKey?: string }> {
   try {
-    const cfg = await fs.readJson(path.join(HC_DIR, 'hyperclaw.json'));
+    const cfg = await fs.readJson(getConfigPath());
     const providerId = cfg?.provider?.providerId;
     const apiKey = cfg?.provider?.apiKey;  // from wizard when api_key auth
     return { providerId, apiKey };

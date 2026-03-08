@@ -12,7 +12,7 @@ const TEST_TOKEN = 'test-token-abc123';
 
 const mockDeps: GatewayDeps = {
   getHyperClawDir: () => '/tmp/hyperclaw-test',
-  getConfigPath: () => '/tmp/hyperclaw-test/openclaw.json',
+  getConfigPath: () => '/tmp/hyperclaw-test/hyperclaw.json',
   resolveGatewayToken: () => TEST_TOKEN,
   createSessionStore: async () => null,
   startChannelRunners: async () => ({ stop: async () => {} }),

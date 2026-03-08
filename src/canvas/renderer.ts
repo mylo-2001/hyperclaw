@@ -10,8 +10,8 @@
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
 import crypto from 'crypto';
+import { getHyperClawDir } from '../infra/paths';
 
 export type CanvasComponentType = 'chart' | 'table' | 'form' | 'markdown' | 'image' | 'custom' | 'script';
 
@@ -37,7 +37,7 @@ export interface CanvasState {
   updatedAt: string;
 }
 
-const CANVAS_DIR = path.join(os.homedir(), '.hyperclaw', 'canvas');
+const getCanvasDir = () => path.join(getHyperClawDir(), 'canvas');
 
 function randomId(): string {
   return crypto.randomBytes(4).toString('hex');
@@ -162,8 +162,9 @@ export class CanvasRenderer {
   private canvasFile: string;
 
   constructor() {
-    this.canvasFile = path.join(CANVAS_DIR, 'state.json');
-    fs.ensureDirSync(CANVAS_DIR);
+    const canvasDir = getCanvasDir();
+    this.canvasFile = path.join(canvasDir, 'state.json');
+    fs.ensureDirSync(canvasDir);
   }
 
   async getOrCreate(sessionId?: string): Promise<CanvasState> {

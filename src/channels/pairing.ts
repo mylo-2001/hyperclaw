@@ -18,13 +18,13 @@ import chalk from 'chalk';
 import crypto from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
+import { getHyperClawDir } from '../infra/paths';
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const CREDENTIALS_DIR = path.join(os.homedir(), '.hyperclaw', 'credentials');
+const getCredentialsDir = () => path.join(getHyperClawDir(), 'credentials');
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 32 chars, no 0 O 1 I
 const CODE_LENGTH = 8;
 const EXPIRY_MS = 60 * 60 * 1000;   // 1 hour
@@ -62,12 +62,12 @@ function generateCode(): string {
 // ---------------------------------------------------------------------------
 
 function pendingFile(channelId: string): string {
-  return path.join(CREDENTIALS_DIR, `${channelId}-pairing.json`);
+  return path.join(getCredentialsDir(), `${channelId}-pairing.json`);
 }
 
 function allowFromFile(channelId: string, accountId = 'default'): string {
   const suffix = accountId === 'default' ? '' : `-${accountId}`;
-  return path.join(CREDENTIALS_DIR, `${channelId}${suffix}-allowFrom.json`);
+  return path.join(getCredentialsDir(), `${channelId}${suffix}-allowFrom.json`);
 }
 
 async function readPending(channelId: string): Promise<PendingEntry[]> {
@@ -80,7 +80,7 @@ async function readPending(channelId: string): Promise<PendingEntry[]> {
 }
 
 async function writePending(channelId: string, entries: PendingEntry[]): Promise<void> {
-  await fs.ensureDir(CREDENTIALS_DIR);
+  await fs.ensureDir(getCredentialsDir());
   await fs.writeJson(pendingFile(channelId), entries, { spaces: 2, mode: 0o600 });
 }
 
@@ -93,7 +93,7 @@ async function readAllowFrom(channelId: string, accountId = 'default'): Promise<
 }
 
 async function writeAllowFrom(channelId: string, store: AllowFromStore, accountId = 'default'): Promise<void> {
-  await fs.ensureDir(CREDENTIALS_DIR);
+  await fs.ensureDir(getCredentialsDir());
   await fs.writeJson(allowFromFile(channelId, accountId), store, { spaces: 2, mode: 0o600 });
 }
 

@@ -19,15 +19,15 @@ import chalk from 'chalk';
 import crypto from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
+import { getHyperClawDir } from './paths';
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const DEVICES_DIR = path.join(os.homedir(), '.hyperclaw', 'devices');
-const PENDING_FILE = path.join(DEVICES_DIR, 'pending.json');
-const PAIRED_FILE = path.join(DEVICES_DIR, 'paired.json');
+const getDevicesDir = () => path.join(getHyperClawDir(), 'devices');
+const getPendingFile = () => path.join(getDevicesDir(), 'pending.json');
+const getPairedFile = () => path.join(getDevicesDir(), 'paired.json');
 
 const PENDING_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes for setup codes
 const TOKEN_BYTES = 16;
@@ -72,7 +72,7 @@ export interface SetupCode {
 
 async function readPending(): Promise<PendingDevice[]> {
   try {
-    const data = await fs.readJson(PENDING_FILE);
+    const data = await fs.readJson(getPendingFile());
     return Array.isArray(data) ? data : [];
   } catch {
     return [];
@@ -80,13 +80,13 @@ async function readPending(): Promise<PendingDevice[]> {
 }
 
 async function writePending(entries: PendingDevice[]): Promise<void> {
-  await fs.ensureDir(DEVICES_DIR);
-  await fs.writeJson(PENDING_FILE, entries, { spaces: 2, mode: 0o600 });
+  await fs.ensureDir(getDevicesDir());
+  await fs.writeJson(getPendingFile(), entries, { spaces: 2, mode: 0o600 });
 }
 
 async function readPaired(): Promise<PairedDevice[]> {
   try {
-    const data = await fs.readJson(PAIRED_FILE);
+    const data = await fs.readJson(getPairedFile());
     return Array.isArray(data) ? data : [];
   } catch {
     return [];
@@ -94,8 +94,8 @@ async function readPaired(): Promise<PairedDevice[]> {
 }
 
 async function writePaired(devices: PairedDevice[]): Promise<void> {
-  await fs.ensureDir(DEVICES_DIR);
-  await fs.writeJson(PAIRED_FILE, devices, { spaces: 2, mode: 0o600 });
+  await fs.ensureDir(getDevicesDir());
+  await fs.writeJson(getPairedFile(), devices, { spaces: 2, mode: 0o600 });
 }
 
 // ---------------------------------------------------------------------------

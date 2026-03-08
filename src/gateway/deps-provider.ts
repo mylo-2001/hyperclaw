@@ -7,7 +7,7 @@
 import type { GatewayDeps } from '../../packages/gateway/src/deps';
 
 export async function createDefaultGatewayDeps(): Promise<GatewayDeps> {
-  const [paths, envResolve, sessionStore, channelRunner, hookLoader, core, devKeys, pendingApproval, observability, costTracker, tts, nodesRegistry, canvasRenderer, a2ui] = await Promise.all([
+  const [paths, envResolve, sessionStore, channelRunner, hookLoader, core, devKeys, pendingApproval, observability, costTracker, tts, nodesRegistry, canvasRenderer, a2ui, daemon] = await Promise.all([
     import('../infra/paths'),
     import('../infra/env-resolve'),
     import('../../packages/core/src/agent/session-store'),
@@ -22,6 +22,7 @@ export async function createDefaultGatewayDeps(): Promise<GatewayDeps> {
     import('../services/nodes-registry'),
     import('../canvas/renderer'),
     import('../canvas/a2ui-protocol'),
+    import('../infra/daemon'),
   ]);
 
   const createSessionStore = async (baseDir: string) => {
@@ -66,5 +67,9 @@ export async function createDefaultGatewayDeps(): Promise<GatewayDeps> {
     NodeRegistry: nodesRegistry.NodeRegistry as GatewayDeps['NodeRegistry'],
     getCanvasState,
     getCanvasA2UI,
+    restartDaemon: async () => {
+      const dm = new daemon.DaemonManager();
+      await dm.restart?.();
+    },
   };
 }

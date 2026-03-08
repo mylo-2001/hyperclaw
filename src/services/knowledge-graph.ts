@@ -6,9 +6,9 @@
 
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
+import { getHyperClawDir } from '../infra/paths';
 
-const KG_FILE = path.join(os.homedir(), '.hyperclaw', 'knowledge-graph.json');
+const getKgFile = () => path.join(getHyperClawDir(), 'knowledge-graph.json');
 
 export type EntityType = 'person' | 'project' | 'preference' | 'fact' | 'topic' | 'event';
 export type RelationType = 'knows' | 'works_on' | 'prefers' | 'related_to' | 'occurred_at' | 'belongs_to';
@@ -44,7 +44,7 @@ const DEFAULT_GRAPH: KnowledgeGraph = {
 
 async function load(): Promise<KnowledgeGraph> {
   try {
-    const data = await fs.readJson(KG_FILE);
+    const data = await fs.readJson(getKgFile());
     return { ...DEFAULT_GRAPH, ...data };
   } catch {
     return { ...DEFAULT_GRAPH };
@@ -52,8 +52,9 @@ async function load(): Promise<KnowledgeGraph> {
 }
 
 async function save(graph: KnowledgeGraph): Promise<void> {
-  await fs.ensureDir(path.dirname(KG_FILE));
-  await fs.writeJson(KG_FILE, graph, { spaces: 2 });
+  const f = getKgFile();
+  await fs.ensureDir(path.dirname(f));
+  await fs.writeJson(f, graph, { spaces: 2 });
 }
 
 function slug(label: string, type: string): string {

@@ -7,10 +7,8 @@
 
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
 import https from 'https';
-
-const HC_DIR = path.join(os.homedir(), '.hyperclaw');
+import { getHyperClawDir } from '../infra/paths';
 
 export interface OAuthTokenFile {
   access_token: string;
@@ -28,7 +26,7 @@ const DEFAULT_REFRESH_URLS: Record<string, string> = {
 };
 
 function defaultTokenPath(providerId: string): string {
-  return path.join(HC_DIR, `oauth-${providerId}.json`);
+  return path.join(getHyperClawDir(), `oauth-${providerId}.json`);
 }
 
 export async function getProviderCredentialAsync(

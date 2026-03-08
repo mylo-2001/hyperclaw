@@ -24,6 +24,10 @@ export interface AgentCallOpts {
   source?: string;
   onToken?: (token: string) => void;
   onDone?: (response: string) => void;
+  /** Agent ID from binding resolution (channel runner). */
+  agentId?: string;
+  /** Pre-computed session key (channel runner). Used for transcript restore/persist. */
+  sessionKey?: string;
 }
 
 export interface GatewayDeps {
@@ -63,4 +67,15 @@ export interface GatewayDeps {
   getCanvasState?: () => Promise<object>;
   /** Returns A2UI JSONL string when canvas is available */
   getCanvasA2UI?: () => Promise<string>;
+  /**
+   * H-6: Called after a successful hot-reload with the raw parsed config object.
+   * Host implementations use this to update provider keys, identity, etc. without
+   * restarting the gateway — e.g. refreshing the in-memory API key cache.
+   */
+  onConfigReloaded?: (rawConfig: unknown) => void;
+  /**
+   * Called when config change requires restart (port/bind). Host provides DaemonManager.restart.
+   * Injected to avoid gateway package importing src/infra (broken in published npm package).
+   */
+  restartDaemon?: () => Promise<void>;
 }

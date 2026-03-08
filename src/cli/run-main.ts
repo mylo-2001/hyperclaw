@@ -55,12 +55,22 @@ import {
 import { AuthStore } from '../infra/device-auth-store';
 import * as developerKeys from '../infra/developer-keys';
 
+// H9: Global handlers so unhandled promise rejections log and exit with code 1
+process.on('unhandledRejection', (reason: unknown) => {
+  console.error('[hyperclaw] Unhandled rejection:', reason);
+  process.exit(1);
+});
+process.on('uncaughtException', (err: Error) => {
+  console.error('[hyperclaw] Uncaught exception:', err?.message ?? String(err));
+  process.exit(1);
+});
+
 const program = new Command();
 
 program
   .name('hyperclaw')
   .description('⚡ HyperClaw — AI Gateway Platform. The Lobster Evolution 🦅')
-  .version('5.2.0')
+  .version('5.2.1')
   .option(
     '--profile <name>',
     'Use an isolated gateway profile. Auto-scopes HYPERCLAW_STATE_DIR and HYPERCLAW_CONFIG_PATH. ' +
@@ -123,16 +133,16 @@ program.command('onboard')
     if (opts.reset) {
       const fs = require('fs-extra');
       const path = require('path');
-      const os = require('os');
-      const hcDir = path.join(os.homedir(), '.hyperclaw');
       const scope: string = opts.resetScope ?? 'config';
-      const filesToRemove: string[] = [path.join(hcDir, 'hyperclaw.json')];
+      const { getHyperClawDir, getConfigPath } = await import('../infra/paths');
+      const hcDirResolved = getHyperClawDir();
+      const filesToRemove: string[] = [getConfigPath()];
       if (scope === 'config+creds' || scope === 'full') {
-        filesToRemove.push(path.join(hcDir, 'credentials'));
-        filesToRemove.push(path.join(hcDir, 'sessions'));
+        filesToRemove.push(path.join(hcDirResolved, 'credentials'));
+        filesToRemove.push(path.join(hcDirResolved, 'sessions'));
       }
       if (scope === 'full') {
-        filesToRemove.push(path.join(hcDir, 'workspace'));
+        filesToRemove.push(path.join(hcDirResolved, 'workspace'));
       }
       const chalk = require('chalk');
       console.log(chalk.yellow(`\n  ⚠  Reset scope: ${chalk.bold(scope)}\n`));
@@ -145,7 +155,7 @@ program.command('onboard')
         default: false
       }]);
       if (confirmReset) {
-        const backupDir = path.join(hcDir, `backup-${Date.now()}`);
+        const backupDir = path.join(hcDirResolved, `backup-${Date.now()}`);
         await fs.ensureDir(backupDir);
         for (const f of filesToRemove) {
           if (await fs.pathExists(f)) {
@@ -210,8 +220,10 @@ program.command('quickstart')
   });
 
 // ─── GATEWAY ─────────────────────────────────────────────────────────────────
+// Note: gateway start/stop and daemon start/stop both use DaemonManager — they start
+// the gateway in the current process. Use "daemon install" for auto-start on boot.
 
-const gatewayCmd = program.command('gateway').description('Gateway control plane');
+const gatewayCmd = program.command('gateway').description('Gateway control (start/stop = runs in this terminal; use daemon for background)');
 
 gatewayCmd.command('status')
   .description('Show gateway status')
@@ -245,7 +257,7 @@ gatewayCmd.command('restart')
 // ─── DAEMON (alias for backward compat) ──────────────────────────────────────
 
 program.command('daemon')
-  .description('Manage HyperClaw system service (alias: gateway)')
+  .description('Manage gateway: start/stop (foreground) or install (auto-start on boot). Same process as gateway start.')
   .argument('<action>', 'start|stop|restart|status|logs|install|uninstall')
   .action(async (action) => {
     const dm = new DaemonManager();
@@ -271,7 +283,9 @@ sandboxCmd.command('explain')
     const { getConfigPath } = await import('../infra/paths');
     const cfgPath = getConfigPath();
     let cfg: any = {};
-    try { cfg = await fs.readJson(cfgPath); } catch {}
+    try { cfg = await fs.readJson(cfgPath); } catch (e) {
+      if (process.env.DEBUG) console.error('[run-main] sandbox config read:', (e as Error)?.message);
+    }
 
     const sandboxMode = cfg?.agents?.defaults?.sandbox?.mode ?? 'non-main';
     const toolsCfg = cfg?.tools ?? {};
@@ -705,6 +719,20 @@ cfgCmd.command('set-key <KEY=value>')
     const cfg = await config.load();
 
     if (PROVIDER_KEY_NAMES.has(key) || key === cfg?.provider?.providerId) {
+      // M-5: Validate API key format for known providers
+      const keyToProvider: Record<string, string> = {
+        GOOGLE_AI_API_KEY: 'google', ANTHROPIC_API_KEY: 'anthropic', OPENROUTER_API_KEY: 'openrouter',
+        OPENAI_API_KEY: 'openai', XAI_API_KEY: 'xai',
+        google: 'google', anthropic: 'anthropic', openrouter: 'openrouter', openai: 'openai', xai: 'xai',
+      };
+      const pid = keyToProvider[key] ?? keyToProvider[key.toLowerCase()] ?? cfg?.provider?.providerId ?? key.toLowerCase();
+      const { validateApiKeyFormat } = await import('../infra/api-key-validation');
+      const formatErr = validateApiKeyFormat(pid, value);
+      if (formatErr) {
+        console.log(chalk.yellow(`\n  ⚠  ${formatErr}\n`));
+        console.log(chalk.gray('  For custom providers use: hyperclaw auth add <service_id>\n'));
+        process.exit(1);
+      }
       // Save directly to provider.apiKey in config.json — where resolveProviderApiKey reads it
       const next = { ...cfg, provider: { ...(cfg?.provider || {}), apiKey: value } };
       await config.save(next);
@@ -712,8 +740,9 @@ cfgCmd.command('set-key <KEY=value>')
       console.log(chalk.gray('  Run: hyperclaw chat  — to use the updated key.\n'));
     } else {
       // Fallback: save to AuthStore for other/unknown keys
-      const store = new AuthStore();
-      store.setProviderKey(key, value);
+      const { getHyperClawDir } = await import('../infra/paths');
+      const store = new AuthStore(getHyperClawDir());
+      await store.setProviderKey(key, value);
       console.log(chalk.hex('#06b6d4')(`\n  ✔  Set ${key}\n`));
     }
     process.exit(0);
@@ -741,9 +770,9 @@ cfgCmd.command('set-service-key <serviceId> [apiKey]')
 cfgCmd.command('schema')
   .description('Show configuration schema')
   .action(() => {
-    console.log(chalk.bold.hex('#06b6d4')('\n  Config schema: ~/.hyperclaw/config.json\n'));
+    console.log(chalk.bold.hex('#06b6d4')('\n  Config schema: ~/.hyperclaw/hyperclaw.json\n'));
     const schema = {
-      version: 'string (e.g. "5.2.0")',
+      version: 'string (e.g. "5.2.1")',
       workspaceName: 'string',
       provider: { providerId: 'string', apiKey: 'string (secret)', modelId: 'string' },
       gateway: { port: 'number', bind: '"127.0.0.1"|"0.0.0.0"|"tailscale"|"custom"', authToken: 'string (secret)', tailscaleExposure: '"off"|"serve"|"funnel"', runtime: '"node"|"bun"|"deno"' },
@@ -1082,7 +1111,8 @@ secretsCmd.command('credentials')
   .description('List provider credential files (credentials/*.json)')
   .action(async () => {
     const { CredentialsStore } = await import('../secrets/credentials-store');
-    await (new CredentialsStore()).showList();
+    const { getHyperClawDir } = await import('../infra/paths');
+    await (new CredentialsStore(getHyperClawDir())).showList();
     process.exit(0);
   });
 
@@ -1230,7 +1260,8 @@ canvasCmd.command('export')
     const { CanvasRenderer } = await import('../canvas/renderer');
     const fs = require('fs-extra');
     const html = await (new CanvasRenderer()).exportHtml();
-    const outFile = require('path').join(require('os').homedir(), '.hyperclaw', 'canvas', 'export.html');
+    const { getHyperClawDir } = await import('../infra/paths');
+    const outFile = require('path').join(getHyperClawDir(), 'canvas', 'export.html');
     await fs.writeFile(outFile, html);
     console.log(require('chalk').green(`\n  ✔  Canvas exported to ${outFile}\n`));
     process.exit(0);
@@ -1259,18 +1290,18 @@ deliveryCmd.command('retry <id>')
 // ─── MCP ─────────────────────────────────────────────────────────────────────
 
 const mcpCmd = program.command('mcp').description('MCP (Model Context Protocol) server management');
-mcpCmd.command('list').action(async () => { const { mcpList } = await import('../commands/mcp'); await mcpList(); process.exit(0); });
-mcpCmd.command('add').action(async () => { const { mcpAdd } = await import('../commands/mcp'); await mcpAdd(); process.exit(0); });
-mcpCmd.command('remove <id>').action(async (id) => { const { mcpRemove } = await import('../commands/mcp'); await mcpRemove(id); process.exit(0); });
-mcpCmd.command('probe [id]').action(async (id) => { const { mcpProbe } = await import('../commands/mcp'); await mcpProbe(id); process.exit(0); });
+mcpCmd.command('list').description('List configured MCP servers').action(async () => { const { mcpList } = await import('../commands/mcp'); await mcpList(); process.exit(0); });
+mcpCmd.command('add').description('Add MCP server').action(async () => { const { mcpAdd } = await import('../commands/mcp'); await mcpAdd(); process.exit(0); });
+mcpCmd.command('remove <id>').description('Remove MCP server').action(async (id) => { const { mcpRemove } = await import('../commands/mcp'); await mcpRemove(id); process.exit(0); });
+mcpCmd.command('probe [id]').description('Test MCP server connection').action(async (id) => { const { mcpProbe } = await import('../commands/mcp'); await mcpProbe(id); process.exit(0); });
 
 // ─── NODE ────────────────────────────────────────────────────────────────────
 
 const nodeCmd = program.command('node').description('HyperClaw node management (local, remote, android)');
-nodeCmd.command('list').action(async () => { const { nodeList } = await import('../commands/node'); await nodeList(); process.exit(0); });
-nodeCmd.command('add').action(async () => { const { nodeAdd } = await import('../commands/node'); await nodeAdd(); process.exit(0); });
-nodeCmd.command('probe [id]').action(async (id) => { const { nodeProbe } = await import('../commands/node'); await nodeProbe(id); process.exit(0); });
-nodeCmd.command('remove <id>').action(async (id) => { const { nodeRemove } = await import('../commands/node'); await nodeRemove(id); process.exit(0); });
+nodeCmd.command('list').description('List paired nodes').action(async () => { const { nodeList } = await import('../commands/node'); await nodeList(); process.exit(0); });
+nodeCmd.command('add').description('Add or pair a node').action(async () => { const { nodeAdd } = await import('../commands/node'); await nodeAdd(); process.exit(0); });
+nodeCmd.command('probe [id]').description('Probe node connection').action(async (id) => { const { nodeProbe } = await import('../commands/node'); await nodeProbe(id); process.exit(0); });
+nodeCmd.command('remove <id>').description('Remove paired node').action(async (id) => { const { nodeRemove } = await import('../commands/node'); await nodeRemove(id); process.exit(0); });
 
 // ─── AUTO-REPLY ───────────────────────────────────────────────────────────────
 
@@ -1367,13 +1398,13 @@ program.command('nodes')
     const chalk = require('chalk');
     const http = await import('http');
     const fs = await import('fs-extra');
-    const path = await import('path');
-    const os = await import('os');
+    const { getConfigPath } = await import('../infra/paths');
     let port = 18789;
     try {
-      const cfg = await fs.readJson(path.join(os.homedir(), '.hyperclaw', 'hyperclaw.json'));
+      const cfg = await fs.readJson(getConfigPath());
       port = cfg?.gateway?.port ?? 18789;
     } catch { /* use default */ }
+    let exitCode = 0;
     return new Promise<void>((resolve, reject) => {
       const req = http.get(`http://127.0.0.1:${port}/api/nodes`, (res) => {
         let data = '';
@@ -1394,16 +1425,17 @@ program.command('nodes')
               }
               console.log();
             }
-          } catch { console.log(chalk.red('  Could not reach gateway. Start with: hyperclaw daemon start\n')); }
+          } catch { console.log(chalk.red('  Could not reach gateway. Start with: hyperclaw daemon start\n')); exitCode = 1; }
           resolve();
         });
       });
       req.on('error', () => {
         console.log(chalk.red('  Gateway offline. Start with: hyperclaw daemon start\n'));
+        exitCode = 1;
         resolve();
       });
-      req.setTimeout(3000, () => { req.destroy(); resolve(); });
-    }).then(() => process.exit(0));
+      req.setTimeout(3000, () => { req.destroy(); exitCode = 1; resolve(); });
+    }).then(() => process.exit(exitCode));
   });
 
 // ─── WEBHOOKS ────────────────────────────────────────────────────────────────
@@ -1459,12 +1491,14 @@ gatewayCfgCmd
     const chalk = require('chalk');
     const fs = require('fs-extra');
     const path = require('path');
-    const os = require('os');
+    const { getConfigPath } = await import('../infra/paths');
     const crypto = require('crypto');
 
-    const cfgFile = path.join(os.homedir(), '.hyperclaw', 'hyperclaw.json');
+    const cfgFile = getConfigPath();
     let cfg: any = {};
-    try { cfg = await fs.readJson(cfgFile); } catch {}
+    try { cfg = await fs.readJson(cfgFile); } catch (e) {
+      if (process.env.DEBUG) console.error('[run-main] gateway config read:', (e as Error)?.message);
+    }
     if (!cfg.gateway) cfg.gateway = { port: 18789, bind: '127.0.0.1', authToken: '', runtime: 'node', enabledChannels: [], hooks: true };
 
     if (opts.regenerateToken) {
@@ -1486,8 +1520,10 @@ gatewayCfgCmd
     }
 
     await fs.ensureDir(path.dirname(cfgFile));
-    await fs.writeJson(cfgFile, cfg, { spaces: 2 });
-    await fs.chmod(cfgFile, 0o600);
+    const tmp = cfgFile + '.tmp';
+    await fs.writeJson(tmp, cfg, { spaces: 2 });
+    await fs.chmod(tmp, 0o600);
+    await fs.rename(tmp, cfgFile);
     console.log(chalk.gray(`  Saved to ${cfgFile}\n`));
     process.exit(0);
   });
@@ -1675,11 +1711,11 @@ workspaceCmd.command('init [dir]')
     const chalk = require('chalk');
     const fs = require('fs-extra');
     const path = require('path');
-    const os = require('os');
+    const { getHyperClawDir, getConfigPath } = await import('../infra/paths');
 
-    const targetDir = dir || path.join(os.homedir(), '.hyperclaw');
+    const targetDir = dir || getHyperClawDir();
     let cfg: any = {};
-    try { cfg = await fs.readJson(path.join(os.homedir(), '.hyperclaw', 'hyperclaw.json')); } catch {}
+    try { cfg = await fs.readJson(getConfigPath()); } catch {}
 
     const { initWorkspaceFiles } = await import('../agents/memory');
     await initWorkspaceFiles({
@@ -1701,8 +1737,8 @@ workspaceCmd.command('show [dir]')
     const chalk = require('chalk');
     const fs = require('fs-extra');
     const path = require('path');
-    const os = require('os');
-    const targetDir = dir || path.join(os.homedir(), '.hyperclaw');
+    const { getHyperClawDir } = await import('../infra/paths');
+    const targetDir = dir || getHyperClawDir();
 
     console.log(chalk.bold.hex('#06b6d4')('\n  📁 WORKSPACE\n'));
     for (const fname of ['SOUL.md', 'USER.md', 'TOOLS.md', 'HEARTBEAT.md', 'BOOTSTRAP.md', 'AGENTS.md', 'MEMORY.md']) {
@@ -1917,7 +1953,8 @@ pcCmd.command('log')
   .description('Show PC access audit log')
   .option('-n, --lines <n>', 'Number of lines', '50')
   .action(async (opts) => {
-    const logFile = require('path').join(require('os').homedir(), '.hyperclaw', 'pc-access.log');
+    const { getHyperClawDir } = await import('../infra/paths');
+    const logFile = require('path').join(getHyperClawDir(), 'pc-access.log');
     const fs2 = require('fs-extra');
     if (!(await fs2.pathExists(logFile))) {
       console.log(chalk.gray('\n  No PC access log yet\n'));
@@ -2014,13 +2051,12 @@ if (process.argv.length === 2) {
       const t = getTheme(false);
       const chalk = require('chalk');
       console.log(t.bold('  Quick actions:\n'));
+      console.log(`  ${t.c('hyperclaw chat')}                      — chat with agent (terminal)`);
       console.log(`  ${t.c('hyperclaw onboard')}                    — re-run setup wizard`);
-      console.log(`  ${t.c('hyperclaw onboard --install-daemon')}   — wizard + daemon (full PC access)`);
       console.log(`  ${t.c('hyperclaw daemon start')}               — start background service`);
-      console.log(`  ${t.c('hyperclaw daemon stop')}                — stop background service`);
       console.log(`  ${t.c('hyperclaw daemon status')}              — service status`);
-      console.log(`  ${t.c('hyperclaw gateway start')}              — start gateway (foreground)`);
       console.log(`  ${t.c('hyperclaw status')}                     — system overview`);
+      console.log(`  ${t.c('hyperclaw doctor')}                     — health check & fix issues`);
       console.log(`  ${t.c('hyperclaw --help')}                     — all commands\n`);
     } else {
       // First run → launch wizard automatically

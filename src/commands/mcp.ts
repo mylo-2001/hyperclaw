@@ -8,10 +8,10 @@ import chalk from 'chalk';
 import ora from 'ora';
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
 import inquirer from 'inquirer';
+import { getHyperClawDir } from '../infra/paths';
 
-const MCP_FILE = path.join(os.homedir(), '.hyperclaw', 'mcp-servers.json');
+const getMcpFile = () => path.join(getHyperClawDir(), 'mcp-servers.json');
 
 export type MCPTransport = 'stdio' | 'sse' | 'http';
 
@@ -29,13 +29,14 @@ export interface MCPServer {
 }
 
 async function loadServers(): Promise<MCPServer[]> {
-  try { return await fs.readJson(MCP_FILE); }
+  try { return await fs.readJson(getMcpFile()); }
   catch { return []; }
 }
 
 async function saveServers(servers: MCPServer[]): Promise<void> {
-  await fs.ensureDir(path.dirname(MCP_FILE));
-  await fs.writeJson(MCP_FILE, servers, { spaces: 2 });
+  const mcpFile = getMcpFile();
+  await fs.ensureDir(path.dirname(mcpFile));
+  await fs.writeJson(mcpFile, servers, { spaces: 2 });
 }
 
 export async function mcpList(): Promise<void> {

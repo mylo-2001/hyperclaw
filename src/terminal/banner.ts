@@ -9,7 +9,7 @@ export class Banner {
     console.clear();
     const t = getTheme(daemonMode);
 
-    const icon = daemonMode ? '??' : '??';
+    const icon = daemonMode ? '🩸' : '🦅';
     try {
       const title = figlet.textSync('HYPERCLAW', { font: 'ANSI Shadow' });
       const g = (gradient as any)(t.gradient);
@@ -22,8 +22,8 @@ export class Banner {
     }
 
     const subtitle = daemonMode
-      ? chalk.hex(t.daemonPrimary)('    ?? DAEMON MODE � ALWAYS WATCHING ?\n')
-      : t.muted('    ?? HyperClaw Bot � AI Gateway v5.2.0 ?\n');
+      ? chalk.hex(t.daemonPrimary)('    🩸 DAEMON MODE - ALWAYS WATCHING 🩸\n')
+      : t.muted('    🦅 HyperClaw Bot - AI Gateway v5.2.1 🦅\n');
 
     console.log(subtitle);
 
@@ -35,15 +35,25 @@ export class Banner {
     };
     if (t.boxBg) boxOpts.backgroundColor = t.boxBg;
 
+    const { ConfigManager } = await import('../config/manager');
+    const { GatewayManager } = await import('../cli/gateway');
+    const cfg = await (new ConfigManager()).load().catch(() => null);
+    const port = cfg?.gateway?.port ?? 18789;
+    const gm = new GatewayManager();
+    const running = await gm.isRunning(port);
+    const chList = cfg?.gateway?.enabledChannels ?? cfg?.channels ?? [];
+    const chCount = Array.isArray(chList) ? chList.length : 0;
+    const providerCount = cfg?.providers?.length ?? (cfg?.provider ? 1 : 0);
+
     const box = boxen(
-      `${t.a('?')} GATEWAY READY    ` +
-      `${t.a('?')} PROVIDERS: 8    ` +
-      `${t.a('?')} CHANNELS: 27    ` +
-      (daemonMode ? `${t.d('??')} DAEMON` : `${t.a('??')} HYPERCLAW`),
+      `${t.a('●')} Gateway: ${running ? t.success('Running') : t.error('Stopped')}  ` +
+      `${t.a('●')} Providers: ${providerCount}  ` +
+      `${t.a('●')} Channels: ${chCount}  ` +
+      (daemonMode ? `${t.d('🩸')} DAEMON` : `${t.a('🦅')} HYPERCLAW`),
       boxOpts
     );
     console.log(box);
-    console.log(t.muted('  One assistant. All your channels. ??\n'));
+    console.log(t.muted('  One assistant. All your channels. 🦅\n'));
     const { maybeShowUpdateNotice } = await import('../infra/update-check');
     maybeShowUpdateNotice(daemonMode);
   }
@@ -60,12 +70,12 @@ export class Banner {
       const title = figlet.textSync('HYPERCLAW', { font: 'ANSI Shadow' });
       const lines = title.split('\n');
       const first = lines[0] ?? '';
-      console.log('\n  ?? ' + g(first));
+      console.log('\n  🦅 ' + g(first));
       for (let i = 1; i < lines.length; i++) console.log(g('     ' + (lines[i] ?? '')));
     } catch {
-      console.log(t.bold('\n  ?? HYPERCLAW\n'));
+      console.log(t.bold('\n  🦅 HYPERCLAW\n'));
     }
-    console.log(t.muted('    ?? HyperClaw Bot � AI Gateway � SETUP WIZARD v5.2.0 ?\n'));
+    console.log(t.muted('    🦅 HyperClaw Bot - AI Gateway - SETUP WIZARD v5.2.1 🦅\n'));
 
     const boxOpts: any = {
       padding: 1,
@@ -76,7 +86,7 @@ export class Banner {
     if (t.boxBg) boxOpts.backgroundColor = t.boxBg;
 
     const box = boxen(
-      t.a('?') + ' Provider � Channels � Gateway � Identity',
+      t.a('⚡') + ' Provider - Channels - Gateway - Identity',
       boxOpts
     );
     console.log(box);
@@ -85,15 +95,17 @@ export class Banner {
   async showStatus(): Promise<void> {
     const t = getTheme(false);
     const { ConfigManager } = await import('../config/manager');
-    const { GatewayManager } = await import('../gateway/manager');
+    const { GatewayManager } = await import('../cli/gateway');
     const cfg = await (new ConfigManager()).load();
     const gm = new GatewayManager();
     const port = cfg?.gateway?.port ?? 18789;
     const running = await gm.isRunning(port);
-    console.log(t.bold('\n  ?? HYPERCLAW STATUS\n'));
-    console.log(`  Gateway: ${running ? t.success('? running') : t.error('0 stopped')}  port ${port}`);
+    const chList = cfg?.gateway?.enabledChannels ?? cfg?.channels ?? [];
+    const chCount = Array.isArray(chList) ? chList.length : 0;
+    console.log(t.bold('\n  HyperClaw Status\n'));
+    console.log(`  Gateway: ${running ? t.success('Running') : t.error('Stopped')}  port ${port}`);
     console.log(`  Provider: ${t.c(cfg?.provider?.providerId ?? 'none')}`);
-    console.log(`  Channels: ${t.c(String((cfg?.channels ?? []).length))}`);
+    console.log(`  Channels: ${t.c(String(chCount))}`);
     console.log();
   }
 }

@@ -9,6 +9,7 @@ import ora from 'ora';
 import fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
+import { getConfigPath } from '../infra/paths';
 
 export interface MessageSendOptions {
   target: string;
@@ -18,7 +19,8 @@ export interface MessageSendOptions {
 }
 
 export async function sendMessage(opts: MessageSendOptions): Promise<void> {
-  const configFile = path.join(os.homedir(), '.hyperclaw', 'config.json');
+  // C-3: Use hyperclaw.json via getConfigPath, not config.json
+  const configFile = getConfigPath();
   let cfg: any = null;
 
   try {
@@ -28,7 +30,7 @@ export async function sendMessage(opts: MessageSendOptions): Promise<void> {
     return;
   }
 
-  const channels = cfg.channels || [];
+  const channels = cfg.gateway?.enabledChannels || cfg.channels || [];
   const targetChannel = opts.channel || guessChannel(opts.target, channels);
 
   if (!targetChannel) {

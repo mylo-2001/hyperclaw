@@ -79,7 +79,15 @@ A full React app with:
 cd apps/web && npm run dev
 ```
 
-The app uses `http://localhost:18789` as the gateway base URL. Configure via env or app settings if the Gateway runs elsewhere.
+The app uses `http://localhost:18789` as the gateway base URL by default.
+
+**Custom gateway port:** Set `VITE_GATEWAY_URL` at build time to point at a different gateway:
+```bash
+VITE_GATEWAY_URL=http://localhost:19001 npm run build
+# or for dev:
+VITE_GATEWAY_URL=http://localhost:19001 npm run dev
+```
+Alternatively, change the base URL in Settings if the app supports runtime config.
 
 ---
 

@@ -7,10 +7,12 @@
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
+import { getHyperClawDir } from '../infra/paths';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 export type LogCategory = 'gateway' | 'channel' | 'agent' | 'hook' | 'delivery' | 'security' | 'system';
+
+const getLogDir = () => path.join(getHyperClawDir(), 'logs');
 
 export interface LogEntry {
   ts: string;
@@ -22,13 +24,10 @@ export interface LogEntry {
   meta?: Record<string, unknown>;
 }
 
-const HC_DIR = path.join(os.homedir(), '.hyperclaw');
-const LOG_DIR = path.join(HC_DIR, 'logs');
-
 function todayFile(): string {
   const d = new Date();
   const dateStr = d.toISOString().slice(0, 10);
-  return path.join(LOG_DIR, `${dateStr}.jsonl`);
+  return path.join(getLogDir(), `${dateStr}.jsonl`);
 }
 
 export class SessionLogger {
@@ -36,7 +35,7 @@ export class SessionLogger {
 
   constructor(logFile?: string) {
     this.logFile = logFile || todayFile();
-    fs.ensureDirSync(LOG_DIR);
+    fs.ensureDirSync(getLogDir());
   }
 
   write(level: LogLevel, category: LogCategory, msg: string, meta?: Record<string, unknown>): void {
@@ -65,10 +64,10 @@ export class SessionLogger {
     live?: boolean;
   } = {}): Promise<void> {
     const n = options.n || 50;
-    await fs.ensureDir(LOG_DIR);
+    await fs.ensureDir(getLogDir());
 
     // Get all log files, sorted newest first
-    const files = (await fs.readdir(LOG_DIR))
+    const files = (await fs.readdir(getLogDir()))
       .filter(f => f.endsWith('.jsonl'))
       .sort()
       .reverse();
@@ -80,7 +79,7 @@ export class SessionLogger {
 
     const entries: LogEntry[] = [];
     for (const f of files) {
-      const content = await fs.readFile(path.join(LOG_DIR, f), 'utf8');
+      const content = await fs.readFile(path.join(getLogDir(), f), 'utf8');
       const lines = content.trim().split('\n').filter(Boolean);
       for (const line of lines.reverse()) {
         try {
@@ -105,11 +104,11 @@ export class SessionLogger {
 
     if (options.live) {
       console.log(chalk.gray('\n  Live mode — watching for new entries... (Ctrl+C to stop)\n'));
-      const watcher = fs.watch(LOG_DIR, async (event, filename) => {
+      const watcher = fs.watch(getLogDir(), async (event, filename) => {
         if (!filename?.endsWith('.jsonl')) return;
         // Read last line of the file
         try {
-          const content = await fs.readFile(path.join(LOG_DIR, filename), 'utf8');
+          const content = await fs.readFile(path.join(getLogDir(), filename), 'utf8');
           const lines = content.trim().split('\n').filter(Boolean);
           if (lines.length > 0) {
             const entry = JSON.parse(lines[lines.length - 1]) as LogEntry;
@@ -152,8 +151,8 @@ export class SessionLogger {
   }
 
   static async stats(): Promise<void> {
-    await fs.ensureDir(LOG_DIR);
-    const files = (await fs.readdir(LOG_DIR)).filter(f => f.endsWith('.jsonl')).sort();
+    await fs.ensureDir(getLogDir());
+    const files = (await fs.readdir(getLogDir())).filter(f => f.endsWith('.jsonl')).sort();
 
     console.log(chalk.bold.cyan('\n  📊 LOG STATS\n'));
 
@@ -162,7 +161,7 @@ export class SessionLogger {
     const byCategory: Record<string, number> = {};
 
     for (const f of files) {
-      const content = await fs.readFile(path.join(LOG_DIR, f), 'utf8');
+      const content = await fs.readFile(path.join(getLogDir(), f), 'utf8');
       const lines = content.trim().split('\n').filter(Boolean);
       for (const line of lines) {
         try {

@@ -67,12 +67,31 @@ export async function createFileSessionStore(baseDir: string): Promise<SessionSt
   const dir = path.join(baseDir, 'sessions');
   await fs.ensureDir(dir);
 
+  // H-3: Per-key write queue — serialises concurrent writes for the same session so
+  // rapid-fire messages (e.g. Telegram bursts) never clobber each other's transcript.
+  const writeQueues = new Map<string, Promise<void>>();
+
+  const enqueue = (key: string, fn: () => Promise<void>): Promise<void> => {
+    const prev = writeQueues.get(key) ?? Promise.resolve();
+    const next = prev
+      .then(fn)
+      .catch((err) => {
+        console.error(`[session-store] Write failed for ${key}:`, err?.message ?? err);
+        throw err;
+      });
+    writeQueues.set(key, next);
+    next.finally(() => { if (writeQueues.get(key) === next) writeQueues.delete(key); });
+    return next;
+  };
+
   const readState = async (key: string): Promise<SessionState | null> => {
     const fp = path.join(dir, `${sanitizeKey(key)}.json`);
     if (!(await fs.pathExists(fp))) return null;
     try {
       return await fs.readJson(fp);
-    } catch {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`[session-store] Corrupted session file ${fp}: ${msg}`);
       return null;
     }
   };
@@ -87,21 +106,34 @@ export async function createFileSessionStore(baseDir: string): Promise<SessionSt
       return readState(key);
     },
     async set(key: string, state: SessionState) {
-      await writeState(key, { ...state, lastActiveAt: new Date().toISOString() });
+      return enqueue(key, () => writeState(key, { ...state, lastActiveAt: new Date().toISOString() }));
     },
     async append(key: string, role: string, content: string, source?: string) {
-      const existing = await readState(key);
-      const transcript = existing?.transcript ?? [];
-      transcript.push({ role, content });
-      if (transcript.length > 100) transcript.splice(0, transcript.length - 80);
-      await writeState(key, {
-        id: existing?.id ?? key,
-        source: existing?.source ?? source ?? 'unknown',
-        externalId: existing?.externalId,
-        transcript,
-        lastActiveAt: new Date().toISOString(),
-        workingMemory: existing?.workingMemory,
-        agentState: existing?.agentState
+      return enqueue(key, async () => {
+        const existing = await readState(key);
+        const transcript = existing?.transcript ?? [];
+        transcript.push({ role, content });
+        // M-7: When trimming preserve leading system-role entries (injected system prompt)
+        // so the agent never loses its context after 100+ turns.
+        if (transcript.length > 100) {
+          const lastSystemIdx = transcript.reduce(
+            (idx, t, i) => (t.role === 'system' ? i : idx), -1
+          );
+          const systemEntries = lastSystemIdx >= 0 ? transcript.slice(0, lastSystemIdx + 1) : [];
+          const keepFrom = Math.max(lastSystemIdx + 1, transcript.length - 80);
+          const recent = transcript.slice(keepFrom);
+          transcript.length = 0;
+          transcript.push(...systemEntries, ...recent);
+        }
+        await writeState(key, {
+          id: existing?.id ?? key,
+          source: existing?.source ?? source ?? 'unknown',
+          externalId: existing?.externalId,
+          transcript,
+          lastActiveAt: new Date().toISOString(),
+          workingMemory: existing?.workingMemory,
+          agentState: existing?.agentState
+        });
       });
     },
     async getWorkingMemory(key: string) {
@@ -113,28 +145,32 @@ export async function createFileSessionStore(baseDir: string): Promise<SessionSt
       return slots.slice(-MAX_WORKING_MEMORY);
     },
     async setWorkingMemory(key: string, slots: WorkingMemorySlot[]) {
-      const existing = await readState(key);
-      const state: SessionState = {
-        id: existing?.id ?? key,
-        source: existing?.source ?? 'unknown',
-        transcript: existing?.transcript ?? [],
-        lastActiveAt: new Date().toISOString(),
-        workingMemory: slots.slice(-MAX_WORKING_MEMORY),
-        agentState: existing?.agentState
-      };
-      await writeState(key, state);
+      return enqueue(key, async () => {
+        const existing = await readState(key);
+        const state: SessionState = {
+          id: existing?.id ?? key,
+          source: existing?.source ?? 'unknown',
+          transcript: existing?.transcript ?? [],
+          lastActiveAt: new Date().toISOString(),
+          workingMemory: slots.slice(-MAX_WORKING_MEMORY),
+          agentState: existing?.agentState
+        };
+        await writeState(key, state);
+      });
     },
     async updateAgentState(key: string, patch: Partial<AgentState>) {
-      const existing = await readState(key);
-      const agentState = { ...(existing?.agentState ?? {}), ...patch };
-      await writeState(key, {
-        id: existing?.id ?? key,
-        source: existing?.source ?? 'unknown',
-        externalId: existing?.externalId,
-        transcript: existing?.transcript ?? [],
-        lastActiveAt: new Date().toISOString(),
-        workingMemory: existing?.workingMemory,
-        agentState
+      return enqueue(key, async () => {
+        const existing = await readState(key);
+        const agentState = { ...(existing?.agentState ?? {}), ...patch };
+        await writeState(key, {
+          id: existing?.id ?? key,
+          source: existing?.source ?? 'unknown',
+          externalId: existing?.externalId,
+          transcript: existing?.transcript ?? [],
+          lastActiveAt: new Date().toISOString(),
+          workingMemory: existing?.workingMemory,
+          agentState
+        });
       });
     }
   };

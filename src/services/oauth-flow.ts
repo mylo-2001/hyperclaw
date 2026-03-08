@@ -9,8 +9,7 @@ import crypto from 'crypto';
 import { writeOAuthToken } from './oauth-provider';
 import os from 'os';
 import path from 'path';
-
-const HC_DIR = path.join(os.homedir(), '.hyperclaw');
+import { getHyperClawDir } from '../infra/paths';
 const REDIRECT_PORT = 38789;
 const REDIRECT_PATH = '/oauth/callback';
 

@@ -120,14 +120,16 @@ export async function performUpdate(channel: UpdateChannel, installKind: Install
   }
 
   // Save channel preference
-  const storedPath = path.join(os.homedir(), '.hyperclaw', 'update-channel');
+  const { getHyperClawDir } = await import('./paths');
+  const storedPath = path.join(getHyperClawDir(), 'update-channel');
   await fs.ensureDir(path.dirname(storedPath));
   await fs.writeFile(storedPath, channel);
   console.log(chalk.green(`\n  ✔  Preferred channel saved: ${channel}`));
 }
 
 export async function getStoredChannel(): Promise<UpdateChannel | undefined> {
-  const storedPath = path.join(os.homedir(), '.hyperclaw', 'update-channel');
+  const { getHyperClawDir } = await import('./paths');
+  const storedPath = path.join(getHyperClawDir(), 'update-channel');
   try {
     const ch = (await fs.readFile(storedPath, 'utf8')).trim() as UpdateChannel;
     if (['stable', 'beta', 'dev'].includes(ch)) return ch;

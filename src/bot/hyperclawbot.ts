@@ -25,12 +25,11 @@
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
 import axios from 'axios';
+import { getHyperClawDir, getConfigPath } from '../infra/paths';
 
-const HC_DIR = path.join(os.homedir(), '.hyperclaw');
-const BOT_CONFIG_FILE = path.join(HC_DIR, 'hyperclawbot.json');
-const BOT_PID_FILE = path.join(HC_DIR, 'hyperclawbot.pid');
+const getBotConfigFile = () => path.join(getHyperClawDir(), 'hyperclawbot.json');
+const getBotPidFile = () => path.join(getHyperClawDir(), 'hyperclawbot.pid');
 
 export type BotPlatform = 'telegram' | 'discord';
 
@@ -83,7 +82,7 @@ async function getGatewayStatus(gatewayUrl: string, token?: string): Promise<str
 }
 
 async function getLogSummary(n = 20): Promise<string> {
-  const logFile = path.join(HC_DIR, 'logs', 'hyperclaw.log');
+  const logFile = path.join(getHyperClawDir(), 'logs', 'hyperclaw.log');
   if (!(await fs.pathExists(logFile))) return '📋 No logs yet.';
 
   const content = await fs.readFile(logFile, 'utf8');
@@ -114,7 +113,7 @@ async function approveCode(channelId: string, code: string): Promise<string> {
 
 async function listChannels(): Promise<string> {
   try {
-    const cfg = await fs.readJson(path.join(HC_DIR, 'hyperclaw.json'));
+    const cfg = await fs.readJson(getConfigPath());
     const channels = Object.entries(cfg.channelConfigs || {}).map(([id]) => `• ${id}`).join('\n');
     return `📱 *Active Channels*\n\n${channels || '(none configured)'}`;
   } catch {
@@ -547,12 +546,12 @@ export class DiscordHyperClawBot {
 
 export async function loadBotConfig(): Promise<HyperClawBotConfig | null> {
   try {
-    const cfg = await fs.readJson(BOT_CONFIG_FILE);
+    const cfg = await fs.readJson(getBotConfigFile());
     return cfg;
   } catch {
     // Fallback: try alternate config paths
     try {
-      for (const p of [path.join(HC_DIR, 'hyperclaw-bot.json'), path.join(HC_DIR, 'bot-config.json')]) {
+      for (const p of [path.join(getHyperClawDir(), 'hyperclaw-bot.json'), path.join(getHyperClawDir(), 'bot-config.json')]) {
         if (await fs.pathExists(p)) return await fs.readJson(p);
       }
     } catch { /* ignore */ }
@@ -561,24 +560,26 @@ export async function loadBotConfig(): Promise<HyperClawBotConfig | null> {
 }
 
 export async function saveBotConfig(config: HyperClawBotConfig): Promise<void> {
-  await fs.ensureDir(path.dirname(BOT_CONFIG_FILE));
-  await fs.writeJson(BOT_CONFIG_FILE, config, { spaces: 2 });
-  await fs.chmod(BOT_CONFIG_FILE, 0o600);
+  const botCfg = getBotConfigFile();
+  await fs.ensureDir(path.dirname(botCfg));
+  await fs.writeJson(botCfg, config, { spaces: 2 });
+  await fs.chmod(botCfg, 0o600);
 }
 
-export const BOT_PID_FILE_PATH = BOT_PID_FILE;
+export const BOT_PID_FILE_PATH = getBotPidFile;
 
 export async function stopBotProcess(): Promise<boolean> {
   try {
-    if (!(await fs.pathExists(BOT_PID_FILE))) return false;
-    const pid = parseInt(await fs.readFile(BOT_PID_FILE, 'utf8'), 10);
+    const pidFile = getBotPidFile();
+    if (!(await fs.pathExists(pidFile))) return false;
+    const pid = parseInt(await fs.readFile(pidFile, 'utf8'), 10);
     if (isNaN(pid)) return false;
     try {
       process.kill(pid, 'SIGTERM');
     } catch {
       // Process may already be gone
     }
-    await fs.remove(BOT_PID_FILE);
+    await fs.remove(getBotPidFile());
     return true;
   } catch {
     return false;
@@ -586,8 +587,9 @@ export async function stopBotProcess(): Promise<boolean> {
 }
 
 export async function writeBotPid(pid: number): Promise<void> {
-  await fs.ensureDir(path.dirname(BOT_PID_FILE));
-  await fs.writeFile(BOT_PID_FILE, String(pid), 'utf8');
+  const pidFile = getBotPidFile();
+  await fs.ensureDir(path.dirname(pidFile));
+  await fs.writeFile(pidFile, String(pid), 'utf8');
 }
 
 export async function showBotStatus(): Promise<void> {

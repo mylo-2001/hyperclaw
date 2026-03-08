@@ -14,8 +14,8 @@
 
 import chalk from 'chalk';
 import path from 'path';
-import os from 'os';
 import fs from 'fs-extra';
+import { getHyperClawDir } from './paths';
 
 export type ThemeName = 'dark' | 'grey' | 'white';
 
@@ -112,14 +112,14 @@ const THEMES: Record<ThemeName, ThemePalette> = {
 
 // ── Persistence ───────────────────────────────────────────────────────────────
 
-const THEME_FILE = path.join(os.homedir(), '.hyperclaw', 'theme.json');
+const getThemeFile = () => path.join(getHyperClawDir(), 'theme.json');
 
 let _cached: ThemeName | null = null;
 
 export function getThemeName(): ThemeName {
   if (_cached) return _cached;
   try {
-    const raw = fs.readJsonSync(THEME_FILE) as { name?: string };
+    const raw = fs.readJsonSync(getThemeFile()) as { name?: string };
     if (raw?.name && raw.name in THEMES) {
       _cached = raw.name as ThemeName;
       return _cached;
@@ -129,8 +129,9 @@ export function getThemeName(): ThemeName {
 }
 
 export async function setThemeName(name: ThemeName): Promise<void> {
-  await fs.ensureDir(path.dirname(THEME_FILE));
-  await fs.writeJson(THEME_FILE, { name }, { spaces: 2 });
+  const f = getThemeFile();
+  await fs.ensureDir(path.dirname(f));
+  await fs.writeJson(f, { name }, { spaces: 2 });
   _cached = name;
 }
 

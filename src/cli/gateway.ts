@@ -9,9 +9,9 @@ import fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
 import { WebSocket } from 'ws';
+import { getHyperClawDir } from '../infra/paths';
 
 const execAsync = promisify(exec);
-const HC_DIR = path.join(os.homedir(), '.hyperclaw');
 
 export interface GatewayConfig {
   port: number;
@@ -135,7 +135,9 @@ WantedBy=default.target
       await fs.writeFile(serviceFile, content);
       await execAsync('systemctl --user daemon-reload');
       await execAsync('systemctl --user enable hyperclaw');
-      await execAsync(`loginctl enable-linger ${os.userInfo().username}`).catch(() => {});
+      await execAsync(`loginctl enable-linger ${os.userInfo().username}`).catch((e: any) => {
+        console.log(chalk.yellow(`  ⚠  loginctl enable-linger failed: ${e?.message ?? e}. Service may not persist across logouts.`));
+      });
       console.log(chalk.green('  ✅ systemd service installed (lingering enabled)'));
     } catch (e: any) {
       console.log(chalk.gray(`  Service file: ${serviceFile}`));
@@ -157,8 +159,8 @@ WantedBy=default.target
   </array>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
-  <key>StandardOutPath</key><string>${HC_DIR}/gateway.log</string>
-  <key>StandardErrorPath</key><string>${HC_DIR}/gateway.err</string>
+  <key>StandardOutPath</key><string>${getHyperClawDir()}/gateway.log</string>
+  <key>StandardErrorPath</key><string>${getHyperClawDir()}/gateway.err</string>
 </dict></plist>`;
     await fs.ensureDir(plistDir);
     await fs.writeFile(plistPath, content);

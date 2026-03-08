@@ -8,10 +8,8 @@ import chalk from 'chalk';
 import ora from 'ora';
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
 import crypto from 'crypto';
-
-const HC_DIR = path.join(os.homedir(), '.hyperclaw');
+import { getHyperClawDir, getConfigPath } from '../infra/paths';
 
 interface SecurityFinding {
   checkId: string;
@@ -26,11 +24,12 @@ interface SecurityFinding {
 
 async function checkFilePermissions(): Promise<SecurityFinding[]> {
   const findings: SecurityFinding[] = [];
+  const hcDir = getHyperClawDir();
   const sensitiveFiles = [
-    path.join(HC_DIR, 'hyperclaw.json'),
-    path.join(HC_DIR, 'auth.json'),
-    path.join(HC_DIR, '.env'),
-    path.join(HC_DIR, 'AGENTS.md'),
+    getConfigPath(),
+    path.join(hcDir, 'auth.json'),
+    path.join(hcDir, '.env'),
+    path.join(hcDir, 'AGENTS.md'),
   ];
 
   for (const f of sensitiveFiles) {
@@ -51,7 +50,7 @@ async function checkFilePermissions(): Promise<SecurityFinding[]> {
     }
   }
 
-  const credsDir = path.join(HC_DIR, 'credentials');
+  const credsDir = path.join(hcDir, 'credentials');
   if (await fs.pathExists(credsDir)) {
     const stat = await fs.stat(credsDir);
     if ((stat.mode & 0o077) !== 0) {
@@ -69,8 +68,8 @@ async function checkFilePermissions(): Promise<SecurityFinding[]> {
   }
 
   // Check config directory permissions
-  if (await fs.pathExists(HC_DIR)) {
-    const stat = await fs.stat(HC_DIR);
+  if (await fs.pathExists(hcDir)) {
+    const stat = await fs.stat(hcDir);
     if ((stat.mode & 0o077) !== 0) {
       findings.push({
         checkId: 'config-dir-permissions',
@@ -78,9 +77,9 @@ async function checkFilePermissions(): Promise<SecurityFinding[]> {
         category: 'File Permissions',
         title: '~/.hyperclaw/ directory is group/world readable',
         detail: `Mode ${(stat.mode & 0o777).toString(8)} — config directory accessible to others`,
-        remediation: `chmod 700 ${HC_DIR}`,
+        remediation: `chmod 700 ${hcDir}`,
         cvss: 6.5,
-        autofix: async () => { await fs.chmod(HC_DIR, 0o700); }
+        autofix: async () => { await fs.chmod(hcDir, 0o700); }
       });
     }
   }
@@ -121,7 +120,7 @@ async function checkGatewayConfig(): Promise<SecurityFinding[]> {
   const findings: SecurityFinding[] = [];
   let cfg: any = null;
 
-  try { cfg = await fs.readJson(path.join(HC_DIR, 'hyperclaw.json')); } catch { return findings; }
+  try { cfg = await fs.readJson(getConfigPath()); } catch { return findings; }
 
   // Auth token checks
   const token = cfg.gateway?.authToken;
@@ -186,9 +185,10 @@ async function checkGatewayConfig(): Promise<SecurityFinding[]> {
     });
   }
 
-  // DM policies — check channels object (new flat format)
-  const channels = cfg.channels || cfg.channelConfigs || {};
-  for (const [ch, chCfg] of Object.entries(channels)) {
+  // DM policies — use channelConfigs only (Record<string, config>); channels is string[] and must not be used here
+  const channelConfigs = (cfg.channelConfigs && typeof cfg.channelConfigs === 'object' && !Array.isArray(cfg.channelConfigs))
+    ? cfg.channelConfigs : {} as Record<string, unknown>;
+  for (const [ch, chCfg] of Object.entries(channelConfigs)) {
     const policy = (chCfg as any)?.dmPolicy ?? (chCfg as any)?.dm?.policy;
     if (policy === 'open') {
       findings.push({
@@ -375,10 +375,11 @@ async function checkSecretsInPrompts(): Promise<SecurityFinding[]> {
     { pattern: /[a-f0-9]{64}/, name: 'Potential hex secret' },
   ];
 
+  const hcDir = getHyperClawDir();
   const filesToScan = [
-    path.join(HC_DIR, 'AGENTS.md'),
-    path.join(HC_DIR, 'MEMORY.md'),
-    path.join(HC_DIR, 'hyperclaw.json'),
+    path.join(hcDir, 'AGENTS.md'),
+    path.join(hcDir, 'MEMORY.md'),
+    getConfigPath(),
   ];
 
   for (const f of filesToScan) {
@@ -406,7 +407,7 @@ async function deepScan(): Promise<SecurityFinding[]> {
   const findings: SecurityFinding[] = [];
 
   // Check for known-bad plugin patterns
-  const hubState = path.join(HC_DIR, 'hub-state.json');
+  const hubState = path.join(getHyperClawDir(), 'hub-state.json');
   if (await fs.pathExists(hubState)) {
     const state = await fs.readJson(hubState);
     const dangerous = state.installed?.filter((s: any) => s.risk === 'dangerous') || [];
@@ -425,7 +426,7 @@ async function deepScan(): Promise<SecurityFinding[]> {
 
   // Check for token entropy
   let cfg: any = null;
-  try { cfg = await fs.readJson(path.join(HC_DIR, 'hyperclaw.json')); } catch {}
+  try { cfg = await fs.readJson(getConfigPath()); } catch {}
   if (cfg?.gateway?.authToken) {
     const token = cfg.gateway.authToken;
     const entropy = estimateEntropy(token);

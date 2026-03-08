@@ -6,9 +6,9 @@
 
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
+import { getHyperClawDir } from '../infra/paths';
 
-const COST_LOG = path.join(os.homedir(), '.hyperclaw', 'cost-log.json');
+const getCostLog = () => path.join(getHyperClawDir(), 'cost-log.json');
 
 // Price per 1M tokens (USD) — input / output
 const MODEL_PRICES: Record<string, { in: number; out: number }> = {
@@ -60,14 +60,14 @@ export function calcCostUsd(model: string, inputTokens: number, outputTokens: nu
 }
 
 async function loadLog(): Promise<CostEntry[]> {
-  try { return await fs.readJson(COST_LOG); } catch { return []; }
+  try { return await fs.readJson(getCostLog()); } catch { return []; }
 }
 
 async function saveLog(log: CostEntry[]): Promise<void> {
-  await fs.ensureDir(path.dirname(COST_LOG));
+  await fs.ensureDir(path.dirname(getCostLog()));
   // Keep last 5000 entries
   const trimmed = log.slice(-5000);
-  await fs.writeJson(COST_LOG, trimmed, { spaces: 2 });
+  await fs.writeJson(getCostLog(), trimmed, { spaces: 2 });
 }
 
 export async function recordCost(

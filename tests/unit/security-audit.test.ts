@@ -101,7 +101,7 @@ describe('Security Audit', () => {
   it('detects open DM policy as high', async () => {
     vi.mocked(fs.readJson).mockResolvedValue({
       gateway: { authToken: 'a'.repeat(32) },
-      channels: {
+      channelConfigs: {
         telegram: { dmPolicy: 'open' }
       }
     } as any);

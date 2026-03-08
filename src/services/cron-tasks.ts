@@ -6,9 +6,9 @@
 
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
+import { getHyperClawDir } from '../infra/paths';
 
-const CRON_TASKS_FILE = path.join(os.homedir(), '.hyperclaw', 'cron-tasks.json');
+const getCronTasksFile = () => path.join(getHyperClawDir(), 'cron-tasks.json');
 
 export interface CronTask {
   id: string;
@@ -24,7 +24,7 @@ let tasks: CronTask[] = [];
 
 export async function loadCronTasks(): Promise<CronTask[]> {
   try {
-    tasks = await fs.readJson(CRON_TASKS_FILE);
+    tasks = await fs.readJson(getCronTasksFile());
   } catch {
     tasks = [];
   }
@@ -32,8 +32,9 @@ export async function loadCronTasks(): Promise<CronTask[]> {
 }
 
 export async function saveCronTasks(): Promise<void> {
-  await fs.ensureDir(path.dirname(CRON_TASKS_FILE));
-  await fs.writeJson(CRON_TASKS_FILE, tasks, { spaces: 2 });
+  const f = getCronTasksFile();
+  await fs.ensureDir(path.dirname(f));
+  await fs.writeJson(f, tasks, { spaces: 2 });
 }
 
 export function getCronTasks(): CronTask[] {

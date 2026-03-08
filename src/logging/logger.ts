@@ -7,8 +7,8 @@
 
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
 import chalk from 'chalk';
+import { getHyperClawDir } from '../infra/paths';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'silent';
 
@@ -32,8 +32,8 @@ const LEVEL_COLOR: Record<LogLevel, (s: string) => string> = {
   silent: chalk.gray,
 };
 
-const LOG_DIR  = path.join(os.homedir(), '.hyperclaw', 'logs');
-const LOG_FILE = path.join(LOG_DIR, 'hyperclaw.log');
+const getLogDir = () => path.join(getHyperClawDir(), 'logs');
+const getLogFile = () => path.join(getLogDir(), 'hyperclaw.log');
 const MAX_LOG_BYTES = 5 * 1024 * 1024; // 5 MB before rotation
 
 let _minLevel: LogLevel = 'info';
@@ -60,10 +60,11 @@ function formatFile(entry: LogEntry): string {
 
 async function rotateIfNeeded(): Promise<void> {
   try {
-    const stat = await fs.stat(LOG_FILE).catch(() => null);
+    const stat = await fs.stat(getLogFile()).catch(() => null);
     if (stat && stat.size > MAX_LOG_BYTES) {
-      const rotated = LOG_FILE.replace('.log', `.${Date.now()}.log`);
-      await fs.rename(LOG_FILE, rotated);
+      const logFile = getLogFile();
+      const rotated = logFile.replace('.log', `.${Date.now()}.log`);
+      await fs.rename(logFile, rotated);
     }
   } catch {}
 }
@@ -90,7 +91,7 @@ function write(module: string, level: LogLevel, message: string, data?: Record<s
       rotateChecked = true;
       fs.ensureDir(LOG_DIR).then(() => rotateIfNeeded()).catch(() => {});
     }
-    fs.appendFile(LOG_FILE, formatFile(entry)).catch(() => {});
+    fs.appendFile(getLogFile(), formatFile(entry)).catch(() => {});
   }
 }
 
@@ -108,7 +109,7 @@ export function createLogger(module: string) {
 // ─── CLI: tail log ───────────────────────────────────────────────────────────
 
 export async function tailLog(lines = 50): Promise<void> {
-  if (!(await fs.pathExists(LOG_FILE))) {
+  if (!(await fs.pathExists(getLogFile()))) {
     console.log(chalk.gray('\n  No log file yet. Start the daemon first.\n'));
     return;
   }
@@ -132,14 +133,14 @@ export async function tailLog(lines = 50): Promise<void> {
 
 export async function streamLog(): Promise<void> {
   console.log(chalk.bold.cyan('\n  📡 STREAMING LOGS (Ctrl+C to stop)\n'));
-  await fs.ensureDir(LOG_DIR);
-  await fs.ensureFile(LOG_FILE);
+  await fs.ensureDir(getLogDir());
+  await fs.ensureFile(getLogFile());
 
   const { createReadStream } = await import('fs');
   const { Tail } = await import('tail').catch(() => ({ Tail: null }));
 
   if (Tail) {
-    const tail = new (Tail as any)(LOG_FILE);
+    const tail = new (Tail as any)(getLogFile());
     tail.on('line', (line: string) => {
       try {
         const entry = JSON.parse(line) as LogEntry;
@@ -152,7 +153,7 @@ export async function streamLog(): Promise<void> {
   } else {
     // Fallback: re-exec `tail -f`
     const { spawn } = await import('child_process');
-    const proc = spawn('tail', ['-f', LOG_FILE], { stdio: ['ignore', 'pipe', 'ignore'] });
+    const proc = spawn('tail', ['-f', getLogFile()], { stdio: ['ignore', 'pipe', 'ignore'] });
     proc.stdout?.on('data', (chunk) => {
       const lines = chunk.toString().split('\n');
       for (const line of lines) {

@@ -251,7 +251,7 @@ export class SkillHub {
   async install(skillId: string, force = false): Promise<void> {
     const skill = SKILL_REGISTRY.find(s => s.id === skillId);
     if (!skill) {
-      console.log(chalk.red(`❌ Skill not found: ${skillId}`));
+      console.log(chalk.red(`  ✖  Skill not found: ${skillId}`));
       return;
     }
 

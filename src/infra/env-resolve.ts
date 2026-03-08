@@ -51,15 +51,53 @@ export function resolveProviderApiKey(
   }
 }
 
-/** Resolve API key or OAuth access token (async). Use this when provider.authType may be 'oauth'. */
+/**
+ * H-2: Resolve API key or OAuth access token (async).
+ * Resolution order:
+ *   1. cfg.provider.apiKey (in config file)
+ *   2. CredentialsStore  (~/.hyperclaw/credentials/<providerId>.json)
+ *   3. AuthStore         (~/.hyperclaw/auth.json providers map)
+ *   4. Environment variables (per-provider mapping in resolveProviderApiKey)
+ * Also handles authType === 'oauth' via the oauth-provider service.
+ */
 export async function getProviderCredentialAsync(
   cfg: { provider?: { providerId?: string; apiKey?: string; authType?: 'api_key' | 'oauth'; oauthTokenPath?: string } } | null
 ): Promise<string> {
   if (!cfg?.provider) return '';
+
   if ((cfg.provider as any).authType === 'oauth') {
     const { getProviderCredentialAsync: getOAuth } = await import('../services/oauth-provider');
     return getOAuth(cfg);
   }
+
+  // 1. Config file key takes highest priority
+  if (cfg.provider.apiKey) return cfg.provider.apiKey;
+
+  const pid = cfg.provider.providerId || 'openrouter';
+
+  // 2. Per-provider credentials file (profile-aware)
+  try {
+    const { CredentialsStore } = await import('../secrets/credentials-store');
+    const { getHyperClawDir } = await import('./paths');
+    const credStore = new CredentialsStore(getHyperClawDir());
+    const cred = await credStore.get(pid);
+    if (cred?.apiKey) return cred.apiKey;
+  } catch (e) {
+    if (process.env.DEBUG) console.error('[env-resolve] CredentialsStore:', (e as Error)?.message);
+  }
+
+  // 3. Auth store providers map (profile-aware)
+  try {
+    const { AuthStore } = await import('./device-auth-store');
+    const { getHyperClawDir } = await import('./paths');
+    const authStore = new AuthStore(getHyperClawDir());
+    const key = await authStore.getProviderKey(pid);
+    if (key) return key;
+  } catch (e) {
+    if (process.env.DEBUG) console.error('[env-resolve] AuthStore:', (e as Error)?.message);
+  }
+
+  // 4. Environment variable fallback
   return resolveProviderApiKey(cfg);
 }
 
