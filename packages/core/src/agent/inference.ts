@@ -90,6 +90,20 @@ function streamRequest(
     method: 'POST',
     headers: { ...headers, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) }
   }, (res: any) => {
+    const status: number = res.statusCode || 0;
+    if (status >= 400) {
+      let errBody = '';
+      res.on('data', (chunk: Buffer) => { errBody += chunk.toString(); });
+      res.on('end', () => {
+        let msg = `API error ${status}`;
+        try {
+          const j = JSON.parse(errBody);
+          msg = `API error ${status}: ${j?.error?.message || j?.message || errBody.slice(0, 200)}`;
+        } catch { msg = `API error ${status}: ${errBody.slice(0, 200)}`; }
+        onError(new Error(msg));
+      });
+      return;
+    }
     let buf = '';
     res.on('data', (chunk: Buffer) => {
       buf += chunk.toString();
