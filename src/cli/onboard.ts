@@ -1694,7 +1694,7 @@ export class HyperClawWizard {
 
     const finalSkills = skillsPatch.apiKeys || skillsPatch.vtApiKey ? skillsPatch : (current?.skills || { installed: [] });
 
-    const pkgVersion = await fs.readJson(path.join(__dirname, '../package.json')).then((p: any) => p.version).catch(() => '5.1.1');
+    const pkgVersion = await fs.readJson(path.join(__dirname, '../package.json')).then((p: any) => p.version).catch(() => '5.2.0');
     await this.config.save({
       ...current,
       version: pkgVersion,
@@ -2333,7 +2333,7 @@ export class HyperClawWizard {
     ].join('\n');
 
     console.log('\n' + boxen(
-      chalk.hex('#06b6d4')('?? HyperClaw v5.1.0 ready!\n\n') + lines,
+      chalk.hex('#06b6d4')('?? HyperClaw v5.2.0 ready!\n\n') + lines,
       { padding: 1, borderStyle: 'round', borderColor: 'cyan', margin: 1, backgroundColor: '#0a0a0a' }
     ));
   }
