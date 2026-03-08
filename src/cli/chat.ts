@@ -8,8 +8,8 @@ import readline from 'readline';
 import chalk from 'chalk';
 import ora from 'ora';
 import fs from 'fs-extra';
-import { getConfigPath, resolveTools, loadWorkspaceContext, loadSkillsContext, InferenceEngine } from '../../../packages/core/src/index';
-import type { InferenceMessage } from '../../../packages/core/src/agent/inference';
+import { getConfigPath, resolveTools, loadWorkspaceContext, loadSkillsContext, InferenceEngine } from '../../packages/core/src/index';
+import type { InferenceMessage } from '../../packages/core/src/agent/inference';
 
 const DIVIDER = chalk.gray('  ' + '─'.repeat(56));
 
@@ -42,7 +42,7 @@ function printHelp(): void {
 async function printSkills(): Promise<void> {
   console.log();
   try {
-    const { loadSkills } = await import('../../../packages/core/src/agent/skill-loader');
+    const { loadSkills } = await import('../../packages/core/src/agent/skill-loader');
     const skills = await loadSkills();
     if (skills.length === 0) {
       console.log(chalk.gray('  No skills installed yet.'));
@@ -220,7 +220,7 @@ export async function runChat(opts: {
 
       // Auto memory extraction in background
       try {
-        const { AutoMemory } = await import('../../../packages/core/src/agent/memory-auto');
+        const { AutoMemory } = await import('../../packages/core/src/agent/memory-auto');
         const mem = new AutoMemory({ extractEveryNTurns: 3 });
         mem.addTurn('user', text);
         if (responseText) mem.addTurn('assistant', responseText);
