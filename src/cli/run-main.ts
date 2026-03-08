@@ -70,7 +70,7 @@ const program = new Command();
 program
   .name('hyperclaw')
   .description('⚡ HyperClaw — AI Gateway Platform. The Lobster Evolution 🦅')
-  .version('5.2.1')
+  .version('5.2.2')
   .option(
     '--profile <name>',
     'Use an isolated gateway profile. Auto-scopes HYPERCLAW_STATE_DIR and HYPERCLAW_CONFIG_PATH. ' +
@@ -237,9 +237,10 @@ gatewayCmd.command('status')
 gatewayCmd.command('start')
   .description('Start the gateway service')
   .option('-p, --port <port>', 'Override port')
-  .action(async (opts) => {
+  .action(async (_opts) => {
     await (new DaemonManager()).start();
-    // Server keeps process alive — do not exit
+    // DaemonManager.start() now awaits forever — process.exit(0) in parseAsync
+    // will never be reached for this command.
   });
 
 gatewayCmd.command('stop')
@@ -772,7 +773,7 @@ cfgCmd.command('schema')
   .action(() => {
     console.log(chalk.bold.hex('#06b6d4')('\n  Config schema: ~/.hyperclaw/hyperclaw.json\n'));
     const schema = {
-      version: 'string (e.g. "5.2.1")',
+      version: 'string (e.g. "5.2.2")',
       workspaceName: 'string',
       provider: { providerId: 'string', apiKey: 'string (secret)', modelId: 'string' },
       gateway: { port: 'number', bind: '"127.0.0.1"|"0.0.0.0"|"tailscale"|"custom"', authToken: 'string (secret)', tailscaleExposure: '"off"|"serve"|"funnel"', runtime: '"node"|"bun"|"deno"' },

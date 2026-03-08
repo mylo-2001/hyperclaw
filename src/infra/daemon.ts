@@ -72,6 +72,9 @@ export class DaemonManager {
       };
       process.on('SIGINT', shutdown);
       process.on('SIGTERM', shutdown);
+      // Keep the process alive indefinitely — the HTTP server handles requests
+      // but process.exit(0) in run-main.ts would kill it without this guard.
+      await new Promise<void>(() => {});
     } catch (e: any) {
       s.fail(`Failed to start: ${e.message}`);
       throw e;
