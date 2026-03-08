@@ -30,10 +30,14 @@ export async function showSecurityDisclaimer(): Promise<boolean> {
   console.log(chalk.gray('  ● Use strongest model  — smarter = better at refusing tricks\n'));
 
   const { understood } = await inquirer.prompt([{
-    type: 'confirm',
+    type: 'list',
     name: 'understood',
-    message: chalk.bold('I understand this is powerful and inherently risky. Continue?'),
-    default: false
+    message: chalk.bold('I understand this is powerful and inherently risky.'),
+    choices: [
+      { name: chalk.green('Yes, continue  — I understand the risks'), value: true },
+      { name: chalk.gray('No, exit       — I\'ll come back later'),   value: false },
+    ],
+    default: false,
   }]);
 
   if (!understood) console.log(chalk.gray('\n  Aborted. Come back when ready.\n'));

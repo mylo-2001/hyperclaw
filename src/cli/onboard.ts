@@ -1360,7 +1360,7 @@ export class HyperClawWizard {
         await initWorkspaceFiles({
           agentName: 'Hyper', personality: 'helpful and concise',
           language: 'English', userName: 'User', rules: []
-        }, targetDir);
+        }, targetDir, selectedFiles);
         console.log(chalk.green(`  ? Workspace files initialized in ${targetDir}\n`));
       } catch {
         console.log(chalk.yellow(`  ? Could not initialize workspace � run: hyperclaw workspace init\n`));
@@ -1576,11 +1576,18 @@ export class HyperClawWizard {
         const { writeOAuthToken } = await import('../services/oauth-provider');
         const tokens = await runOAuthFlow(provider, {});
         const now = Math.floor(Date.now() / 1000);
+        const TOKEN_URLS: Record<string, string> = {
+          'google-calendar': 'https://oauth2.googleapis.com/token',
+          'google-drive': 'https://oauth2.googleapis.com/token',
+          'github': 'https://github.com/login/oauth/access_token',
+          'notion': 'https://api.notion.com/v1/oauth/token',
+          'linear': 'https://api.linear.app/oauth/token',
+        };
         await writeOAuthToken(provider, {
           access_token: tokens.access_token,
           refresh_token: tokens.refresh_token,
           expires_at: tokens.expires_in ? now + tokens.expires_in : undefined,
-          token_url: `https://oauth2.googleapis.com/token`
+          token_url: TOKEN_URLS[provider] ?? 'https://oauth2.googleapis.com/token',
         });
         console.log(chalk.green(`  ? ${provider} connected\n`));
       } catch {
@@ -1827,16 +1834,14 @@ export class HyperClawWizard {
   private async setupIntegrations(): Promise<void> {
     console.log();
 
-    const { skip } = await inquirer.prompt<{ skip: boolean }>([{
+    const { configure } = await inquirer.prompt<{ configure: boolean }>([{
       type: 'confirm',
-      name: 'skip',
+      name: 'configure',
       message: chalk.cyan('Configure integrations now?') + chalk.gray(' (Spotify, Home Assistant, GitHub, Trello, etc.)'),
       default: false
     }]);
 
-    if (skip === false) {
-      // They said yes (default false = confirmed)
-    } else {
+    if (!configure) {
       console.log(chalk.gray('  Skipped — configure later by telling the agent or running: hyperclaw config set-key KEY value\n'));
       return;
     }

@@ -3,6 +3,9 @@ import readline from 'readline';
 import { GatewayManager } from './gateway';
 import { ConfigManager } from './config';
 import { SkillHub } from '../plugins/hub';
+import { checkForUpdates } from '../infra/update-check';
+import fs from 'fs-extra';
+import path from 'path';
 
 export class Dashboard {
   async launch(live: boolean): Promise<void> {
@@ -20,6 +23,21 @@ export class Dashboard {
     const gm = new GatewayManager();
     const hub = new SkillHub();
     const installed = await hub.getInstalled();
+
+    // Check for updates (with short timeout so dashboard isn't delayed)
+    let updateNotice: string | null = null;
+    try {
+      const pkgPath = path.join(__dirname, '../package.json');
+      const pkg = await fs.readJson(pkgPath).catch(() => null);
+      const current = pkg?.version ?? '0.0.0';
+      const upd = await Promise.race([
+        checkForUpdates(current),
+        new Promise<null>(r => setTimeout(() => r(null), 2500))
+      ]);
+      if (upd?.available) {
+        updateNotice = chalk.yellow(`⬆  Update available: ${upd.latest}`) + chalk.gray(`  →  npm i -g hyperclaw`);
+      }
+    } catch {}
 
     const port = cfg?.gateway?.port || 1515;
     const agent = cfg?.identity?.agentName || 'Hyper';
@@ -73,6 +91,9 @@ export class Dashboard {
     console.log(row(`  [${now}] AGENTS.md loaded � rules active`));
     console.log(row(`  [${now}] Channels monitoring...`));
     console.log(c(`�${'-'.repeat(w)}�`));
+    if (updateNotice) {
+      console.log(row(`  ${updateNotice}`));
+    }
     console.log(row(chalk.gray('Commands: [d] ') + chalk.red('?? daemon') + chalk.gray('  [h] hub  [g] gateway  [m] memory  [q] quit')));
     console.log(c(`L${line}-\n`));
   }

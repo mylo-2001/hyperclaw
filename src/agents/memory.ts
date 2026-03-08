@@ -153,7 +153,7 @@ ${id.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
 
 // ─── Workspace file generation (SOUL, USER, TOOLS, HEARTBEAT) ──────────────
 
-export async function initWorkspaceFiles(identity: AgentIdentity, workspaceDir: string): Promise<void> {
+export async function initWorkspaceFiles(identity: AgentIdentity, workspaceDir: string, only?: string[]): Promise<void> {
   const files: Record<string, string> = {
     'SOUL.md': generateSoul(identity),
     'USER.md': generateUser(identity),
@@ -165,6 +165,8 @@ export async function initWorkspaceFiles(identity: AgentIdentity, workspaceDir: 
   await fs.ensureDir(workspaceDir);
 
   for (const [fname, content] of Object.entries(files)) {
+    // If `only` is provided, skip files not in the list (match by name without extension)
+    if (only && !only.some(sel => fname.startsWith(sel))) continue;
     const fpath = path.join(workspaceDir, fname);
     if (!(await fs.pathExists(fpath))) {
       await fs.writeFile(fpath, content, 'utf8');

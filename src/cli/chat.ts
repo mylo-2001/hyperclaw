@@ -131,7 +131,20 @@ export async function runChat(opts: {
   const sessionId = opts.sessionId ?? makeSessionId();
   const messages: InferenceMessage[] = [];
 
+  // Create once per session so the turn counter accumulates correctly
+  let autoMem: any = null;
+  try {
+    const { AutoMemory } = await import('../../packages/core/src/agent/memory-auto');
+    autoMem = new AutoMemory({ extractEveryNTurns: 3 });
+  } catch {}
+
   printHeader(rawModel, sessionId);
+
+  // Non-blocking update check — shows notice before first prompt if update available
+  try {
+    const { maybeShowUpdateNotice } = await import('../infra/update-check');
+    maybeShowUpdateNotice();
+  } catch {}
 
   // Set up readline
   const rl = readline.createInterface({
@@ -182,27 +195,33 @@ export async function runChat(opts: {
       let responseText = '';
 
       try {
+        let prefixPrinted = false;
         const engine = new InferenceEngine({
           ...engineOpts,
           onToken: (token: string) => {
             if (spinner.isSpinning) spinner.stop();
+            if (!prefixPrinted) {
+              process.stdout.write(chalk.bold.blue('\n  Agent › '));
+              prefixPrinted = true;
+            }
             process.stdout.write(token);
           },
           onToolCall: (name: string) => {
             if (spinner.isSpinning) spinner.stop();
             console.log(chalk.gray(`\n  [tool: ${name}]`));
+            prefixPrinted = false; // reset so "Agent ›" prints again after tool
           },
         });
-
-        // Print agent prefix before streaming
-        spinner.stop();
-        process.stdout.write(chalk.bold.blue('\n  Agent › '));
 
         const result = await engine.run(messages);
         responseText = result.text || '';
 
-        // If tokens were streamed, newline already there; if not, print now
-        if (!responseText && !result.text) {
+        spinner.stop();
+        // If no tokens were streamed (non-streaming provider), print now
+        if (!prefixPrinted) {
+          process.stdout.write(chalk.bold.blue('\n  Agent › '));
+          process.stdout.write(responseText || chalk.gray('(empty)'));
+        } else if (!responseText) {
           process.stdout.write(chalk.gray('(empty)'));
         }
         console.log('\n');
@@ -221,14 +240,12 @@ export async function runChat(opts: {
         messages.push({ role: 'assistant', content: responseText });
       }
 
-      // Auto memory extraction in background
-      try {
-        const { AutoMemory } = await import('../../packages/core/src/agent/memory-auto');
-        const mem = new AutoMemory({ extractEveryNTurns: 3 });
-        mem.addTurn('user', text);
-        if (responseText) mem.addTurn('assistant', responseText);
-        mem.extract().catch(() => {});
-      } catch {}
+      // Auto memory extraction in background (uses session-level instance)
+      if (autoMem) {
+        autoMem.addTurn('user', text);
+        if (responseText) autoMem.addTurn('assistant', responseText);
+        autoMem.extract().catch(() => {});
+      }
 
       prompt();
     });
