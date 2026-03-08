@@ -84,18 +84,64 @@ hyperclaw onboard --install-daemon
 
 The wizard walks you through: AI provider → model → channels → skills. Done.
 
+## ▶️ Running your bot
+
 ```bash
-# After setup, start your assistant
+# Step 1 — Start the daemon (runs in the background, bot becomes active on Telegram/Discord/etc.)
 hyperclaw daemon start
 
-# Interactive terminal chat (multi-turn, streams responses)
-hyperclaw chat
+# Step 2 — Open the TUI dashboard to see live status, channels, logs
+hyperclaw dashboard
 
+# Step 3 — Or chat directly from your terminal (no Telegram needed)
+hyperclaw chat
+```
+
+### How it works
+
+```
+hyperclaw daemon start
+        ↓
+   Gateway  (background process)
+        ↓
+   ┌─────────────┬──────────────┐
+   │  Telegram   │  Dashboard   │
+   │  Discord    │  hyperclaw   │
+   │  WhatsApp   │  dashboard   │
+   └─────────────┴──────────────┘
+```
+
+> **The daemon must be running** for the Telegram/Discord/WhatsApp bot to answer messages and for the TUI dashboard to show "ONLINE".  
+> On **Windows** the daemon runs via Task Scheduler (no WSL, no admin).  
+> On **Linux/macOS** with `--install-daemon` it uses systemd / launchd.
+
+### Without the daemon (foreground mode)
+
+If you haven't installed the daemon, run the bot in the foreground — the terminal stays open:
+
+```bash
+# Run bot in foreground (Ctrl+C to stop)
+hyperclaw start
+
+# In a second terminal, open the dashboard
+hyperclaw dashboard
+```
+
+### Quick reference
+
+| I want to…                              | Command                    |
+|-----------------------------------------|----------------------------|
+| Start Telegram/Discord bot (background) | `hyperclaw daemon start`   |
+| Stop the bot                            | `hyperclaw daemon stop`    |
+| Check if running                        | `hyperclaw daemon status`  |
+| Open TUI dashboard                      | `hyperclaw dashboard`      |
+| Chat from terminal (no Telegram needed) | `hyperclaw chat`           |
+| Run in foreground (no daemon)           | `hyperclaw start`          |
+| Health check                            | `hyperclaw doctor`         |
+
+```bash
 # Send a single message (non-interactive)
 hyperclaw agent --message "What can you do?"
-
-# Health check
-hyperclaw doctor
 ```
 
 > **Windows**: No WSL2, no admin rights needed. The daemon uses Task Scheduler and runs as your account.
