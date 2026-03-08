@@ -98,7 +98,7 @@ export const PROVIDERS: Provider[] = [
     authLabel: 'OpenRouter API Key',
     authHint: 'openrouter.ai/keys',
     baseUrl: 'https://openrouter.ai/api/v1',
-    supportsTranscription: true,  // routes to OpenAI/Google
+    supportsTranscription: true,  // Fallback only: uses OpenAI Whisper key if present, not a native OpenRouter transcription endpoint
     models: [
       // Auto-routing
       { id: 'openrouter/auto', name: 'Auto (best available)', contextK: 200, flagship: true },
@@ -132,7 +132,7 @@ export const PROVIDERS: Provider[] = [
     authLabel: 'OpenAI API Key',
     authHint: 'platform.openai.com/api-keys',
     baseUrl: 'https://api.openai.com/v1',
-    supportsTranscription: true,  // Whisper API
+    supportsTranscription: true,  // Whisper API: POST /v1/audio/transcriptions (model: whisper-1)
     models: [
       // GPT-5 series
       { id: 'gpt-5.2', name: 'GPT-5.2', contextK: 1000, vision: true, flagship: true },
@@ -308,7 +308,7 @@ export const PROVIDERS: Provider[] = [
     authLabel: 'Groq API Key',
     authHint: 'console.groq.com/keys',
     baseUrl: 'https://api.groq.com/openai/v1',
-    supportsTranscription: true,  // Whisper models
+    supportsTranscription: true,  // Whisper models: whisper-large-v3, whisper-large-v3-turbo
     models: [
       { id: 'groq/compound', name: 'Groq Compound', contextK: 128, flagship: true },
       { id: 'groq/compound-mini', name: 'Groq Compound Mini', contextK: 128, fast: true },
