@@ -120,7 +120,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=${binary} ${path.join(__dirname, '../../dist/cli/run-main.js')} gateway start
+ExecStart=${binary} ${path.join(__dirname, 'run-main.js')} gateway start
 Restart=on-failure
 RestartSec=5
 Environment=PORT=${cfg.port}
@@ -152,7 +152,7 @@ WantedBy=default.target
   <key>Label</key><string>ai.hyperclaw.gateway</string>
   <key>ProgramArguments</key><array>
     <string>${binary}</string>
-    <string>${path.join(__dirname, '../../dist/cli/run-main.js')}</string>
+    <string>${path.join(__dirname, 'run-main.js')}</string>
     <string>gateway</string><string>start</string>
   </array>
   <key>RunAtLoad</key><true/>

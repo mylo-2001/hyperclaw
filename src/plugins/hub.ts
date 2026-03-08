@@ -196,7 +196,7 @@ export class SkillHub {
     const skillPath = path.join(destDir, 'SKILL.md');
     // Prefer copying from repo skills/ if exists
     const repoSkillPath = path.join(process.cwd(), 'skills', skill.id, 'SKILL.md');
-    const altRepoPath = path.join(__dirname, '..', '..', 'skills', skill.id, 'SKILL.md');
+    const altRepoPath = path.join(__dirname, '..', 'skills', skill.id, 'SKILL.md');
     if (await fs.pathExists(repoSkillPath)) {
       await fs.copy(repoSkillPath, skillPath);
     } else if (await fs.pathExists(altRepoPath)) {

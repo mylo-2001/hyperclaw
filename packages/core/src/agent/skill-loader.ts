@@ -8,7 +8,8 @@ import path from 'path';
 import os from 'os';
 
 const HC_DIR = path.join(os.homedir(), '.hyperclaw');
-const BUNDLED_SKILLS = path.join(__dirname, '..', '..', '..', '..', 'skills');
+// One level up from dist/ — works for both local dev and global npm install
+const BUNDLED_SKILLS = path.join(__dirname, '..', 'skills');
 const WORKSPACE_SKILLS = path.join(HC_DIR, 'workspace', 'skills');
 
 /** Max size for a single SKILL.md (chars). */

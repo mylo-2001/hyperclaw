@@ -244,9 +244,7 @@ WantedBy=default.target
     const home = os.homedir();
     const nodePath = process.execPath; // e.g. C:\Program Files\nodejs\node.exe
     // Resolve the main script — works both from source (ts-node) and after npm install (dist/)
-    const fromDist = path.resolve(__dirname, '../../dist/cli/run-main.js');
-    const fromSrc  = path.resolve(__dirname, '../cli/run-main.js');
-    const mainScript = require('fs').existsSync(fromDist) ? fromDist : fromSrc;
+    const mainScript = path.resolve(__dirname, 'run-main.js');
 
     const logDir     = path.join(home, '.hyperclaw', 'logs');
     const logFile    = path.join(logDir, 'gateway.log');

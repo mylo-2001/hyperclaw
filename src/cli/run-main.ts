@@ -1935,7 +1935,7 @@ function checkForUpdate(): void {
   const { readFileSync } = require('fs');
   const path = require('path');
   try {
-    const pkgPath = path.resolve(__dirname, '../../package.json');
+    const pkgPath = path.resolve(__dirname, '../package.json');
     const current: string = JSON.parse(readFileSync(pkgPath, 'utf8')).version;
     execFile('npm', ['view', 'hyperclaw', 'version', '--json'], { timeout: 5000 },
       (_err: unknown, stdout: string) => {
@@ -1996,7 +1996,7 @@ async function runUpdateCheck(): Promise<void> {
     const { checkForUpdates, notifyUpdateAvailable } = await import('../infra/update-check');
     const path = require('path');
     const { readFileSync } = require('fs');
-    const pkgPath = path.resolve(__dirname, '../../package.json');
+    const pkgPath = path.resolve(__dirname, '../package.json');
     const current: string = JSON.parse(readFileSync(pkgPath, 'utf8')).version;
     const result = await checkForUpdates(current);
     if (result?.available) notifyUpdateAvailable(current, result.latest);

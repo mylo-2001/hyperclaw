@@ -70,7 +70,7 @@ export function maybeShowUpdateNotice(skipInDaemon = false): void {
   if (skipInDaemon) return;
   (async () => {
     try {
-      const pkgPath = path.join(__dirname, '../../package.json');
+      const pkgPath = path.join(__dirname, '../package.json');
       const pkg = await fs.readJson(pkgPath).catch(() => null);
       const current = pkg?.version ?? '0.0.0';
       const result = await checkForUpdates(current);

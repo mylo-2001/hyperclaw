@@ -25,7 +25,7 @@ export class DaemonManager {
     }
     await fs.ensureDir(getHyperClawDir());
     const logFd = await fs.open(getLOG_FILE(), 'a');
-    const mainScript = path.resolve(__dirname, '../../dist/cli/run-main.js');
+    const mainScript = path.resolve(__dirname, 'run-main.js');
     const child = spawn(process.execPath, [mainScript, 'gateway', 'start-inner'], {
       detached: true,
       windowsHide: true, // native Windows: no console window flash

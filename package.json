@@ -10,6 +10,7 @@
     "bin/",
     "dist/",
     "scripts/",
+    "skills/",
     "README.md",
     "LICENSE"
   ],
