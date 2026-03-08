@@ -347,7 +347,7 @@ export class GatewayServer {
 
     if (url === '/api/v1/check') {
       res.writeHead(200);
-      res.end(JSON.stringify({ ok: true, service: 'hyperclaw', version: '5.2.2' }));
+      res.end(JSON.stringify({ ok: true, service: 'hyperclaw', version: '5.2.3' }));
       return;
     }
 
@@ -675,14 +675,17 @@ export class GatewayServer {
     }
     if (url === '/chat' || url === '/chat/') {
       res.setHeader('Content-Type', 'text/html');
-      const fp = path.join(process.cwd(), 'static', 'chat.html');
+      // Look for static/ relative to the package root (one level up from dist/)
+      const staticDir = path.resolve(__dirname, '..', 'static');
+      const fp = path.join(staticDir, 'chat.html');
       if (fs.pathExistsSync(fp)) res.end(fs.readFileSync(fp, 'utf8'));
-      else res.end('<!DOCTYPE html><html><body><p>Chat UI: <a href="/">apps/web</a></p></body></html>');
+      else res.end('<!DOCTYPE html><html><body><p>Chat UI not found. Run from package root or reinstall hyperclaw.</p></body></html>');
       return;
     }
     if (url === '/dashboard' || url === '/dashboard/') {
       res.setHeader('Content-Type', 'text/html');
-      const fp = path.join(process.cwd(), 'static', 'dashboard.html');
+      const staticDir = path.resolve(__dirname, '..', 'static');
+      const fp = path.join(staticDir, 'dashboard.html');
       if (fs.pathExistsSync(fp)) res.end(fs.readFileSync(fp, 'utf8'));
       else res.end('<!DOCTYPE html><html><body><p>Dashboard: <a href="/api/status">status</a></p></body></html>');
       return;
@@ -768,7 +771,7 @@ export class GatewayServer {
     if (authToken && !session.authenticated) {
       this.send(session, { type: 'connect.challenge', sessionId: id });
     } else {
-      this.send(session, { type: 'connect.ok', sessionId: id, version: '5.2.2', heartbeatInterval: 30000 });
+      this.send(session, { type: 'connect.ok', sessionId: id, version: '5.2.3', heartbeatInterval: 30000 });
       if (this.config.hooks && this.config.deps.createHookLoader) {
         this.config.deps.createHookLoader().execute('session:start', { sessionId: id }).catch(() => {});
       }
