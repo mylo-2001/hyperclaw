@@ -1808,6 +1808,20 @@ export class HyperClawWizard {
     }
 
     this.showSuccessScreen(data);
+
+    // Offer to launch chat immediately after setup
+    const { launchChat } = await inquirer.prompt([{
+      type: 'confirm',
+      name: 'launchChat',
+      message: chalk.cyan('Launch HyperClaw Chat now?'),
+      default: true,
+    }]);
+
+    if (launchChat) {
+      console.log(chalk.gray('\n  Starting chat...\n'));
+      const { runChat } = await import('./chat');
+      await runChat({});
+    }
   }
 
   private async setupIntegrations(): Promise<void> {
