@@ -35,9 +35,14 @@ export const PROVIDERS: Provider[] = [
     authLabel: 'Anthropic API Key',
     authHint: 'console.anthropic.com → API Keys',
     models: [
-      { id: 'claude-opus-4-5', name: 'Claude Opus 4.5', contextK: 200, reasoning: true, flagship: true },
-      { id: 'claude-sonnet-4-5', name: 'Claude Sonnet 4.5', contextK: 200, reasoning: true },
-      { id: 'claude-haiku-4-5', name: 'Claude Haiku 4.5', contextK: 200, fast: true },
+      { id: 'claude-opus-4-6', name: 'Claude Opus 4.6', contextK: 200, reasoning: true, flagship: true },
+      { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6', contextK: 200, reasoning: true },
+      { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', contextK: 200, fast: true },
+      { id: 'claude-opus-4-1-20250805', name: 'Claude Opus 4.1', contextK: 200, reasoning: true },
+      { id: 'claude-opus-4-20250514', name: 'Claude Opus 4', contextK: 200 },
+      { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', contextK: 200 },
+      { id: 'claude-3-7-sonnet-20250219', name: 'Claude 3.7 Sonnet', contextK: 200, reasoning: true },
+      { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', contextK: 200, fast: true },
     ]
   },
   {
@@ -47,8 +52,8 @@ export const PROVIDERS: Provider[] = [
     authLabel: 'Claude OAuth credentials',
     authHint: 'Reuses ~/.claude/.credentials.json (Claude Code CLI) or macOS Keychain "Claude Code-credentials"',
     models: [
-      { id: 'claude-opus-4-5', name: 'Claude Opus 4.5', contextK: 200, reasoning: true, flagship: true },
-      { id: 'claude-sonnet-4-5', name: 'Claude Sonnet 4.5', contextK: 200, reasoning: true },
+      { id: 'claude-opus-4-6', name: 'Claude Opus 4.6', contextK: 200, reasoning: true, flagship: true },
+      { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6', contextK: 200, reasoning: true },
     ]
   },
   {
@@ -58,8 +63,8 @@ export const PROVIDERS: Provider[] = [
     authLabel: 'Anthropic setup-token',
     authHint: 'Run `claude setup-token` on any machine → paste the token here',
     models: [
-      { id: 'claude-opus-4-5', name: 'Claude Opus 4.5', contextK: 200, reasoning: true, flagship: true },
-      { id: 'claude-sonnet-4-5', name: 'Claude Sonnet 4.5', contextK: 200, reasoning: true },
+      { id: 'claude-opus-4-6', name: 'Claude Opus 4.6', contextK: 200, reasoning: true, flagship: true },
+      { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6', contextK: 200, reasoning: true },
     ]
   },
   {
@@ -96,13 +101,15 @@ export const PROVIDERS: Provider[] = [
     supportsTranscription: true,  // routes to OpenAI/Google
     models: [
       { id: 'openrouter/auto', name: 'Auto (best available)', contextK: 200, flagship: true },
-      { id: 'anthropic/claude-opus-4.6', name: 'Claude Opus 4.6 (via OR)', contextK: 200, reasoning: true },
-      { id: 'anthropic/claude-sonnet-4.5', name: 'Claude Sonnet 4.5 (via OR)', contextK: 200 },
+      { id: 'anthropic/claude-opus-4-6', name: 'Claude Opus 4.6', contextK: 200, reasoning: true },
+      { id: 'anthropic/claude-sonnet-4-6', name: 'Claude Sonnet 4.6', contextK: 200 },
+      { id: 'openai/gpt-4.1', name: 'GPT-4.1', contextK: 1000, vision: true },
       { id: 'openai/gpt-4o', name: 'GPT-4o', contextK: 128, vision: true },
+      { id: 'openai/o4-mini', name: 'o4-mini (reasoning)', contextK: 200, reasoning: true, fast: true },
       { id: 'openai/o3', name: 'o3 (reasoning)', contextK: 200, reasoning: true },
+      { id: 'google/gemini-2.5-pro-preview-03-25', name: 'Gemini 2.5 Pro', contextK: 1000, reasoning: true },
       { id: 'google/gemini-2.0-flash', name: 'Gemini 2.0 Flash', contextK: 1000, fast: true },
-      { id: 'google/gemini-2.5-pro', name: 'Gemini 2.5 Pro', contextK: 1000, reasoning: true },
-      { id: 'x-ai/grok-3', name: 'Grok 3', contextK: 131, reasoning: true },
+      { id: 'x-ai/grok-3-beta', name: 'Grok 3', contextK: 131, reasoning: true },
       { id: 'deepseek/deepseek-r1', name: 'DeepSeek R1', contextK: 64, reasoning: true },
       { id: 'meta-llama/llama-3.3-70b-instruct', name: 'Llama 3.3 70B', contextK: 128 },
       { id: 'qwen/qwen-2.5-72b-instruct', name: 'Qwen 2.5 72B', contextK: 128 },
@@ -118,10 +125,29 @@ export const PROVIDERS: Provider[] = [
     baseUrl: 'https://api.openai.com/v1',
     supportsTranscription: true,  // Whisper API
     models: [
-      { id: 'gpt-4o', name: 'GPT-4o', contextK: 128, vision: true, flagship: true },
+      // GPT-5 series
+      { id: 'gpt-5.2', name: 'GPT-5.2', contextK: 1000, vision: true, flagship: true },
+      { id: 'gpt-5.1', name: 'GPT-5.1', contextK: 1000, vision: true },
+      { id: 'gpt-5', name: 'GPT-5', contextK: 1000, vision: true },
+      // GPT-4 series
+      { id: 'gpt-4.1', name: 'GPT-4.1', contextK: 1000, vision: true },
+      { id: 'gpt-4.1-mini', name: 'GPT-4.1 Mini', contextK: 1000, fast: true },
+      { id: 'gpt-4.1-nano', name: 'GPT-4.1 Nano', contextK: 1000, fast: true },
+      { id: 'gpt-4o', name: 'GPT-4o', contextK: 128, vision: true },
       { id: 'gpt-4o-mini', name: 'GPT-4o Mini', contextK: 128, fast: true },
-      { id: 'o3', name: 'o3 (reasoning)', contextK: 200, reasoning: true },
+      // Reasoning
       { id: 'o4-mini', name: 'o4-mini (reasoning)', contextK: 200, reasoning: true, fast: true },
+      { id: 'o3', name: 'o3 (reasoning)', contextK: 200, reasoning: true },
+      { id: 'o3-mini', name: 'o3-mini (reasoning)', contextK: 200, reasoning: true, fast: true },
+      { id: 'o1', name: 'o1 (reasoning)', contextK: 200, reasoning: true },
+      { id: 'o1-mini', name: 'o1-mini (reasoning)', contextK: 128, reasoning: true, fast: true },
+      // Codex
+      { id: 'gpt-5.3-codex', name: 'GPT-5.3 Codex (code)', contextK: 1000 },
+      { id: 'gpt-5.2-codex', name: 'GPT-5.2 Codex (code)', contextK: 1000 },
+      { id: 'gpt-5.1-codex', name: 'GPT-5.1 Codex (code)', contextK: 1000 },
+      { id: 'gpt-5.1-codex-max', name: 'GPT-5.1 Codex Max (code)', contextK: 1000 },
+      { id: 'gpt-5.1-codex-mini', name: 'GPT-5.1 Codex Mini (code)', contextK: 1000, fast: true },
+      { id: 'gpt-5-codex', name: 'GPT-5 Codex (code)', contextK: 1000 },
     ]
   },
   {
@@ -133,9 +159,15 @@ export const PROVIDERS: Provider[] = [
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
     supportsTranscription: true,  // Gemini multimodal audio
     models: [
-      { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', contextK: 1000, reasoning: true, flagship: true },
-      { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', contextK: 1000, fast: true },
-      { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', contextK: 2000 },
+      { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro (preview)', contextK: 1000, reasoning: true, flagship: true },
+      { id: 'gemini-3-pro-image-preview', name: 'Gemini 3 Pro Image (preview)', contextK: 1000, vision: true },
+      { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash (preview)', contextK: 1000, fast: true },
+      { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', contextK: 1000, reasoning: true },
+      { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', contextK: 1000, fast: true },
+      { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash Lite (free)', contextK: 1000, fast: true },
+      { id: 'gemini-2.5-pro-preview-tts', name: 'Gemini 2.5 Pro TTS (audio)', contextK: 1000 },
+      { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash (free)', contextK: 1000, fast: true },
+      { id: 'gemini-2.0-flash-lite', name: 'Gemini 2.0 Flash Lite (free)', contextK: 1000, fast: true },
     ]
   },
   {
@@ -146,8 +178,11 @@ export const PROVIDERS: Provider[] = [
     authHint: 'console.x.ai',
     baseUrl: 'https://api.x.ai/v1',
     models: [
-      { id: 'grok-3', name: 'Grok 3', contextK: 131, reasoning: true, flagship: true },
-      { id: 'grok-3-mini', name: 'Grok 3 Mini', contextK: 131, fast: true },
+      { id: 'grok-4', name: 'Grok 4', contextK: 256, reasoning: true, flagship: true },
+      { id: 'grok-4-1-fast-reasoning', name: 'Grok 4.1 Fast (reasoning)', contextK: 256, reasoning: true, fast: true },
+      { id: 'grok-3', name: 'Grok 3', contextK: 131, reasoning: true },
+      { id: 'grok-3-fast', name: 'Grok 3 Fast', contextK: 131, fast: true },
+      { id: 'grok-imagine-image', name: 'Grok Imagine (image gen)', contextK: 1 },
     ]
   },
   {
@@ -155,11 +190,14 @@ export const PROVIDERS: Provider[] = [
     displayName: '🎯 MiniMax',
     authType: 'api_key',
     authLabel: 'MiniMax API Key',
-    authHint: 'platform.minimaxi.com',
-    baseUrl: 'https://api.minimaxi.chat/v1',
+    authHint: 'platform.minimax.io (international) or minimaxi.com (CN)',
+    baseUrl: 'https://api.minimax.io/v1',
     models: [
-      { id: 'MiniMax-Text-01', name: 'MiniMax Text-01', contextK: 1000, flagship: true },
-      { id: 'abab6.5s-chat', name: 'ABAB 6.5S', contextK: 245 },
+      { id: 'MiniMax-M2.5', name: 'MiniMax M2.5', contextK: 1000, flagship: true },
+      { id: 'MiniMax-M2.5-highspeed', name: 'MiniMax M2.5 Highspeed', contextK: 1000, fast: true },
+      { id: 'MiniMax-M2.1', name: 'MiniMax M2.1', contextK: 1000 },
+      { id: 'MiniMax-M2.1-highspeed', name: 'MiniMax M2.1 Highspeed', contextK: 1000, fast: true },
+      { id: 'MiniMax-M2', name: 'MiniMax M2', contextK: 1000 },
     ]
   },
   {
@@ -170,7 +208,14 @@ export const PROVIDERS: Provider[] = [
     authHint: 'platform.moonshot.cn',
     baseUrl: 'https://api.moonshot.cn/v1',
     models: [
-      { id: 'moonshot-v1-128k', name: 'Moonshot v1 128K', contextK: 128, flagship: true },
+      { id: 'kimi-k2-thinking', name: 'Kimi K2 Thinking (reasoning)', contextK: 128, reasoning: true, flagship: true },
+      { id: 'kimi-k2-thinking-turbo', name: 'Kimi K2 Thinking Turbo', contextK: 128, reasoning: true, fast: true },
+      { id: 'kimi-k2-0905-preview', name: 'Kimi K2 (Sep 2025 preview)', contextK: 128 },
+      { id: 'kimi-k2-0711-preview', name: 'Kimi K2 (Jul 2025 preview)', contextK: 128 },
+      { id: 'kimi-k2-turbo-preview', name: 'Kimi K2 Turbo (preview)', contextK: 128, fast: true },
+      { id: 'kimi-latest', name: 'Kimi Latest', contextK: 128 },
+      { id: 'moonshot-v1-128k', name: 'Moonshot v1 128K', contextK: 128 },
+      { id: 'moonshot-v1-32k', name: 'Moonshot v1 32K', contextK: 32, fast: true },
       { id: 'moonshot-v1-8k', name: 'Moonshot v1 8K', contextK: 8, fast: true },
     ]
   },
@@ -179,24 +224,41 @@ export const PROVIDERS: Provider[] = [
     displayName: '🐉 Qwen (Alibaba)',
     authType: 'api_key',
     authLabel: 'DashScope API Key',
-    authHint: 'dashscope.aliyuncs.com',
+    authHint: 'dashscope-intl.aliyuncs.com (international)',
     baseUrl: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
     models: [
-      { id: 'qwen-max', name: 'Qwen Max', contextK: 32, flagship: true },
-      { id: 'qwen-plus', name: 'Qwen Plus', contextK: 128 },
-      { id: 'qwen-turbo', name: 'Qwen Turbo', contextK: 128, fast: true },
-      { id: 'qwen3-235b-a22b', name: 'Qwen3 235B', contextK: 32, reasoning: true },
+      { id: 'qwen3-max', name: 'Qwen3 Max', contextK: 128, flagship: true, reasoning: true },
+      { id: 'qwen3-235b-a22b-thinking', name: 'Qwen3 235B Thinking', contextK: 128, reasoning: true },
+      { id: 'qwen3-235b-a22b-instruct', name: 'Qwen3 235B Instruct', contextK: 128 },
+      { id: 'qwen-max-latest', name: 'Qwen Max (latest)', contextK: 32 },
+      { id: 'qwen-plus-latest', name: 'Qwen Plus (latest)', contextK: 128 },
+      { id: 'qwen-turbo-latest', name: 'Qwen Turbo (latest)', contextK: 128, fast: true },
+      { id: 'qwen3-coder-plus', name: 'Qwen3 Coder Plus (code)', contextK: 128 },
+      { id: 'qwen3-coder-flash', name: 'Qwen3 Coder Flash (code)', contextK: 128, fast: true },
+      { id: 'qwen3-vl-plus', name: 'Qwen3 VL Plus (vision)', contextK: 128, vision: true },
+      { id: 'qwen3-vl-flash', name: 'Qwen3 VL Flash (vision)', contextK: 128, vision: true, fast: true },
+      { id: 'qwen2.5-72b-instruct', name: 'Qwen2.5 72B Instruct', contextK: 128 },
     ]
   },
   {
     id: 'zai',
-    displayName: '🔧 Z.AI',
+    displayName: '🔧 Z.AI (Zhipu GLM)',
     authType: 'api_key',
     authLabel: 'Z.AI API Key',
-    authHint: 'z.ai',
+    authHint: 'api.z.ai',
+    baseUrl: 'https://api.z.ai/api/paas/v4',
     models: [
-      { id: 'glm-4-plus', name: 'GLM-4 Plus', contextK: 128, flagship: true },
-      { id: 'glm-4-flash', name: 'GLM-4 Flash', contextK: 128, fast: true },
+      { id: 'glm-5', name: 'GLM-5', contextK: 128, flagship: true },
+      { id: 'glm-4.7', name: 'GLM-4.7', contextK: 128 },
+      { id: 'glm-4.7-flash', name: 'GLM-4.7 Flash', contextK: 128, fast: true },
+      { id: 'glm-4.7-flashx', name: 'GLM-4.7 FlashX', contextK: 128, fast: true },
+      { id: 'glm-4.6', name: 'GLM-4.6', contextK: 128 },
+      { id: 'glm-4.5', name: 'GLM-4.5', contextK: 128 },
+      { id: 'glm-4.5-air', name: 'GLM-4.5 Air', contextK: 128 },
+      { id: 'glm-4.5-x', name: 'GLM-4.5 X', contextK: 128 },
+      { id: 'glm-4.5-airx', name: 'GLM-4.5 AirX', contextK: 128 },
+      { id: 'glm-4.5-flash', name: 'GLM-4.5 Flash', contextK: 128, fast: true },
+      { id: 'glm-4-32b-0414-128k', name: 'GLM-4 32B 128K', contextK: 128 },
     ]
   },
   {
@@ -237,11 +299,17 @@ export const PROVIDERS: Provider[] = [
     authLabel: 'Groq API Key',
     authHint: 'console.groq.com/keys',
     baseUrl: 'https://api.groq.com/openai/v1',
+    supportsTranscription: true,  // Whisper models
     models: [
-      { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile', contextK: 128, flagship: true },
+      { id: 'groq/compound', name: 'Groq Compound', contextK: 128, flagship: true },
+      { id: 'groq/compound-mini', name: 'Groq Compound Mini', contextK: 128, fast: true },
+      { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile', contextK: 128 },
       { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B Instant', contextK: 128, fast: true },
-      { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B', contextK: 32 },
-      { id: 'gemma2-9b-it', name: 'Gemma 2 9B', contextK: 8, fast: true },
+      { id: 'meta-llama/llama-4-scout-17b-16e-instruct', name: 'Llama 4 Scout 17B', contextK: 128 },
+      { id: 'openai/gpt-oss-120b', name: 'GPT OSS 120B (via Groq)', contextK: 128 },
+      { id: 'openai/gpt-oss-20b', name: 'GPT OSS 20B (via Groq)', contextK: 128, fast: true },
+      { id: 'qwen/qwen3-32b', name: 'Qwen3 32B (via Groq)', contextK: 128, reasoning: true },
+      { id: 'moonshotai/kimi-k2-instruct-0905', name: 'Kimi K2 (via Groq)', contextK: 128 },
     ]
   },
   {
@@ -252,9 +320,10 @@ export const PROVIDERS: Provider[] = [
     authHint: 'console.mistral.ai/api-keys',
     baseUrl: 'https://api.mistral.ai/v1',
     models: [
-      { id: 'mistral-large-latest', name: 'Mistral Large', contextK: 128, flagship: true },
-      { id: 'mistral-medium-latest', name: 'Mistral Medium', contextK: 128 },
-      { id: 'mistral-small-latest', name: 'Mistral Small', contextK: 128, fast: true },
+      { id: 'mistral-large-2512', name: 'Mistral Large (Dec 2025)', contextK: 128, flagship: true },
+      { id: 'magistral-medium-2507', name: 'Magistral Medium (reasoning)', contextK: 128, reasoning: true },
+      { id: 'magistral-small-2507', name: 'Magistral Small (reasoning)', contextK: 128, reasoning: true, fast: true },
+      { id: 'mistral-small-2506', name: 'Mistral Small (Jun 2025)', contextK: 128, fast: true },
       { id: 'codestral-latest', name: 'Codestral (code)', contextK: 256 },
     ]
   },
@@ -278,9 +347,22 @@ export const PROVIDERS: Provider[] = [
     authHint: 'perplexity.ai/settings/api',
     baseUrl: 'https://api.perplexity.ai',
     models: [
-      { id: 'sonar-pro', name: 'Sonar Pro (search)', contextK: 200, flagship: true },
+      { id: 'sonar-deep-research', name: 'Sonar Deep Research', contextK: 128, reasoning: true, flagship: true },
+      { id: 'sonar-reasoning-pro', name: 'Sonar Reasoning Pro', contextK: 128, reasoning: true },
+      { id: 'sonar-pro', name: 'Sonar Pro (search)', contextK: 200 },
       { id: 'sonar', name: 'Sonar (search, fast)', contextK: 128, fast: true },
-      { id: 'sonar-reasoning', name: 'Sonar Reasoning', contextK: 128, reasoning: true },
+    ]
+  },
+  {
+    id: 'cohere',
+    displayName: '🧬 Cohere',
+    authType: 'api_key',
+    authLabel: 'Cohere API Key',
+    authHint: 'dashboard.cohere.com/api-keys',
+    baseUrl: 'https://api.cohere.com/compatibility/v1',
+    models: [
+      { id: 'command-a-03-2025', name: 'Command A (Mar 2025)', contextK: 256, flagship: true },
+      { id: 'command-a-vision-07-2025', name: 'Command A Vision (Jul 2025)', contextK: 256, vision: true },
     ]
   },
   {
@@ -289,11 +371,21 @@ export const PROVIDERS: Provider[] = [
     authType: 'api_key',
     authLabel: 'HuggingFace API Token',
     authHint: 'huggingface.co/settings/tokens',
-    baseUrl: 'https://api-inference.huggingface.co/v1',
+    baseUrl: 'https://router.huggingface.co/v1',
     models: [
-      { id: 'Qwen/Qwen2.5-72B-Instruct', name: 'Qwen 2.5 72B', contextK: 128, flagship: true },
+      // Qwen series
+      { id: 'Qwen/Qwen3-Coder-480B-A35B-Instruct', name: 'Qwen3 Coder 480B (code)', contextK: 128, flagship: true },
+      { id: 'Qwen/Qwen2.5-72B-Instruct', name: 'Qwen 2.5 72B', contextK: 128 },
+      // Llama
       { id: 'meta-llama/Llama-3.3-70B-Instruct', name: 'Llama 3.3 70B', contextK: 128 },
+      // Mistral
       { id: 'mistralai/Mistral-7B-Instruct-v0.3', name: 'Mistral 7B', contextK: 32, fast: true },
+      // Other notable models
+      { id: 'zai-org/GLM-4.5', name: 'GLM-4.5', contextK: 128 },
+      { id: 'openai/gpt-oss-120b', name: 'GPT-OSS 120B', contextK: 128 },
+      // Manual entry — use full repo ID (e.g. "org/model-name")
+      // Optional suffixes: :hf-inference :groq :cerebras :fastest :cheapest
+      { id: '__manual__', name: 'Enter full repo ID (e.g. org/model-name)', contextK: 128 },
     ]
   },
   {
