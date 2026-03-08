@@ -179,7 +179,7 @@ export class HyperClawWizard {
     const webSearch = await this.configureWebSearch(options.skipSearch);
     const memoryIntegration = await this.configureMemoryIntegration();
     const serviceApiKeys = await this.configureServiceApiKeys();
-    const hyperclawbotConfig = await this.configureHyperClawBot(gatewayConfig);
+    const hyperclawbotConfig = await this.configureHyperClawBot(gatewayConfig, channelConfigs);
     const talkModeConfig = await this.configureTalkMode();
     const pcAccess = await this.configurePcAccess();
     const updateChannel = await this.configureUpdateChannel();
@@ -279,7 +279,7 @@ export class HyperClawWizard {
     const webSearch = await this.configureWebSearch(options.skipSearch);
     const memoryIntegration = await this.configureMemoryIntegration();
     const serviceApiKeys = await this.configureServiceApiKeys();
-    const hyperclawbotConfig = await this.configureHyperClawBot(gatewayConfig);
+    const hyperclawbotConfig = await this.configureHyperClawBot(gatewayConfig, channelConfigs);
     const talkModeConfig = await this.configureTalkMode();
     const pcAccess = await this.configurePcAccess();
     const updateChannel = await this.configureUpdateChannel();
@@ -806,7 +806,7 @@ export class HyperClawWizard {
     return apiKeys;
   }
 
-  private async configureHyperClawBot(gatewayConfig: GatewayConfig | null): Promise<{ token?: string; allowedUsers?: string[] } | undefined> {
+  private async configureHyperClawBot(gatewayConfig: GatewayConfig | null, existingChannelConfigs?: Record<string, any>): Promise<{ token?: string; allowedUsers?: string[] } | undefined> {
     console.log(chalk.hex('#06b6d4')('\n  ?? HyperClaw Bot � Remote control via Telegram\n'));
     const trans = getTranscriptionProviders();
     if (trans.length > 0) {
@@ -823,12 +823,37 @@ export class HyperClawWizard {
 
     if (!wantHyperClawBot) return undefined;
 
-    const { token } = await inquirer.prompt([{
-      type: 'input',
-      name: 'token',
-      message: 'Telegram Bot token (from @BotFather):',
-      validate: (v: string) => v.trim().length > 10 || 'Required'
-    }]);
+    // Reuse existing Telegram token if already configured in channels step
+    const existingTelegramToken: string | undefined = existingChannelConfigs?.['telegram']?.token;
+    let token: string;
+    if (existingTelegramToken) {
+      const { reuseToken } = await inquirer.prompt([{
+        type: 'confirm',
+        name: 'reuseToken',
+        message: 'Use the same Telegram bot you already configured above?',
+        default: true
+      }]);
+      if (reuseToken) {
+        token = existingTelegramToken;
+        console.log(chalk.green('  ?  Reusing existing Telegram bot token\n'));
+      } else {
+        const r = await inquirer.prompt([{
+          type: 'input',
+          name: 'token',
+          message: 'Telegram Bot token (from @BotFather):',
+          validate: (v: string) => v.trim().length > 10 || 'Required'
+        }]);
+        token = r.token.trim();
+      }
+    } else {
+      const r = await inquirer.prompt([{
+        type: 'input',
+        name: 'token',
+        message: 'Telegram Bot token (from @BotFather):',
+        validate: (v: string) => v.trim().length > 10 || 'Required'
+      }]);
+      token = r.token.trim();
+    }
     const { userIds } = await inquirer.prompt([{
       type: 'input',
       name: 'userIds',
