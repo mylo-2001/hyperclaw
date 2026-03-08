@@ -41,7 +41,7 @@ export class Dashboard {
     };
 
     console.log(c(`-${line}�`));
-    console.log(c(`�`) + chalk.bold.hex('#06b6d4')(`${'?? HYPERCLAW v5.0.7 � GATEWAY DASHBOARD'.padStart(45).padEnd(w)}`) + c(`�`));
+    console.log(c(`�`) + chalk.bold.hex('#06b6d4')(`${'?? HYPERCLAW v5.1.0 � GATEWAY DASHBOARD'.padStart(45).padEnd(w)}`) + c(`�`));
     console.log(c(`�${line}�`));
     console.log(row(`${statusDot} Gateway  ${statusText}   ${chalk.gray('�')}  ws://localhost:${port}   ${chalk.gray('�')}  Agent: ${c(agent)}`));
     console.log(row(`${c('?')} Model     ${chalk.gray(model.slice(0, 30))}   ${chalk.gray('�')}  User: ${c(user)}`));

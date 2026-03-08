@@ -25,14 +25,16 @@ for (const file of readdirSync(distDir)) {
   // a require_paths = require('./paths-*.js') AND a bare init_paths() call
   if (!content.includes('init_paths();') || !content.includes('require_paths')) continue;
 
-  // Find the require_paths variable name (may vary across chunks)
-  const requireMatch = content.match(/const (\w+) = require\('\.\/paths-[^']+\.js'\)/);
-  if (!requireMatch) continue;
+  // Find ALL require_paths variable names — use the LAST one, which is the
+  // @hyperclaw/shared chunk containing init_paths (earlier matches may be utility paths).
+  const requireMatches = [...content.matchAll(/const (\w+) = require\('\.\/paths-[^']+\.js'\)/g)];
+  if (!requireMatches.length) continue;
 
-  const requireVar = requireMatch[1];
+  const requireVar = requireMatches[requireMatches.length - 1][1];
 
-  // Replace bare init_paths() with requireVar.init_paths() inside __esm closures
-  const patched = content.replace(/\binit_paths\(\);/g, `${requireVar}.init_paths();`);
+  // Replace bare init_paths() — negative lookbehind prevents re-patching already-patched lines
+  // (e.g. "require_paths$1.init_paths()" must not become "require_paths$1.require_paths$1.init_paths()")
+  const patched = content.replace(/(?<![\w.])init_paths\(\);/g, `${requireVar}.init_paths();`);
 
   if (patched !== content) {
     writeFileSync(filePath, patched, 'utf8');

@@ -15,7 +15,7 @@ try {
   var bold  = function(s) { return '\x1b[1m'  + s + '\x1b[0m'; };
   var gray  = function(s) { return '\x1b[90m' + s + '\x1b[0m'; };
 
-  var version = '5.0.7';
+  var version = '5.1.0';
   try {
     var path = require('path');
     var fs   = require('fs');
