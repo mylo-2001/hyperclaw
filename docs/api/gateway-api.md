@@ -1,4 +1,4 @@
-# Gateway API � HyperClaw
+# Gateway API — HyperClaw
 
 REST and WebSocket API for the HyperClaw Gateway. Default port: `18789`.
 
