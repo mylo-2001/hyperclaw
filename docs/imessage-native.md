@@ -1,4 +1,13 @@
 # iMessage native (imsg CLI) — Legacy
+---
+
+<div align="center">
+
+[← BlueBubbles](bluebubbles.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Line →](line.md)
+
+</div>
+
+---
 
 > **For new iMessage deployments, use [BlueBubbles](bluebubbles.md) instead.**
 > The `imessage-native` integration is legacy and may be removed in a future release.
@@ -105,3 +114,12 @@ hyperclaw pairing approve imessage-native <CODE>
 
 **Pairing code expired**
 - Codes expire after 1 hour. Send a new message to receive a fresh code.
+
+---
+
+<div align="center">
+
+[← BlueBubbles](bluebubbles.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Line →](line.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

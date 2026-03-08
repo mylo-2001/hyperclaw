@@ -1,4 +1,13 @@
 # Telegram — HyperClaw
+---
+
+<div align="center">
+
+[← Sandboxing](sandboxing.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [WhatsApp →](whatsapp.md)
+
+</div>
+
+---
 
 Telegram is production-ready for bot DMs and groups. Long polling is the default; webhook mode is optional.
 
@@ -229,3 +238,12 @@ Config values win over env. `TELEGRAM_BOT_TOKEN` applies when `channels.telegram
 - [Pairing](security.md#pairing) — DM approval flow
 - [Configuration](configuration.md) — Full config reference
 - [Troubleshooting](troubleshooting.md) — Common issues
+
+---
+
+<div align="center">
+
+[← Sandboxing](sandboxing.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [WhatsApp →](whatsapp.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

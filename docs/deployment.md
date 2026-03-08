@@ -1,4 +1,13 @@
 # Deployment Guide
+---
+
+<div align="center">
+
+[← Browser Tool](browser.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Remote Access →](remote-access.md)
+
+</div>
+
+---
 
 ## Docker
 
@@ -58,3 +67,12 @@ See `render.yaml`. Connect the repo and deploy; configure env vars in the dashbo
 ## Data persistence
 
 Mount `~/.hyperclaw` (or `$HYPERCLAW_DIR`) for config, credentials, and channel state.
+
+---
+
+<div align="center">
+
+[← Browser Tool](browser.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Remote Access →](remote-access.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

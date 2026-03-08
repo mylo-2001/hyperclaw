@@ -1,4 +1,13 @@
 # OSINT / Ethical Hacking Mode
+---
+
+<div align="center">
+
+[← SkillHub](skillhub.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Voice →](voice.md)
+
+</div>
+
+---
 
 HyperClaw includes a dedicated OSINT mode that pre-configures the agent for security research, bug bounty hunting, and penetration testing.
 
@@ -169,3 +178,12 @@ This removes the system prompt override and OSINT target from your config.
 - [Security](security.md) — HyperClaw's own security model
 - [Sandboxing](sandboxing.md) — run tools in Docker containers
 - [Bounty tools](../packages/core/src/agent/bounty-tools.ts) — HackerOne/Bugcrowd/Synack API integration
+
+---
+
+<div align="center">
+
+[← SkillHub](skillhub.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Voice →](voice.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

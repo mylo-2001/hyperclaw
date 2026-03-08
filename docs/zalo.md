@@ -1,4 +1,13 @@
 # Zalo
+---
+
+<div align="center">
+
+[← Line](line.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Integrations →](integrations.md)
+
+</div>
+
+---
 
 **Status:** experimental. DMs are supported; group handling is available with explicit group policy controls.
 
@@ -201,3 +210,12 @@ hyperclaw message send --channel zalo --target 123456789 --message "hi"
 
 **Pairing code expired**
 - Codes expire after 1 hour. Send a new message to receive a fresh code.
+
+---
+
+<div align="center">
+
+[← Line](line.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Integrations →](integrations.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

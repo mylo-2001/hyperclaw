@@ -1,4 +1,13 @@
 # Troubleshooting
+---
+
+<div align="center">
+
+[← Managed Hosting](managed-hosting.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [FAQ →](faq.md)
+
+</div>
+
+---
 
 Start with the fast triage flow below, then go to the relevant section for deep runbook guidance.
 
@@ -355,3 +364,12 @@ High-priority findings to fix first:
 5. Plugins → only load what you explicitly trust
 
 See: [Security](./security.md)
+
+---
+
+<div align="center">
+
+[← Managed Hosting](managed-hosting.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [FAQ →](faq.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

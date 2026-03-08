@@ -1,4 +1,13 @@
 # Browser Control (Puppeteer)
+---
+
+<div align="center">
+
+[← Multi-Agent](multi-agent.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Deployment →](deployment.md)
+
+</div>
+
+---
 
 HyperClaw includes `browser_snapshot` and `browser_action` tools for web automation.
 
@@ -58,3 +67,12 @@ The image includes Chromium; set `PUPPETEER_EXECUTABLE_PATH` if using a custom b
 - Browser runs headless; no visible window.
 - Sandboxed with `--no-sandbox` only when required (e.g. Docker).
 - Use PC access config to limit which sessions can run browser tools.
+
+---
+
+<div align="center">
+
+[← Multi-Agent](multi-agent.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Deployment →](deployment.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

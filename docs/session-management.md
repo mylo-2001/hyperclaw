@@ -1,4 +1,13 @@
 # Session Management
+---
+
+<div align="center">
+
+[← Memory](memory-integration.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Multi-Agent →](multi-agent.md)
+
+</div>
+
+---
 
 HyperClaw treats one direct-chat session per agent as primary. Direct chats collapse to `agent:<agentId>:<mainKey>` (default `main`), while group/channel chats get their own keys.
 
@@ -270,3 +279,12 @@ hyperclaw sessions cleanup --dry-run  # preview maintenance
 - Keep the primary key dedicated to 1:1 traffic; let groups keep their own keys
 - When automating cleanup, delete individual keys instead of the whole store
 - For high-volume setups, use `mode: "enforce"` with both time and count limits
+
+---
+
+<div align="center">
+
+[← Memory](memory-integration.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Multi-Agent →](multi-agent.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

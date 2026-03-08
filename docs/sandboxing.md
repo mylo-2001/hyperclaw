@@ -1,4 +1,13 @@
 # Sandboxing
+---
+
+<div align="center">
+
+[← Security](security.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Telegram →](telegram.md)
+
+</div>
+
+---
 
 HyperClaw supports two complementary sandboxing approaches:
 
@@ -239,3 +248,12 @@ Run `hyperclaw security audit --fix` to auto-remediate safe findings.
 - [Security](./security.md) — full security model and audit guide
 - [Configuration](./configuration.md) — full config reference
 - [Deployment](./deployment.md) — Docker and production deployment
+
+---
+
+<div align="center">
+
+[← Security](security.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Telegram →](telegram.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

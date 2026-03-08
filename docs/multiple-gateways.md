@@ -1,4 +1,13 @@
 # Multiple Gateways
+---
+
+<div align="center">
+
+[← Tailscale](tailscale.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Managed Hosting →](managed-hosting.md)
+
+</div>
+
+---
 
 Most setups should use **one Gateway** because a single Gateway can handle multiple messaging connections and agents. If you need stronger isolation or redundancy (e.g., a rescue bot), run separate Gateways with isolated profiles/ports.
 
@@ -134,3 +143,12 @@ hyperclaw --profile rescue browser status
 
 - [Gateway Lock](./gateway-lock.md)
 - [Troubleshooting](./troubleshooting.md)
+
+---
+
+<div align="center">
+
+[← Tailscale](tailscale.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Managed Hosting →](managed-hosting.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

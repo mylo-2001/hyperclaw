@@ -1,4 +1,13 @@
 # Managed Cloud Hosting — HyperClaw
+---
+
+<div align="center">
+
+[← Multiple Gateways](multiple-gateways.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Troubleshooting →](troubleshooting.md)
+
+</div>
+
+---
 
 > Cloud deployment and developer API keys for embed-in-any-app.
 
@@ -74,3 +83,12 @@ Until managed SaaS is available:
 - **CLI + gateway** — `hyperclaw run` or `hyperclaw daemon start`
 - **Tailscale / Funnel** — Expose gateway securely
 - **Deployment** — [deployment.md](deployment.md)
+
+---
+
+<div align="center">
+
+[← Multiple Gateways](multiple-gateways.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Troubleshooting →](troubleshooting.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

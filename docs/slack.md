@@ -1,4 +1,13 @@
 # Slack
+---
+
+<div align="center">
+
+[← Discord](discord-setup.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Matrix →](matrix.md)
+
+</div>
+
+---
 
 **Status:** production-ready. DMs, channels, groups (MPIMs), threads, reactions, pairing, slash commands, ack/typing reactions, and native text streaming are supported.
 
@@ -335,3 +344,12 @@ Use `""` to disable for a specific account.
 | HTTP mode not receiving events | Webhook URL not set in Slack app / invalid `signingSecret` |
 | Slash commands not firing | `commands.native: true` not set, or slash command not registered in Slack |
 | Streaming errors | Agents and AI Apps not enabled / `assistant:write` scope missing |
+
+---
+
+<div align="center">
+
+[← Discord](discord-setup.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Matrix →](matrix.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

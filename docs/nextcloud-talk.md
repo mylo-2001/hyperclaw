@@ -1,4 +1,13 @@
 # Nextcloud Talk
+---
+
+<div align="center">
+
+[← Twitch](twitch.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [BlueBubbles →](bluebubbles.md)
+
+</div>
+
+---
 
 **Status:** supported via webhook bot. Direct messages, rooms, reactions, and markdown messages are supported.
 
@@ -156,3 +165,12 @@ To block all rooms: set `groupPolicy: "disabled"` or leave `rooms` empty.
 
 **Bot not installed on room**
 - Open the room → ⋯ → Bots → enable HyperClaw.
+
+---
+
+<div align="center">
+
+[← Twitch](twitch.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [BlueBubbles →](bluebubbles.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

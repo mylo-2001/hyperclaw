@@ -1,4 +1,13 @@
 # Contributing — HyperClaw
+---
+
+<div align="center">
+
+[← FAQ](faq.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; —
+
+</div>
+
+---
 
 ## CI Pipeline
 
@@ -72,3 +81,12 @@ A more advanced CI could add:
 - **code-analysis:** LOC threshold for PRs.
 
 Scope logic would live in `scripts/ci-changed-scope.mjs` and could be tested with `scripts/ci-changed-scope.test.ts`.
+
+---
+
+<div align="center">
+
+[← FAQ](faq.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; —
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

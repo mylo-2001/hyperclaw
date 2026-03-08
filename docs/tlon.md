@@ -1,4 +1,13 @@
 # Tlon (Urbit Groups) — HyperClaw Setup Guide
+---
+
+<div align="center">
+
+[← Google Chat](google-chat.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Nostr →](nostr.md)
+
+</div>
+
+---
 
 > **Status:** supported via plugin. DMs, group mentions, thread replies, rich text formatting, and image uploads are supported. Reactions supported via bundled skill. Polls not yet supported.
 
@@ -440,3 +449,12 @@ Urbit login codes expire or rotate. Get a new one from:
 - [Security](./security.md)
 - [Configuration](./configuration.md)
 - [Plugins](./plugin-registry-community.md)
+
+---
+
+<div align="center">
+
+[← Google Chat](google-chat.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Nostr →](nostr.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

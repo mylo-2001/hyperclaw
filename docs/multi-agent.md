@@ -1,4 +1,13 @@
 # Multi-Agent Sandbox & Tools
+---
+
+<div align="center">
+
+[← Sessions](session-management.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Browser Tool →](browser.md)
+
+</div>
+
+---
 
 Each agent in a multi-agent setup can have its own:
 
@@ -263,3 +272,12 @@ tail -f ~/.hyperclaw/logs/gateway.log | grep -E "routing|sandbox|tools"
 **Container not isolated per agent**
 - Set `scope: "agent"` in agent-specific sandbox config
 - Default `"session"` creates one container per session
+
+---
+
+<div align="center">
+
+[← Sessions](session-management.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Browser Tool →](browser.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

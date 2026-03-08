@@ -1,4 +1,13 @@
 # Memory Integration — Obsidian, Raycast, Hazel
+---
+
+<div align="center">
+
+[← Canvas (a2ui)](canvas-a2ui.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Sessions →](session-management.md)
+
+</div>
+
+---
 
 Sync HyperClaw MEMORY.md with an Obsidian vault, Raycast search, and Hazel.
 
@@ -38,3 +47,12 @@ During **onboard** (`hyperclaw onboard`), you are optionally asked for a vault p
 
 - Create a rule on `vaultDir` for `HyperClaw/*.md` files.
 - E.g. "Run script" when a new file is added — for sync, backup, etc.
+
+---
+
+<div align="center">
+
+[← Canvas (a2ui)](canvas-a2ui.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Sessions →](session-management.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

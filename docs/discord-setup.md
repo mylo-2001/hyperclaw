@@ -1,4 +1,13 @@
 # Discord — HyperClaw
+---
+
+<div align="center">
+
+[← WhatsApp](whatsapp.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Slack →](slack.md)
+
+</div>
+
+---
 
 Discord is ready for DMs and guild channels via the official Discord Gateway. Supports pairing, guild allowlist, and mention behavior.
 
@@ -232,4 +241,13 @@ Example for a private server:
 
 - [Pairing](security.md#pairing) — DM approval flow  
 - [Configuration](configuration.md) — Full config reference  
-- [Troubleshooting](troubleshooting.md) — Common issues  
+- [Troubleshooting](troubleshooting.md) — Common issues
+
+---
+
+<div align="center">
+
+[← WhatsApp](whatsapp.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Slack →](slack.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

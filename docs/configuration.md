@@ -1,4 +1,13 @@
 # Configuration — HyperClaw
+---
+
+<div align="center">
+
+[← Architecture](architecture.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Environment Variables →](environment.md)
+
+</div>
+
+---
 
 Full config reference. File: `~/.hyperclaw/hyperclaw.json`.
 
@@ -258,3 +267,12 @@ nix-env -i -f default.nix
 ```
 
 To compute `npmDepsHash`: run `./scripts/nix-update-hash.sh` (on Linux/macOS) or `nix build .# 2>&1` and replace the hash shown in the error.
+
+---
+
+<div align="center">
+
+[← Architecture](architecture.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Environment Variables →](environment.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

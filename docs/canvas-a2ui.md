@@ -1,4 +1,13 @@
 # Canvas + A2UI v0.8
+---
+
+<div align="center">
+
+[← Voice](voice.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Memory →](memory-integration.md)
+
+</div>
+
+---
 
 HyperClaw canvas exposes an A2UI v0.8-compatible API for AI-driven UI streaming.
 
@@ -14,3 +23,12 @@ A `beginRendering` message contains `surfaceId`, `surfaces` (flat list), `dataMo
 Types: `chart`, `table`, `form`, `markdown`, `image`, `custom`, `script`.
 
 Ref: https://a2ui.org/specification/v0.8-a2ui/
+
+---
+
+<div align="center">
+
+[← Voice](voice.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Memory →](memory-integration.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

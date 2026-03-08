@@ -1,4 +1,13 @@
 # Remote Access
+---
+
+<div align="center">
+
+[← Deployment](deployment.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Tailscale →](tailscale.md)
+
+</div>
+
+---
 
 HyperClaw supports “remote over SSH” by keeping a single Gateway (the master) on a dedicated host and connecting clients to it via SSH tunneling or Tailscale.
 
@@ -134,3 +143,12 @@ WebChat connects directly to the Gateway WebSocket. Forward port 18789 over SSH,
 - [Remote Gateway Setup](remote-gateway-setup.md) — Step-by-step SSH config
 - [Tailscale](tailscale.md) — Serve/Funnel for HTTPS and tailnet access
 - [macOS Remote Control](macos-remote-control.md) — App + tunnel flow
+
+---
+
+<div align="center">
+
+[← Deployment](deployment.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Tailscale →](tailscale.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

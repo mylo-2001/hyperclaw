@@ -1,4 +1,13 @@
 # LINE
+---
+
+<div align="center">
+
+[← iMessage](imessage-native.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Zalo →](zalo.md)
+
+</div>
+
+---
 
 LINE connects to HyperClaw via the LINE Messaging API. The plugin runs as a webhook receiver on the gateway and uses your channel access token + channel secret for authentication.
 
@@ -221,3 +230,12 @@ The LINE plugin also ships a `/card` command for Flex message presets:
 
 **Group messages are ignored**
 - Check `groupPolicy`. Default is `allowlist` — add user or group IDs to `groupAllowFrom`.
+
+---
+
+<div align="center">
+
+[← iMessage](imessage-native.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Zalo →](zalo.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

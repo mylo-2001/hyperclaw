@@ -1,4 +1,13 @@
 # MCP (Model Context Protocol)
+---
+
+<div align="center">
+
+[← Integrations](integrations.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [SkillHub →](skillhub.md)
+
+</div>
+
+---
 
 HyperClaw supports the [Model Context Protocol](https://modelcontextprotocol.io/) — a standard for connecting AI agents to external tools and data sources.
 
@@ -197,3 +206,12 @@ hyperclaw mcp add
 - [OSINT mode](osint.md) — uses MCP browser + filesystem for security research
 - [Configuration](configuration.md) — full config reference
 - [Sandboxing](sandboxing.md) — run MCP servers inside Docker
+
+---
+
+<div align="center">
+
+[← Integrations](integrations.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [SkillHub →](skillhub.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

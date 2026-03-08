@@ -1,4 +1,13 @@
 # Matrix
+---
+
+<div align="center">
+
+[← Slack](slack.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [MS Teams →](msteams.md)
+
+</div>
+
+---
 
 Matrix is an open, decentralized messaging protocol. HyperClaw connects as a Matrix user on any homeserver — you need a Matrix account for the bot. Once connected, you can DM the bot directly or invite it to rooms. Beeper is a valid client option but requires E2EE to be enabled.
 
@@ -269,3 +278,12 @@ hyperclaw pairing list matrix
 | DMs ignored | Sender pending pairing approval (`dm.policy: pairing`) |
 | Encrypted rooms fail | Crypto module missing or device not verified |
 | Bot not joining rooms | `autoJoin: off` or room not in `autoJoinAllowlist` |
+
+---
+
+<div align="center">
+
+[← Slack](slack.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [MS Teams →](msteams.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

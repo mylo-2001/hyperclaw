@@ -1,4 +1,13 @@
 # Environment Variables — HyperClaw
+---
+
+<div align="center">
+
+[← Configuration](configuration.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Security →](security.md)
+
+</div>
+
+---
 
 HyperClaw loads environment variables from multiple sources. **Rule:** existing values are never overridden.
 
@@ -92,3 +101,12 @@ Use `${VAR}` for substitution where supported.
 - [Configuration](configuration.md)
 - [API Keys](API-KEYS-README.md)
 - [Troubleshooting](troubleshooting.md)
+
+---
+
+<div align="center">
+
+[← Configuration](configuration.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Security →](security.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

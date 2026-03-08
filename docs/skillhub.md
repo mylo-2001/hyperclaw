@@ -1,4 +1,13 @@
 # SkillHub & Skills
+---
+
+<div align="center">
+
+[← MCP](mcp.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [OSINT Mode →](osint.md)
+
+</div>
+
+---
 
 Skills extend the agent with new capabilities. HyperClaw supports three ways to get skills:
 
@@ -210,3 +219,12 @@ The frontmatter fields (`name`, `description`) are read by the skill loader and 
 | `~/.hyperclaw/workspace/skills/` | User-installed + self-written skills |
 
 Both directories are scanned on startup. Workspace skills take precedence over bundled ones with the same ID.
+
+---
+
+<div align="center">
+
+[← MCP](mcp.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [OSINT Mode →](osint.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

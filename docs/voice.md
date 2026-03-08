@@ -1,4 +1,13 @@
 # Voice — Talk Mode & Voice Wake
+---
+
+<div align="center">
+
+[← OSINT Mode](osint.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Canvas (a2ui) →](canvas-a2ui.md)
+
+</div>
+
+---
 
 ## Talk Mode (ElevenLabs TTS)
 
@@ -46,3 +55,12 @@ The wake word is set in the wizard (`hyperclaw onboard`) or in config:
 ```
 
 `hyperclaw voice` uses the wake word from config if `-w` / `--wake-word` is not passed. Alternative: use [Porcupine](https://picovoice.ai/docs/porcupine/) (Picovoice) for real hardware wake-word detection.
+
+---
+
+<div align="center">
+
+[← OSINT Mode](osint.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Canvas (a2ui) →](canvas-a2ui.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

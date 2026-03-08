@@ -1,4 +1,13 @@
 # WhatsApp — HyperClaw
+---
+
+<div align="center">
+
+[← Telegram](telegram.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Discord →](discord-setup.md)
+
+</div>
+
+---
 
 WhatsApp is production-ready via **WhatsApp Web (Baileys)**. No Meta Business API needed. The gateway owns the linked session.
 
@@ -203,3 +212,12 @@ hyperclaw pairing approve whatsapp <CODE>
 - [Pairing](security.md#pairing)
 - [Configuration](configuration.md)
 - [Troubleshooting](troubleshooting.md)
+
+---
+
+<div align="center">
+
+[← Telegram](telegram.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Discord →](discord-setup.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

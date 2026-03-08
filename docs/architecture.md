@@ -1,4 +1,13 @@
 # Architecture — HyperClaw
+---
+
+<div align="center">
+
+[← Overview](README.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Configuration →](configuration.md)
+
+</div>
+
+---
 
 A brief overview of the HyperClaw architecture.
 
@@ -88,3 +97,12 @@ See [Gateway Protocol](protocols/gateway-protocol.md) and [API](api/gateway-api.
 | `~/.hyperclaw/credentials/` | Channel creds |
 | `~/.hyperclaw/logs/` | Logs |
 | `~/.hyperclaw/gateway.pid` | Daemon PID |
+
+---
+
+<div align="center">
+
+[← Overview](README.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Configuration →](configuration.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

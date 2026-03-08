@@ -1,4 +1,13 @@
 # Nostr — HyperClaw
+---
+
+<div align="center">
+
+[← Tlon / Urbit](tlon.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Twitch →](twitch.md)
+
+</div>
+
+---
 
 Nostr is a decentralized protocol for social networking. This channel enables HyperClaw to receive and respond to encrypted direct messages (DMs) via NIP-04.
 
@@ -177,3 +186,12 @@ docker run -p 7777:7777 ghcr.io/hoytech/strfry
 - No media attachments
 - NIP-04 only (NIP-17 gift-wrap planned)
 - Profile metadata (NIP-01 kind:0) not yet published by connector
+
+---
+
+<div align="center">
+
+[← Tlon / Urbit](tlon.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Twitch →](twitch.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

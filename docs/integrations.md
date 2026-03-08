@@ -1,4 +1,13 @@
 # Integrations (Built-in Agent Tools)
+---
+
+<div align="center">
+
+[← Zalo](zalo.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [MCP →](mcp.md)
+
+</div>
+
+---
 
 The agent has built-in tools for common integrations. No extra npm packages needed — just set the required environment variables.
 
@@ -366,3 +375,12 @@ Actions: `send` (to, message), `list_conversations` (limit)
 | `OP_SERVICE_ACCOUNT_TOKEN` | 1Password | Required |
 
 Add them to `~/.hyperclaw/.env` or your shell profile.
+
+---
+
+<div align="center">
+
+[← Zalo](zalo.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [MCP →](mcp.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

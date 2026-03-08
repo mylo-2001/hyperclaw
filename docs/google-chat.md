@@ -1,4 +1,13 @@
 # Google Chat — HyperClaw Setup Guide
+---
+
+<div align="center">
+
+[← MS Teams](msteams.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Tlon / Urbit →](tlon.md)
+
+</div>
+
+---
 
 > **Status:** ready for DMs + Spaces via Google Chat API webhooks (HTTP only).
 
@@ -315,3 +324,12 @@ Available via the `reactions` tool when `actions.reactions: true`:
 - [Security](./security.md)
 - [Tailscale](./tailscale.md)
 - [Deployment](./deployment.md)
+
+---
+
+<div align="center">
+
+[← MS Teams](msteams.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Tlon / Urbit →](tlon.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

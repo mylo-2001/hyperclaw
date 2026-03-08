@@ -1,4 +1,13 @@
 # BlueBubbles (iMessage) — HyperClaw
+---
+
+<div align="center">
+
+[← Nextcloud Talk](nextcloud-talk.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [iMessage →](imessage-native.md)
+
+</div>
+
+---
 
 **Status:** Bundled. Talks to the BlueBubbles macOS server over HTTP + WebSocket. Recommended for iMessage integration.
 
@@ -204,3 +213,12 @@ BlueBubbles supports edit, unsend, tapbacks, reply threading, message effects, g
 - [iMessage native (imsg)](imessage-native.md) — legacy alternative
 - [Groups](group-messages.md) — group policy, mention gating
 - [Pairing](security.md#pairing)
+
+---
+
+<div align="center">
+
+[← Nextcloud Talk](nextcloud-talk.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [iMessage →](imessage-native.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

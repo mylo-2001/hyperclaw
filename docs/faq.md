@@ -1,4 +1,13 @@
 # FAQ — HyperClaw
+---
+
+<div align="center">
+
+[← Troubleshooting](troubleshooting.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Contributing →](contributing.md)
+
+</div>
+
+---
 
 Frequently asked questions.
 
@@ -193,3 +202,12 @@ hyperclaw onboard
 - [Troubleshooting](troubleshooting.md)
 - [Environment](environment.md)
 - [Configuration](configuration.md)
+
+---
+
+<div align="center">
+
+[← Troubleshooting](troubleshooting.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Contributing →](contributing.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

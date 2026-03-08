@@ -1,4 +1,13 @@
 # Microsoft Teams — HyperClaw
+---
+
+<div align="center">
+
+[← Matrix](matrix.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Google Chat →](google-chat.md)
+
+</div>
+
+---
 
 Talk to HyperClaw via Teams DMs and chats using the Bot Framework webhook.
 
@@ -217,3 +226,12 @@ For full channel/group file support and RSC, you would need:
 - [Teams Developer Portal](https://dev.teams.microsoft.com/)
 - [Teams app manifest schema](https://developer.microsoft.com/en-us/json-schemas/teams/v1.23/MicrosoftTeams.schema.json)
 - [Bot Framework](https://dev.botframework.com/)
+
+---
+
+<div align="center">
+
+[← Matrix](matrix.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Google Chat →](google-chat.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

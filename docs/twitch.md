@@ -1,4 +1,13 @@
 # Twitch — HyperClaw
+---
+
+<div align="center">
+
+[← Nostr](nostr.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Nextcloud Talk →](nextcloud-talk.md)
+
+</div>
+
+---
 
 Twitch chat support via IRC connection. HyperClaw connects as a Twitch user (bot account) to receive and send messages in channels.
 
@@ -226,3 +235,12 @@ To respond to all messages without a prefix (use with caution):
 
 - [Groups](group-messages.md) — group policy (Twitch is channel-based)
 - [Configuration](configuration.md)
+
+---
+
+<div align="center">
+
+[← Nostr](nostr.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Nextcloud Talk →](nextcloud-talk.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

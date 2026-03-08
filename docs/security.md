@@ -1,4 +1,13 @@
 # Security
+---
+
+<div align="center">
+
+[← Environment Variables](environment.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Sandboxing →](sandboxing.md)
+
+</div>
+
+---
 
 > **Personal assistant trust model:** This guidance assumes one trusted operator boundary per gateway (single-user/personal assistant model). HyperClaw is **not** a hostile multi-tenant security boundary for multiple adversarial users sharing one agent/gateway. If you need mixed-trust or adversarial-user operation, split trust boundaries (separate gateway + credentials, ideally separate OS users/hosts).
 
@@ -370,3 +379,12 @@ Found a vulnerability in HyperClaw? Please report responsibly.
 - Don't post publicly until fixed
 - Include: exact code path (file, function, line range), tested version/commit, and impact across a documented trust boundary
 - Verify the report is not listed in "Not vulnerabilities by design" (prompt-injection-only chains, localhost-only findings, "missing per-user authorization" treating `sessionKey` as an auth token)
+
+---
+
+<div align="center">
+
+[← Environment Variables](environment.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Sandboxing →](sandboxing.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

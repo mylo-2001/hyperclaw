@@ -1,4 +1,13 @@
 # Tailscale Serve / Funnel — HyperClaw
+---
+
+<div align="center">
+
+[← Remote Access](remote-access.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Multiple Gateways →](multiple-gateways.md)
+
+</div>
+
+---
 
 Expose the gateway to your tailnet (or the public internet) via Tailscale for secure remote access without open ports.
 
@@ -136,3 +145,12 @@ In `hyperclaw.json`:
 - [tailscale serve command](https://tailscale.com/kb/1242/tailscale-serve)
 - [Tailscale Funnel overview](https://tailscale.com/kb/1223/tailscale-funnel)
 - [tailscale funnel command](https://tailscale.com/kb/1311/tailscale-funnel)
+
+---
+
+<div align="center">
+
+[← Remote Access](remote-access.md) &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Multiple Gateways →](multiple-gateways.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>

@@ -1,4 +1,13 @@
 # HyperClaw Documentation
+---
+
+<div align="center">
+
+— &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Architecture →](architecture.md)
+
+</div>
+
+---
 
 For a curated index of every page, see [Docs Hubs](docs-hubs.md).
 
@@ -35,3 +44,12 @@ For a curated index of every page, see [Docs Hubs](docs-hubs.md).
 | [Mobile & Desktop Apps](mobile-desktop-apps.md) | OpenClaw vs HyperClaw — native apps, roadmap |
 | [Managed Hosting](managed-hosting.md) | Optional managed hosting options |
 | [Contributing](contributing.md) | CI pipeline, local check commands |
+
+---
+
+<div align="center">
+
+— &nbsp;•&nbsp; [📋 Docs Index](README.md) &nbsp;•&nbsp; [Architecture →](architecture.md)
+
+</div>
+<div align="right"><a href="#top">▲ Back to top</a></div>
