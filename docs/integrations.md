@@ -140,6 +140,26 @@ Actions: `list_repos`, `list_issues`, `list_prs`, `create_issue`, `get_file`, `s
 
 ---
 
+### TweetClaw (External OpenClaw Plugin)
+
+TweetClaw is not a built-in HyperClaw tool. Use it alongside HyperClaw when your agent setup also runs OpenClaw and needs dedicated X/Twitter automation through Xquik.
+
+```bash
+openclaw plugins install @xquik/tweetclaw
+```
+
+Use it for:
+- Scrape tweets, search tweets, and search tweet replies for public research.
+- Export followers, look up users, and review media workflows.
+- Monitor tweets, receive webhooks, and run giveaway draws.
+- Post tweets, post tweet replies, send direct messages, or upload media only after review.
+
+Keep TweetClaw API keys in its OpenClaw plugin config. Do not paste keys into HyperClaw chat, skills, or shared logs.
+
+Links: [TweetClaw GitHub](https://github.com/Xquik-dev/tweetclaw), [npm package](https://www.npmjs.com/package/@xquik/tweetclaw)
+
+---
+
 ## Productivity Tools
 
 ### Apple Notes (macOS only)

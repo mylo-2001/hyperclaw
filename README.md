@@ -658,6 +658,12 @@ The agent has built-in tools for common integrations — no extra packages neede
 | **Browser** | Built-in — enable `browser.enabled: true` |
 | **Gmail** | Set `GOOGLE_CREDENTIALS_PATH` + configure Pub/Sub |
 
+### External OpenClaw Plugins
+
+| Plugin | When to use |
+|--------|-------------|
+| **TweetClaw** | Run `openclaw plugins install @xquik/tweetclaw` for dedicated X/Twitter automation through Xquik: scrape tweets, search tweet replies, post tweets or replies after review, export followers, look up users, handle media, direct messages, monitors, webhooks, and giveaway draws. |
+
 ### Productivity
 
 | Tool | How to enable |
